@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="10%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="60dp">
+
+    <Row>
+        <Key android:keyLabel="༡"
+            android:keyEdgeFlags="left"
+            android:codes="03873"/>
+        <Key android:keyLabel="༢"
+            android:codes="03874"/>
+        <Key android:keyLabel="༣"
+            android:codes="03875"/>
+        <Key android:keyLabel="༤"
+            android:codes="03876"/>
+        <Key android:keyLabel="༥"
+            android:codes="03877"/>
+        <Key android:keyLabel="༦"
+            android:codes="03878"/>
+        <Key android:keyLabel="༧"
+            android:codes="03879"/>
+        <Key android:keyLabel="༨"
+            android:codes="03880"/>
+        <Key android:keyLabel="༩"
+            android:codes="03881"/>
+        <Key android:keyLabel="༠"
+            android:keyEdgeFlags="right"
+            android:codes="03872"/>
+    </Row>
+
+    <Row>
+        <Key android:keyLabel="ཀ" android:keyEdgeFlags="left" android:codes="03904"/>
+        <Key android:keyLabel="ཁ" android:codes="03905"/>
+        <Key android:keyLabel="ག" android:codes="03906"/>
+        <Key android:keyLabel="ང" android:codes="03908"/>
+        <Key android:keyLabel="ི" android:codes="03954"/>
+        <Key android:keyLabel="ུ" android:codes="03956"/>
+        <Key android:keyLabel="ེ" android:codes="03962"/>
+        <Key android:keyLabel="ོ" android:codes="03964"/>
+        <Key android:keyLabel="ཅ" android:codes="03909"/>
+        <Key android:keyLabel="ཆ" android:codes="03910"/>
+        <Key android:keyLabel="ཇ" android:codes="03911"/>
+        <Key android:keyLabel="ཉ" android:keyEdgeFlags="right" android:codes="03913"/>
+    </Row>
+
+    <Row>
+        <Key android:keyLabel="ཏ" android:keyEdgeFlags="left" android:codes="03919"/>
+        <Key android:keyLabel="ཐ" android:codes="03920"/>
+        <Key android:keyLabel="ད" android:codes="03921"/>
+        <Key android:keyLabel="ན" android:codes="03923"/>
+        <Key android:keyLabel="པ" android:codes="03924"/>
+        <Key android:keyLabel="ཕ" android:codes="03925"/>
+        <Key android:keyLabel="བ" android:codes="03926"/>
+        <Key android:keyLabel="མ" android:codes="03928"/>
+        <Key android:keyLabel="ཙ" android:codes="03929"/>
+        <Key android:keyLabel="ཚ" android:codes="03930"/>
+        <Key android:keyLabel="ཛ" android:codes="03931"/>
+        <!--<Key android:keyLabel="\# \@" android:keyEdgeFlags="right" android:codes="35,64"/>-->
+        <Key android:keyLabel="ཝ" android:keyEdgeFlags="right" android:codes="03933"/>
+    </Row>
+
+    <Row>
+        <Key android:keyLabel="CAPS" android:keyEdgeFlags="left" android:codes="-1"/>
+        <Key android:keyLabel="ཞ" android:codes="03934"/>
+        <Key android:keyLabel="ཟ" android:codes="03935"/>
+        <Key android:keyLabel="འ" android:codes="03936"/>
+        <Key android:keyLabel="ཡ" android:codes="03937"/>
+        <Key android:keyLabel="ར" android:codes="03938"/>
+        <Key android:keyLabel="ལ" android:codes="03939"/>
+        <Key android:keyLabel="ཤ" android:codes="03940"/>
+        <Key android:keyLabel="ས" android:codes="03942"/>
+        <Key android:keyLabel="ཧ" android:codes="03943"/>
+        <Key android:keyLabel="ཨ" android:codes="03944"/>
+        <!-- <Key android:keyLabel="\? ! :" android:keyEdgeFlags="right" android:codes="63,33,58"/>-->
+         <Key android:keyLabel="་" android:keyEdgeFlags="right" android:codes="03851"/>
+     </Row>
+
+     <Row android:rowEdgeFlags="bottom">
+         <Key android:keyLabel="," android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="44"/>
+         <Key android:keyLabel="/" android:keyWidth="10%p"  android:codes="47"/>
+         <Key android:keyLabel="SPACE" android:keyWidth="40%p" android:isRepeatable="true" android:codes="32"/>
+         <Key android:keyLabel="DEL" android:keyWidth="20%p" android:isRepeatable="true" android:codes="-5"/>
+         <Key android:keyLabel="DONE" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="-4"/>
+
+     </Row>
+
+ </Keyboard>

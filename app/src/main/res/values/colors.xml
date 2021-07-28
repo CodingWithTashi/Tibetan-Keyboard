@@ -2,9 +2,15 @@
 <resources>
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
+    <color name="brown_500">#FF704C04</color>
+    <color name="brown_700">#ff795C22</color>
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="keyboard_background_color">#34495E</color>
+    <color name="keyboard_divider">#2C3E50</color>
+    <color name="keyboard_pressed">#95A5A6</color>
+    <color name="colorPrimaryDark">#303F9F</color>
 </resources>
