@@ -19,7 +19,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         kv = layoutInflater.inflate(R.layout.keyboard, null) as KeyboardView
-        keyboard = Keyboard(this, R.xml.qwerty)
+        keyboard = Keyboard(this, R.xml.alphabet_1)
         kv!!.keyboard = keyboard
         kv!!.setOnKeyboardActionListener(this)
         return kv!!
@@ -29,6 +29,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onRelease(i: Int) {}
     override fun onKey(i: Int, ints: IntArray) {
         val ic = currentInputConnection
+        Log.i("TAG", "onKey: $i")
         playClick(i)
         when (i) {
             Keyboard.KEYCODE_DELETE -> ic.deleteSurroundingText(1, 0)
@@ -43,6 +44,14 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                     KeyEvent.KEYCODE_ENTER
                 )
             )
+            KeyboardType.ALPHABET_1 -> {
+                kv?.keyboard = Keyboard(this, R.xml.alphabet_1)
+            }
+
+            KeyboardType.ALPHABET_2 -> {
+                kv?.keyboard = Keyboard(this, R.xml.alphabet_2)
+            }
+
             else -> {
                 var code = i.toChar()
                 if (Character.isLetter(code) && isCaps) code = Character.toUpperCase(code)

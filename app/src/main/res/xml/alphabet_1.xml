@@ -62,7 +62,7 @@
     </Row>
 
     <Row>
-        <Key android:keyLabel="CAPS" android:keyEdgeFlags="left" android:codes="-1"/>
+        <Key android:keyIcon="@drawable/ic_baseline_keyboard_arrow_down_24" android:keyWidth="15%p" android:keyEdgeFlags="left" android:codes="-8"/>
         <Key android:keyLabel="ཞ" android:codes="03934"/>
         <Key android:keyLabel="ཟ" android:codes="03935"/>
         <Key android:keyLabel="འ" android:codes="03936"/>
@@ -74,15 +74,16 @@
         <Key android:keyLabel="ཧ" android:codes="03943"/>
         <Key android:keyLabel="ཨ" android:codes="03944"/>
         <!-- <Key android:keyLabel="\? ! :" android:keyEdgeFlags="right" android:codes="63,33,58"/>-->
-         <Key android:keyLabel="་" android:keyEdgeFlags="right" android:codes="03851"/>
+        <Key android:keyIcon="@drawable/outline_backspace_24" android:keyWidth="20%p" android:isRepeatable="true" android:codes="-5"/>
+
      </Row>
 
      <Row android:rowEdgeFlags="bottom">
-         <Key android:keyLabel="," android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="44"/>
-         <Key android:keyLabel="/" android:keyWidth="10%p"  android:codes="47"/>
+         <Key android:keyIcon="@drawable/ic_baseline_language_24" android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="44"/>
+         <Key android:keyLabel="༑ཿ༅" android:keyWidth="10%p"  android:codes="47"/>
          <Key android:keyLabel="SPACE" android:keyWidth="40%p" android:isRepeatable="true" android:codes="32"/>
-         <Key android:keyLabel="DEL" android:keyWidth="20%p" android:isRepeatable="true" android:codes="-5"/>
-         <Key android:keyLabel="DONE" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="-4"/>
+         <Key android:keyLabel="་" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="03851"/>
+         <Key android:keyIcon="@drawable/ic_baseline_keyboard_return_24" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="-4"/>
 
      </Row>
 
