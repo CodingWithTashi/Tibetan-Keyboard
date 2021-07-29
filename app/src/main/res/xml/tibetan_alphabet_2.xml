@@ -9,51 +9,53 @@
         <Key android:keyLabel="ྑ" android:codes="03985"/>
         <Key android:keyLabel="ྒ" android:codes="03986"/>
         <Key android:keyLabel="ྔ" android:codes="03988"/>
-        <Key android:keyLabel="ི" android:codes="03954"/>
-        <Key android:keyLabel="ུ" android:codes="03956"/>
-        <Key android:keyLabel="ེ" android:codes="03962"/>
-        <Key android:keyLabel="ོ" android:codes="03964"/>
         <Key android:keyLabel="ྕ" android:codes="03989"/>
         <Key android:keyLabel="ྖ" android:codes="03990"/>
         <Key android:keyLabel="ྗ" android:codes="03991"/>
-        <Key android:keyLabel="ྙ" android:keyEdgeFlags="right" android:codes="03993"/>
+        <Key android:keyLabel="ྙ"  android:codes="03993"/>
+        <Key android:keyLabel="ྟ" android:codes="03999"/>
+        <Key android:keyLabel="ྠ" android:codes="04000"/>
+        <Key android:keyLabel="ྡ" android:codes="04001"/>
+        <Key android:keyLabel="ྣ" android:codes="04003" android:keyEdgeFlags="right"/>
     </Row>
 
     <Row>
-        <Key android:keyLabel="ྟ" android:keyEdgeFlags="left" android:codes="03999"/>
-        <Key android:keyLabel="ྠ" android:codes="04000"/>
-        <Key android:keyLabel="ྡ" android:codes="04001"/>
-        <Key android:keyLabel="ྣ" android:codes="04003"/>
-        <Key android:keyLabel="ྤ" android:codes="04004"/>
+        <Key android:keyLabel="ྤ" android:codes="04004" android:keyEdgeFlags="left"/>
         <Key android:keyLabel="ྥ" android:codes="04005"/>
         <Key android:keyLabel="ྦ" android:codes="04006"/>
         <Key android:keyLabel="ྨ" android:codes="04008"/>
         <Key android:keyLabel="ྩ" android:codes="04009"/>
         <Key android:keyLabel="ྪ" android:codes="04010"/>
         <Key android:keyLabel="ྫ" android:codes="04011"/>
+        <Key android:keyLabel="ྭ"  android:codes="04013"/>
+        <Key android:keyLabel="ྮ" android:codes="04014"/>
+        <Key android:keyLabel="ྯ" android:codes="04015"/>
+        <Key android:keyLabel="ྰ" android:codes="04016"/>
+        <Key android:keyLabel="ྱ" android:codes="04017" android:keyEdgeFlags="right"/>
         <!--<Key android:keyLabel="\# \@" android:keyEdgeFlags="right" android:codes="35,64"/>-->
-        <Key android:keyLabel="ྭ" android:keyEdgeFlags="right" android:codes="04013"/>
+
     </Row>
 
     <Row>
         <Key  android:keyIcon="@drawable/ic_baseline_keyboard_arrow_up_24" android:keyWidth="15%p" android:keyEdgeFlags="left" android:codes="-7"/>
-        <Key android:keyLabel="ྮ" android:codes="04014"/>
-        <Key android:keyLabel="ྯ" android:codes="04015"/>
-        <Key android:keyLabel="ྰ" android:codes="04016"/>
-        <Key android:keyLabel="ྱ" android:codes="04017"/>
+
         <Key android:keyLabel="ྲ" android:codes="04018"/>
         <Key android:keyLabel="ླ" android:codes="04019"/>
         <Key android:keyLabel="ྴ" android:codes="04020"/>
         <Key android:keyLabel="ྶ" android:codes="04022"/>
         <Key android:keyLabel="ྷ" android:codes="04023"/>
         <Key android:keyLabel="ྸ" android:codes="04024"/>
+        <Key android:keyLabel="ྚ"  android:codes="03994"/>
+        <Key android:keyLabel="ྛ" android:codes="03995"/>
+        <Key android:keyLabel="ྜ" android:codes="03996"/>
+        <Key android:keyLabel="ྞ" android:codes="03998"/>
         <!-- <Key android:keyLabel="\? ! :" android:keyEdgeFlags="right" android:codes="63,33,58"/>-->
         <Key android:keyIcon="@drawable/outline_backspace_24" android:keyWidth="20%p" android:isRepeatable="true" android:codes="-5"/>
     </Row>
 
     <Row android:rowEdgeFlags="bottom">
-        <Key android:keyIcon="@drawable/ic_baseline_language_24" android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="44"/>
-        <Key android:keyLabel="༑ཿ༅" android:keyWidth="10%p"  android:codes="47"/>
+        <Key android:keyIcon="@drawable/ic_baseline_language_24" android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="-10"/>
+        <Key android:keyLabel="༑ཿ༅" android:keyWidth="10%p"  android:codes="-9"/>
         <Key android:keyLabel="SPACE" android:keyWidth="40%p" android:isRepeatable="true" android:codes="32"/>
         <Key android:keyLabel="་" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="03851"/>
         <Key android:keyIcon="@drawable/ic_baseline_keyboard_return_24" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="-4"/>

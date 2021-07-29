@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Tibetan Keyboard</string>
     <string name="author_name">by Kharag Edition</string>
+    <string name="question_mark">\u003F</string>
+    <string name="at_rate">\u0040</string>
+    <string name="slash">\u005C</string>
+
 </resources>

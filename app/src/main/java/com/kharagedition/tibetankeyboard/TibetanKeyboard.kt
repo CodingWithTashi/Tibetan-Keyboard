@@ -19,7 +19,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         kv = layoutInflater.inflate(R.layout.keyboard, null) as KeyboardView
-        keyboard = Keyboard(this, R.xml.alphabet_1)
+        keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
         kv!!.keyboard = keyboard
         kv!!.setOnKeyboardActionListener(this)
         return kv!!
@@ -44,12 +44,27 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                     KeyEvent.KEYCODE_ENTER
                 )
             )
-            KeyboardType.ALPHABET_1 -> {
-                kv?.keyboard = Keyboard(this, R.xml.alphabet_1)
+            KeyboardType.TIBETAN_ALPHABET_1 -> {
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
             }
 
-            KeyboardType.ALPHABET_2 -> {
-                kv?.keyboard = Keyboard(this, R.xml.alphabet_2)
+            KeyboardType.TIBETAN_ALPHABET_2 -> {
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_2)
+            }
+            KeyboardType.SYMBOL_1 -> {
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_symbol_1)
+            }
+            KeyboardType.QWERTY_SMALL -> {
+                kv?.keyboard = Keyboard(this, R.xml.qwerty)
+            }
+            KeyboardType.TIBETAN -> {
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
+            }
+            KeyboardType.QWERTY_CAP -> {
+                kv?.keyboard = Keyboard(this, R.xml.qwerty_cap)
+            }
+            KeyboardType.SYMBOL_EN -> {
+                kv?.keyboard = Keyboard(this, R.xml.symbol_en)
             }
 
             else -> {
