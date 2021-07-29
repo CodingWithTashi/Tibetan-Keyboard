@@ -7,7 +7,7 @@
     android:keyTextColor="@android:color/white"
     android:keyBackground="@drawable/key_background"
     android:keyPreviewLayout="@layout/key_preview"
-    android:background="@color/colorPrimaryDark"
+    android:background="@color/keyboard_background_color"
 
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
