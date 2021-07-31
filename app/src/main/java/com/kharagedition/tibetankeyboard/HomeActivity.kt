@@ -5,7 +5,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
@@ -19,7 +21,7 @@ class HomeActivity : InputMethodActivity() {
     lateinit var homeBinding: ActivityHomeBinding;
     override fun onResume() {
         checkKeyboardIsEnabledOrNot()
-        checkInputMethodEnableOrNot()
+
         super.onResume()
     }
 
@@ -33,7 +35,6 @@ class HomeActivity : InputMethodActivity() {
         setContentView(homeBinding.root)
         initAds();
         checkKeyboardIsEnabledOrNot()
-        checkInputMethodEnableOrNot()
         initClickListener()
 
 
@@ -81,24 +82,6 @@ class HomeActivity : InputMethodActivity() {
     private fun openView(playStoreUrl: String) {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(playStoreUrl)))
     }
-
-    private fun checkInputMethodEnableOrNot() {
-        var string = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD);
-        if(string.contains("com.kharagedition.tibetankeyboard")){
-            homeBinding.messgaeLbl.text = "Great, You are all setup and ready to use!";
-            homeBinding.testField.visibility = VISIBLE;
-            //homeBinding.inputMethodBtn.isEnabled = false;
-            Glide.with(this)
-                .load(R.drawable.keyboard_img)
-                .into(homeBinding.gitImage)
-
-        }else{
-            homeBinding.inputMethodBtn.isEnabled = true;
-
-        }
-        //homeBinding.inputMethodBtn.isEnabled = !string.contains("com.kharagedition.tibetankeyboard")
-    }
-
     private fun checkKeyboardIsEnabledOrNot() {
         val im = applicationContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         var list = im.enabledInputMethodList.toString()
@@ -106,19 +89,42 @@ class HomeActivity : InputMethodActivity() {
             homeBinding.messgaeLbl.text = "Vola! Now only one step left";
             homeBinding.enableKeyboardBtn.isEnabled = false
             homeBinding.inputMethodBtn.isEnabled = true;
-            Log.e("TAG", "checkInputMethodEnableOrNot: input", )
-            Glide.with(this)
-                .load(R.drawable.input)
-                .into(homeBinding.gitImage)
+            //check input method
+            checkInputMethodEnableOrNot()
+
         }else{
+            homeBinding.messgaeLbl.text = "Well done, Now only two step away!";
             homeBinding.enableKeyboardBtn.isEnabled = true;
             homeBinding.inputMethodBtn.isEnabled = false;
+            homeBinding.gifCard.visibility = VISIBLE;
             Glide.with(this)
-                .load(R.drawable.keyboard)
-                .into(homeBinding.gitImage)
+                    .load(R.drawable.keyboard)
+                    .into(homeBinding.gitImage)
         }
         //homeBinding.enableKeyboardBtn.isEnabled = !list.contains("com.kharagedition.tibetankeyboard")
     }
+
+    private fun checkInputMethodEnableOrNot() {
+        var string = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD);
+        if(string.contains("com.kharagedition.tibetankeyboard")){
+            homeBinding.messgaeLbl.text = "Great, You are all setup and ready to use!";
+            homeBinding.testField.visibility = VISIBLE;
+            //homeBinding.inputMethodBtn.isEnabled = false;
+            homeBinding.gifCard.visibility = GONE;
+
+        }else{
+            homeBinding.testField.visibility = GONE;
+            homeBinding.gifCard.visibility = VISIBLE;
+            Glide.with(this)
+                    .load(R.drawable.input)
+                    .into(homeBinding.gitImage)
+            homeBinding.messgaeLbl.text = "Vola! Now only one step left";
+            homeBinding.inputMethodBtn.isEnabled = true;
+
+        }
+        //homeBinding.inputMethodBtn.isEnabled = !string.contains("com.kharagedition.tibetankeyboard")
+    }
+
 
     private fun initAds() {
         val adView = AdView(this)
