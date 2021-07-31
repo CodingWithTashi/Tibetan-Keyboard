@@ -4,7 +4,7 @@
     android:horizontalGap="0px"
     android:verticalGap="0px"
     android:keyHeight="60dp">
-    <Row>
+    <Row android:keyWidth="8.2%p">
         <Key android:keyLabel="ྐ" android:keyEdgeFlags="left" android:codes="03984"/>
         <Key android:keyLabel="ྑ" android:codes="03985"/>
         <Key android:keyLabel="ྒ" android:codes="03986"/>
@@ -19,7 +19,7 @@
         <Key android:keyLabel="ྣ" android:codes="04003" android:keyEdgeFlags="right"/>
     </Row>
 
-    <Row>
+    <Row android:keyWidth="8.2%p">
         <Key android:keyLabel="ྤ" android:codes="04004" android:keyEdgeFlags="left"/>
         <Key android:keyLabel="ྥ" android:codes="04005"/>
         <Key android:keyLabel="ྦ" android:codes="04006"/>
@@ -36,8 +36,8 @@
 
     </Row>
 
-    <Row>
-        <Key  android:keyIcon="@drawable/ic_baseline_keyboard_arrow_up_24" android:keyWidth="15%p" android:keyEdgeFlags="left" android:codes="-7"/>
+    <Row android:keyWidth="8.2%p">
+        <Key android:keyIcon="@drawable/ic_baseline_keyboard_arrow_up_24"  android:keyEdgeFlags="left" android:codes="-7"/>
 
         <Key android:keyLabel="ྲ" android:codes="04018"/>
         <Key android:keyLabel="ླ" android:codes="04019"/>
@@ -50,10 +50,10 @@
         <Key android:keyLabel="ྜ" android:codes="03996"/>
         <Key android:keyLabel="ྞ" android:codes="03998"/>
         <!-- <Key android:keyLabel="\? ! :" android:keyEdgeFlags="right" android:codes="63,33,58"/>-->
-        <Key android:keyIcon="@drawable/outline_backspace_24" android:keyWidth="20%p" android:isRepeatable="true" android:codes="-5"/>
+        <Key android:keyIcon="@drawable/outline_backspace_24" android:keyWidth="10%p" android:isRepeatable="true" android:codes="-5"/>
     </Row>
 
-    <Row android:rowEdgeFlags="bottom">
+    <Row android:rowEdgeFlags="bottom" >
         <Key android:keyIcon="@drawable/ic_baseline_language_24" android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="-10"/>
         <Key android:keyLabel="༑ཿ༅" android:keyWidth="10%p"  android:codes="-9"/>
         <Key android:keyLabel="SPACE" android:keyWidth="40%p" android:isRepeatable="true" android:codes="32"/>

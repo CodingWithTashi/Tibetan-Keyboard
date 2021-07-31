@@ -4,5 +4,17 @@
     <string name="question_mark">\u003F</string>
     <string name="at_rate">\u0040</string>
     <string name="slash">\u005C</string>
-
+    <string name="about_us">About Us</string>
+    <string name="about_app">About App:</string>
+    <string name="share">Share</string>
+    <string name="rate">Rate</string>
+    <string name="download">Download</string>
+    <string name="support_contribution">Support/contribution:</string>
+    <string name="about_me">About me:</string>
+    <string name="uh_snap_msg">UH-SNAP!</string>
+    <string name="leaving_app_message">You are leaving already!</string>
+    <string name="leaving_msg">Yes, I\'m sorry</string>
+    <string name="dictionary">Dictionary</string>
+    <string name="favourite">Favourite</string>
+    <string name="about">About</string>
 </resources>

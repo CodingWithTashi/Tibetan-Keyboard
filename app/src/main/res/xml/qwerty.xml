@@ -30,7 +30,7 @@
             android:codes="48"/>
     </Row>
 
-    <Row>
+    <Row android:keyWidth="10%p">
         <Key android:keyLabel="q" android:keyEdgeFlags="left" android:codes="113"/>
         <Key android:keyLabel="w" android:codes="119"/>
         <Key android:keyLabel="e" android:codes="101"/>
@@ -74,7 +74,7 @@
         <Key android:keyIcon="@drawable/ic_baseline_space_bar_24" android:keyWidth="40%p" android:isRepeatable="true" android:codes="32"/>
         <Key android:keyLabel="." android:keyWidth="10%p" android:codes="46"/>
         <Key android:keyLabel="," android:keyWidth="10%p" android:codes="00044"/>
-        <Key android:keyIcon="@drawable/ic_baseline_keyboard_return_24" android:keyWidth="20%p" android:keyEdgeFlags="right" android:codes="-4"/>
+        <Key android:keyIcon="@drawable/ic_baseline_keyboard_return_24" android:keyWidth="10%p" android:keyEdgeFlags="right" android:codes="-4"/>
 
     </Row>
 

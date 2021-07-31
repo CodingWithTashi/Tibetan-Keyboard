@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard
 
+import android.content.Context
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
@@ -8,20 +9,29 @@ import android.media.AudioManager
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import com.google.firebase.crashlytics.internal.common.CommonUtils
+import com.kharagedition.tibetankeyboard.util.AppConstant
 
 
 class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     private var kv: KeyboardView? = null
     private var keyboard: Keyboard? = null
     private var isCaps = false
-
+    private var isLanguageTibetan: Boolean = true
     //Press Ctrl+O
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         kv = layoutInflater.inflate(R.layout.keyboard, null) as KeyboardView
-        keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
+        isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
+            AppConstant.IS_TIB,true)
+        keyboard = if(isLanguageTibetan){
+            Keyboard(this, R.xml.tibetan_alphabet_1)
+        }else{
+            Keyboard(this, R.xml.qwerty)
+        }
         kv!!.keyboard = keyboard
         kv!!.setOnKeyboardActionListener(this)
+
         return kv!!
     }
 
@@ -38,13 +48,21 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                 keyboard!!.isShifted = isCaps
                 kv!!.invalidateAllKeys()
             }
-            Keyboard.KEYCODE_DONE -> ic.sendKeyEvent(
-                KeyEvent(
-                    KeyEvent.ACTION_DOWN,
-                    KeyEvent.KEYCODE_ENTER
+            Keyboard.KEYCODE_DONE -> {
+                sendDefaultEditorAction(true);
+                ic.sendKeyEvent(
+                        KeyEvent(
+                                KeyEvent.ACTION_DOWN,
+                                KeyEvent.KEYCODE_ENTER
+
+                        )
                 )
-            )
+            }
             KeyboardType.TIBETAN_ALPHABET_1 -> {
+                val prefs = getSharedPreferences(
+                    "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
+                prefs.putBoolean(AppConstant.IS_TIB,true)
+                prefs.apply();
                 kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
             }
 
@@ -55,6 +73,10 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                 kv?.keyboard = Keyboard(this, R.xml.tibetan_symbol_1)
             }
             KeyboardType.QWERTY_SMALL -> {
+                val prefs = getSharedPreferences(
+                    "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
+                prefs.putBoolean(AppConstant.IS_TIB,false)
+                prefs.apply();
                 kv?.keyboard = Keyboard(this, R.xml.qwerty)
             }
             KeyboardType.TIBETAN -> {

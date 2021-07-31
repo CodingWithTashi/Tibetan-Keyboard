@@ -31,40 +31,40 @@
     </Row>
 
     <Row>
-        <Key android:keyLabel="Q" android:keyEdgeFlags="left" android:codes="113"/>
-        <Key android:keyLabel="W" android:codes="119"/>
-        <Key android:keyLabel="E" android:codes="101"/>
-        <Key android:keyLabel="R" android:codes="114"/>
-        <Key android:keyLabel="T" android:codes="116"/>
-        <Key android:keyLabel="Y" android:codes="121"/>
-        <Key android:keyLabel="U" android:codes="117"/>
-        <Key android:keyLabel="I" android:codes="105"/>
-        <Key android:keyLabel="O" android:codes="111"/>
-        <Key android:keyLabel="P" android:keyEdgeFlags="right" android:codes="112"/>
+        <Key android:keyLabel="Q" android:keyEdgeFlags="left" android:codes="00081"/>
+        <Key android:keyLabel="W" android:codes="00087"/>
+        <Key android:keyLabel="E" android:codes="00069"/>
+        <Key android:keyLabel="R" android:codes="00082"/>
+        <Key android:keyLabel="T" android:codes="00084"/>
+        <Key android:keyLabel="Y" android:codes="00089"/>
+        <Key android:keyLabel="U" android:codes="00085"/>
+        <Key android:keyLabel="I" android:codes="00073"/>
+        <Key android:keyLabel="O" android:codes="00079"/>
+        <Key android:keyLabel="P" android:keyEdgeFlags="right" android:codes="00080"/>
     </Row>
 
     <Row>
-        <Key android:keyLabel="A" android:keyEdgeFlags="left" android:codes="97"/>
-        <Key android:keyLabel="S" android:codes="115"/>
-        <Key android:keyLabel="D" android:codes="100"/>
-        <Key android:keyLabel="F" android:codes="102"/>
-        <Key android:keyLabel="G" android:codes="103"/>
-        <Key android:keyLabel="H" android:codes="104"/>
-        <Key android:keyLabel="J" android:codes="106"/>
-        <Key android:keyLabel="K" android:codes="107"/>
-        <Key android:keyLabel="L" android:codes="108"/>
+        <Key android:keyLabel="A" android:keyEdgeFlags="left" android:codes="00065"/>
+        <Key android:keyLabel="S" android:codes="00083"/>
+        <Key android:keyLabel="D" android:codes="00068"/>
+        <Key android:keyLabel="F" android:codes="00070"/>
+        <Key android:keyLabel="G" android:codes="00071"/>
+        <Key android:keyLabel="H" android:codes="00072"/>
+        <Key android:keyLabel="J" android:codes="00074"/>
+        <Key android:keyLabel="K" android:codes="00075"/>
+        <Key android:keyLabel="L" android:codes="00076"/>
         <Key android:keyLabel=";" android:keyEdgeFlags="right" android:codes="00059"/>
     </Row>
 
     <Row>
         <Key android:keyIcon="@drawable/ic_baseline_keyboard_arrow_down_24" android:keyWidth="15%p" android:keyEdgeFlags="left" android:codes="-10"/>
-        <Key android:keyLabel="Z" android:codes="122"/>
-        <Key android:keyLabel="X" android:codes="120"/>
-        <Key android:keyLabel="C" android:codes="99"/>
-        <Key android:keyLabel="V" android:codes="118"/>
-        <Key android:keyLabel="B" android:codes="98"/>
-        <Key android:keyLabel="N" android:codes="110"/>
-        <Key android:keyLabel="M" android:codes="109"/>
+        <Key android:keyLabel="Z" android:codes="00090"/>
+        <Key android:keyLabel="X" android:codes="00088"/>
+        <Key android:keyLabel="C" android:codes="00067"/>
+        <Key android:keyLabel="V" android:codes="00086"/>
+        <Key android:keyLabel="B" android:codes="00066"/>
+        <Key android:keyLabel="N" android:codes="00078"/>
+        <Key android:keyLabel="M" android:codes="00077"/>
         <Key android:keyIcon="@drawable/outline_backspace_24" android:keyWidth="15%p"  android:isRepeatable="true" android:codes="-5"/>
     </Row>
 

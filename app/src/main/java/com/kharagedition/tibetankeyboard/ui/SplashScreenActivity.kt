@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import com.google.android.gms.ads.MobileAds
 import com.kharagedition.tibetankeyboard.HomeActivity
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.databinding.ActivitySplashScreenBinding
@@ -23,6 +24,8 @@ class SplashScreenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         activitySplashScreenBinding = ActivitySplashScreenBinding.inflate(layoutInflater);
         setContentView(activitySplashScreenBinding.root)
+        MobileAds.initialize(this) {}
+
         topAnimation = AnimationUtils.loadAnimation(this,R.anim.top_animation)
         bottomAnimation = AnimationUtils.loadAnimation(this,R.anim.bottom_animation)
 
