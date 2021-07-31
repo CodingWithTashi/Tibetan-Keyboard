@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
 import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
+import com.kharagedition.tibetankeyboard.util.AppConstant.Companion.PRODUCT_BANNER_ADS
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 
@@ -33,13 +34,50 @@ class HomeActivity : InputMethodActivity() {
         super.onCreate(savedInstanceState)
         homeBinding = ActivityHomeBinding.inflate(layoutInflater);
         setContentView(homeBinding.root)
-        initAds();
+        initAdmobAds();
         checkKeyboardIsEnabledOrNot()
         initClickListener()
 
 
 
     }
+
+/*
+    private fun initNativeAds() {
+        //---> initializing Google Ad SDK
+        MobileAds.initialize(this) {
+            val adLoader: AdLoader =
+                AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
+                    .forNativeAd(NativeAd.OnNativeAdLoadedListener { nativeAd ->
+                        Log.d("TAG", "Native Ad Loaded")
+                        if (isDestroyed) {
+                            nativeAd.destroy()
+                            Log.d("TAG", "Native Ad Destroyed")
+                            return@OnNativeAdLoadedListener
+                        }
+                        val styles = NativeTemplateStyle.Builder().build()
+                        homeBinding.templete.setStyles(styles)
+                        homeBinding.templete.visibility = VISIBLE
+                        homeBinding.templete.setNativeAd(nativeAd)
+                    })
+                    .withAdListener(object : AdListener() {
+                        override fun onAdFailedToLoad(adError: LoadAdError?) {
+                            // Handle the failure by logging, altering the UI, and so on.
+                            Log.d("TAG", "Native Ad Failed To Load" + adError?.message)
+                            homeBinding.templete.visibility = GONE
+                        }
+                    })
+                    .withNativeAdOptions(
+                        NativeAdOptions.Builder()
+                            .build()
+                    )
+                    .build()
+
+            adLoader.loadAd(AdRequest.Builder().build())
+        }
+
+    }
+*/
 
     private fun initClickListener() {
         homeBinding.enableKeyboardBtn.setOnClickListener {
@@ -105,7 +143,10 @@ class HomeActivity : InputMethodActivity() {
     }
 
     private fun checkInputMethodEnableOrNot() {
-        var string = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD);
+        var string = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.DEFAULT_INPUT_METHOD
+        );
         if(string.contains("com.kharagedition.tibetankeyboard")){
             homeBinding.messgaeLbl.text = "Great, You are all setup and ready to use!";
             homeBinding.testField.visibility = VISIBLE;
@@ -126,25 +167,25 @@ class HomeActivity : InputMethodActivity() {
     }
 
 
-    private fun initAds() {
+    private fun initAdmobAds() {
         val adView = AdView(this)
 
         adView.adSize = AdSize.BANNER
 
-        adView.adUnitId = "ca-app-pub-3940256099942544/6300978111"
+        adView.adUnitId = PRODUCT_BANNER_ADS
         val adRequest = AdRequest.Builder().build()
         homeBinding.adView.loadAd(adRequest)
         homeBinding.adView.adListener = object: AdListener() {
             override fun onAdLoaded() {
-                Log.e("TAG", "onAdLoaded: ", )
+                Log.e("TAG", "onAdLoaded: ")
             }
 
-            override fun onAdFailedToLoad(adError : LoadAdError) {
-                Log.e("TAG", "onAdFailedToLoad: "+adError.message, )
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.e("TAG", "onAdFailedToLoad: " + adError.message)
             }
 
             override fun onAdOpened() {
-                Log.e("TAG", "onAdLoaded: ", )
+                Log.e("TAG", "onAdLoaded: ")
             }
 
             override fun onAdClicked() {
@@ -152,7 +193,7 @@ class HomeActivity : InputMethodActivity() {
             }
 
             override fun onAdClosed() {
-                Log.e("TAG", "onAdLoaded: ", )
+                Log.e("TAG", "onAdLoaded: ")
             }
         }
     }

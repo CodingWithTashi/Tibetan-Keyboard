@@ -286,7 +286,7 @@
                </RelativeLayout>
            </LinearLayout>
            <LinearLayout
-               android:layout_marginTop="10dp"
+               android:layout_marginTop="20dp"
                android:layout_marginBottom="20dp"
                android:gravity="center"
                app:layout_constraintLeft_toLeftOf="parent"
@@ -295,7 +295,7 @@
                android:layout_width="match_parent"
                android:layout_height="wrap_content">
                <com.google.android.gms.ads.AdView
-                   android:visibility="gone"
+                   android:visibility="visible"
                    ads:layout_constraintLeft_toLeftOf="parent"
                    ads:layout_constraintRight_toRightOf="parent"
                    ads:layout_constraintTop_toBottomOf="@id/button_layout"
@@ -306,7 +306,7 @@
                    android:layout_centerHorizontal="true"
                    android:layout_alignParentBottom="true"
                    ads:adSize="BANNER"
-                   ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
+                   ads:adUnitId="ca-app-pub-8284901143739274/6442959854">
                </com.google.android.gms.ads.AdView>
            </LinearLayout>
        </androidx.constraintlayout.widget.ConstraintLayout>
