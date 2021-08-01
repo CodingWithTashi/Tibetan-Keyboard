@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/container"
-    tools:context=".HomeActivity"
+    tools:context=".ui.HomeActivity"
     android:background="@color/brown_500">
    <ScrollView
        app:layout_constraintTop_toTopOf="parent"
@@ -285,29 +285,22 @@
                        android:elevation="10dp" />
                </RelativeLayout>
            </LinearLayout>
+
            <LinearLayout
-               android:layout_marginTop="20dp"
-               android:layout_marginBottom="20dp"
-               android:gravity="center"
+               android:visibility="gone"
+               android:id="@+id/native_ads_layout"
+               android:layout_margin="20dp"
                app:layout_constraintLeft_toLeftOf="parent"
                app:layout_constraintRight_toRightOf="parent"
-               app:layout_constraintTop_toBottomOf="@id/icon_btn_layout"
+               app:layout_constraintTop_toBottomOf="@+id/icon_btn_layout"
                android:layout_width="match_parent"
                android:layout_height="wrap_content">
-               <com.google.android.gms.ads.AdView
-                   android:visibility="visible"
-                   ads:layout_constraintLeft_toLeftOf="parent"
-                   ads:layout_constraintRight_toRightOf="parent"
-                   ads:layout_constraintTop_toBottomOf="@id/button_layout"
-                   xmlns:ads="http://schemas.android.com/apk/res-auto"
-                   android:id="@+id/adView"
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:layout_centerHorizontal="true"
-                   android:layout_alignParentBottom="true"
-                   ads:adSize="BANNER"
-                   ads:adUnitId="ca-app-pub-8284901143739274/6442959854">
-               </com.google.android.gms.ads.AdView>
+
+               <com.kharagedition.tibetankeyboard.ads.TemplateView
+                   android:id="@+id/template"
+                   app:gnt_template_type="@layout/gnt_small_template_view"
+                   android:layout_width="match_parent"
+                   android:layout_height="match_parent" />
            </LinearLayout>
        </androidx.constraintlayout.widget.ConstraintLayout>
    </ScrollView>

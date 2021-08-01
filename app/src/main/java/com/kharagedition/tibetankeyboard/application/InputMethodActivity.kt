@@ -1,9 +1,8 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.application
 
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentActivity
 
 
 /**

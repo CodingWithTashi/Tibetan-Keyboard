@@ -9,7 +9,6 @@ import android.os.Looper
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import com.google.android.gms.ads.MobileAds
-import com.kharagedition.tibetankeyboard.HomeActivity
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.databinding.ActivitySplashScreenBinding
 

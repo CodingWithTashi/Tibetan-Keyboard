@@ -1,5 +1,6 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -7,13 +8,16 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
+import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdOptions
+import com.kharagedition.tibetankeyboard.application.InputMethodActivity
+import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
 import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
-import com.kharagedition.tibetankeyboard.util.AppConstant.Companion.PRODUCT_BANNER_ADS
+import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 
@@ -34,12 +38,42 @@ class HomeActivity : InputMethodActivity() {
         super.onCreate(savedInstanceState)
         homeBinding = ActivityHomeBinding.inflate(layoutInflater);
         setContentView(homeBinding.root)
-        initAdmobAds();
+        initNativeAds()
         checkKeyboardIsEnabledOrNot()
         initClickListener()
 
 
 
+    }
+
+    @SuppressLint("NewApi")
+    private fun initNativeAds() {
+        val adLoader = AdLoader.Builder(this, AppConstant.TEST_ADS_NATIVE)
+            .forNativeAd { ad: NativeAd ->
+                if (isDestroyed) {
+                    ad.destroy()
+                    return@forNativeAd
+                }
+                val styles =
+                    NativeTemplateStyle.Builder().build()
+
+                homeBinding.template.setStyles(styles)
+                homeBinding.template.setNativeAd(ad)
+                homeBinding.nativeAdsLayout.visibility = VISIBLE
+            }
+            .withAdListener(object : AdListener() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.e("TAG", "onAdFailedToLoad: "+adError.message, )
+                }
+            })
+            .withNativeAdOptions(
+                NativeAdOptions.Builder()
+                    // Methods in the NativeAdOptions.Builder class can be
+                    // used here to specify individual options settings.
+                    .build()
+            )
+            .build()
+        adLoader.loadAd(AdRequest.Builder().build())
     }
 
 /*
@@ -167,34 +201,4 @@ class HomeActivity : InputMethodActivity() {
     }
 
 
-    private fun initAdmobAds() {
-        val adView = AdView(this)
-
-        adView.adSize = AdSize.BANNER
-
-        adView.adUnitId = PRODUCT_BANNER_ADS
-        val adRequest = AdRequest.Builder().build()
-        homeBinding.adView.loadAd(adRequest)
-        homeBinding.adView.adListener = object: AdListener() {
-            override fun onAdLoaded() {
-                Log.e("TAG", "onAdLoaded: ")
-            }
-
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.e("TAG", "onAdFailedToLoad: " + adError.message)
-            }
-
-            override fun onAdOpened() {
-                Log.e("TAG", "onAdLoaded: ")
-            }
-
-            override fun onAdClicked() {
-                // Code to be executed when the user clicks on an ad.
-            }
-
-            override fun onAdClosed() {
-                Log.e("TAG", "onAdLoaded: ")
-            }
-        }
-    }
 }

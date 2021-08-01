@@ -9,7 +9,7 @@ import android.media.AudioManager
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import com.google.firebase.crashlytics.internal.common.CommonUtils
+import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
 
 

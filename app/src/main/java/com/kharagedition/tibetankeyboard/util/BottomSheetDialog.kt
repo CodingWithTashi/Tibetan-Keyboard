@@ -3,62 +3,72 @@ package com.kharagedition.tibetankeyboard.util
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.Toast
-import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.gms.ads.*
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.button.MaterialButton
 import com.kharagedition.tibetankeyboard.R
-
+import com.kharagedition.tibetankeyboard.databinding.BottomSheetLayoutBinding
 
 class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
-    lateinit var backIcon: ImageView
-    lateinit var shareBtn: MaterialButton
-    lateinit var rateBtn: MaterialButton
-    lateinit var gmailBtn: MaterialButton
-    lateinit var gitHubBtn: MaterialButton
-    lateinit var instaBtn: MaterialButton
-    lateinit var facebookBtn: MaterialButton
-    lateinit var downloadPrayer: MaterialButton
-    lateinit var downloadCalender: MaterialButton
-    lateinit var aboutToolbar: MaterialToolbar
+    lateinit var bottomSheetLayoutBinding: BottomSheetLayoutBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view: View = inflater.inflate(
-            R.layout.bottom_sheet_layout,
-            container, false
-        )
-        backIcon = view.findViewById(R.id.back_icon)
-        shareBtn = view.findViewById(R.id.share)
-        rateBtn = view.findViewById(R.id.rate)
-        gmailBtn = view.findViewById(R.id.gmail)
-        gitHubBtn = view.findViewById(R.id.github)
-        instaBtn = view.findViewById(R.id.instagram)
-        facebookBtn = view.findViewById(R.id.facebook)
-        downloadCalender = view.findViewById(R.id.download_calendar)
-        downloadPrayer = view.findViewById(R.id.download_prayer)
-        aboutToolbar = view.findViewById(R.id.about_toolbar)
-        aboutToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_ios_24);
-        aboutToolbar.setNavigationOnClickListener {
+        bottomSheetLayoutBinding = BottomSheetLayoutBinding.inflate(layoutInflater,container,false);
+
+        bottomSheetLayoutBinding.aboutToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_ios_24);
+        bottomSheetLayoutBinding.aboutToolbar.setNavigationOnClickListener {
             dismiss()
         }
-        shareBtn.setOnClickListener(this)
-        rateBtn.setOnClickListener(this)
-        gmailBtn.setOnClickListener(this)
-        gitHubBtn.setOnClickListener(this)
-        instaBtn.setOnClickListener(this)
-        facebookBtn.setOnClickListener(this)
-        downloadCalender.setOnClickListener(this)
-        downloadPrayer.setOnClickListener(this)
-        return view
+        initAdmobAds();
+        bottomSheetLayoutBinding.share.setOnClickListener(this)
+        bottomSheetLayoutBinding.rate.setOnClickListener(this)
+        bottomSheetLayoutBinding.gmail.setOnClickListener(this)
+        bottomSheetLayoutBinding.github.setOnClickListener(this)
+        bottomSheetLayoutBinding.instagram.setOnClickListener(this)
+        bottomSheetLayoutBinding.facebook.setOnClickListener(this)
+        bottomSheetLayoutBinding.downloadCalendar.setOnClickListener(this)
+        bottomSheetLayoutBinding.downloadPrayer.setOnClickListener(this)
+        return bottomSheetLayoutBinding.root;
     }
+    private fun initAdmobAds() {
+        if(context!=null){
+            val adRequest = AdRequest.Builder().build()
+            bottomSheetLayoutBinding.adView.loadAd(adRequest)
+            bottomSheetLayoutBinding.adView.adListener = object: AdListener() {
+                override fun onAdLoaded() {
+                    Log.e("TAG", "onAdLoaded: ")
+                    bottomSheetLayoutBinding.bannerAdsLayout.visibility = VISIBLE;
+                }
+
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.e("TAG", "onAdFailedToLoad: " + adError.message)
+                }
+
+                override fun onAdOpened() {
+                    Log.e("TAG", "onAdLoaded: ")
+                }
+
+                override fun onAdClicked() {
+                    // Code to be executed when the user clicks on an ad.
+                }
+
+                override fun onAdClosed() {
+                    Log.e("TAG", "onAdLoaded: ")
+                }
+            }
+        }
+
+
+    }
+
     override fun onClick(v: View?) {
         when(v?.id){
             R.id.back_icon -> {

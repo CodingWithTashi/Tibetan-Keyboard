@@ -11,5 +11,8 @@ class AppConstant {
 
         var BANNER_ADS_TEST = "ca-app-pub-3940256099942544/6300978111"
         var PRODUCT_BANNER_ADS = "ca-app-pub-8284901143739274/6442959854"
+
+        var TEST_ADS_NATIVE = "ca-app-pub-3940256099942544/2247696110"
+        var PRODUCTION_ADS_NATIVE = "ca-app-pub-8284901143739274/2561880007"
     }
 }
