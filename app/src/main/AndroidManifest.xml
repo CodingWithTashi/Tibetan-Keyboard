@@ -30,7 +30,7 @@
         <activity android:hardwareAccelerated="true" android:name=".ui.HomeActivity" />
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-8284901143739274~5033675263" />
     </application>
 
 </manifest>

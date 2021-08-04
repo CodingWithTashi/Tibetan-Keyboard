@@ -12,6 +12,7 @@ class KeyboardType {
         const val TIBETAN = -11;
         const val QWERTY_CAP = -12;
         const val SYMBOL_EN = -13;
+        const val EMOJI = -14;
 
 
     }
