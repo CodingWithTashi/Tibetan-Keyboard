@@ -6,6 +6,9 @@ import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
 import android.inputmethodservice.KeyboardView.OnKeyboardActionListener
 import android.media.AudioManager
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -22,6 +25,8 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         kv = layoutInflater.inflate(R.layout.keyboard, null) as KeyboardView
+
+        setKeyBoardView();
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
             AppConstant.IS_TIB,true)
         keyboard = if(isLanguageTibetan){
@@ -35,12 +40,20 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         return kv!!
     }
 
+    private fun setKeyBoardView() {
+        //kv?.setBackgroundColor();
+        //kv?.keyB
+    }
+
     override fun onPress(i: Int) {}
     override fun onRelease(i: Int) {}
     override fun onKey(i: Int, ints: IntArray) {
         val ic = currentInputConnection
         Log.i("TAG", "onKey: $i")
-        playClick(i)
+        /// Vibrate Phone
+        vibratePhone(i)
+        /// Play Sound
+        //playClick(i);
         when (i) {
             Keyboard.KEYCODE_DELETE -> ic.deleteSurroundingText(1, 0)
             Keyboard.KEYCODE_SHIFT -> {
@@ -100,12 +113,23 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     private fun playClick(i: Int) {
         val am = getSystemService(AUDIO_SERVICE) as AudioManager
         when (i) {
-            32 -> am.playSoundEffect(AudioManager.FX_KEYPRESS_SPACEBAR)
-            Keyboard.KEYCODE_DONE, 10 -> am.playSoundEffect(AudioManager.FX_KEYPRESS_RETURN)
-            Keyboard.KEYCODE_DELETE -> am.playSoundEffect(AudioManager.FX_KEYPRESS_DELETE)
-            else -> am.playSoundEffect(AudioManager.FX_KEYPRESS_STANDARD)
+            32 -> am.playSoundEffect(AudioManager.FX_KEYPRESS_SPACEBAR,1.0f)
+            Keyboard.KEYCODE_DONE, 10 -> am.playSoundEffect(AudioManager.FX_KEYPRESS_RETURN,1.0f)
+            Keyboard.KEYCODE_DELETE -> am.playSoundEffect(AudioManager.FX_KEYPRESS_DELETE,1.0f)
+            else -> am.playSoundEffect(AudioManager.FX_KEY_CLICK,1.0f)
         }
     }
+
+    private fun vibratePhone(i: Int) {
+      val v = getSystemService(VIBRATOR_SERVICE) as Vibrator
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          v.vibrate(VibrationEffect.createOneShot(50, 1))
+      } else {
+          //deprecated in API 26
+          v.vibrate(50)
+      }
+    }
+
 
     override fun onText(charSequence: CharSequence) {}
     override fun swipeLeft() {}
