@@ -8,9 +8,11 @@ import android.os.Handler
 import android.os.Looper
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.gms.ads.MobileAds
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.databinding.ActivitySplashScreenBinding
+import com.kharagedition.tibetankeyboard.util.CommonUtils
 
 class SplashScreenActivity : AppCompatActivity() {
     lateinit var activitySplashScreenBinding : ActivitySplashScreenBinding
@@ -18,6 +20,12 @@ class SplashScreenActivity : AppCompatActivity() {
     lateinit var bottomAnimation: Animation
     companion object {
         private var  SECOND : Long = 1500
+    }
+
+    override fun onStart() {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        CommonUtils.hideStatusBar(window);
+        super.onStart()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

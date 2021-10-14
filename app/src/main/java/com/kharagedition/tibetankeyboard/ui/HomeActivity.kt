@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.app.AppCompatDelegate
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.nativead.NativeAd
@@ -21,6 +22,7 @@ import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
+import com.kharagedition.tibetankeyboard.util.CommonUtils.Companion.hideStatusBar
 
 
 class HomeActivity : InputMethodActivity() {
@@ -34,7 +36,11 @@ class HomeActivity : InputMethodActivity() {
     override fun onInputMethodPicked() {
         checkInputMethodEnableOrNot()
     }
-
+    override fun onStart() {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        hideStatusBar(window);
+        super.onStart()
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         homeBinding = ActivityHomeBinding.inflate(layoutInflater);
@@ -42,14 +48,11 @@ class HomeActivity : InputMethodActivity() {
         initNativeAds()
         checkKeyboardIsEnabledOrNot()
         initClickListener()
-
-
-
     }
 
     @SuppressLint("NewApi")
     private fun initNativeAds() {
-        val adLoader = AdLoader.Builder(this, AppConstant.PRODUCTION_ADS_NATIVE)
+        val adLoader = AdLoader.Builder(this, AppConstant.TEST_ADS_NATIVE)
             .forNativeAd { ad: NativeAd ->
                 if (isDestroyed) {
                     ad.destroy()
@@ -64,7 +67,7 @@ class HomeActivity : InputMethodActivity() {
             }
             .withAdListener(object : AdListener() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    Log.e("TAG", "onAdFailedToLoad: "+adError.message, )
+                    Log.e("TAG", "onAdFailedToLoad: " + adError.message)
                 }
             })
             .withNativeAdOptions(
@@ -147,6 +150,9 @@ class HomeActivity : InputMethodActivity() {
             val sheet = BottomSheetDialog()
             sheet.show(this.supportFragmentManager, "ModalBottomSheet")
         }
+        homeBinding.settingCard.setOnClickListener{
+            startActivity(Intent(this,SettingsActivity::class.java))
+        }
         homeBinding.exitCard.setOnClickListener {
             finish();
         }
@@ -154,7 +160,6 @@ class HomeActivity : InputMethodActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
-
     private fun openView(playStoreUrl: String) {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(playStoreUrl)))
     }
