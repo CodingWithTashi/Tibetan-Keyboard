@@ -7,302 +7,390 @@
     android:id="@+id/container"
     tools:context=".ui.HomeActivity"
     android:background="@color/brown_500">
-   <ScrollView
-       app:layout_constraintTop_toTopOf="parent"
-       app:layout_constraintBottom_toBottomOf="parent"
-       app:layout_constraintLeft_toLeftOf="parent"
-       app:layout_constraintRight_toRightOf="parent"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent">
-       <androidx.constraintlayout.widget.ConstraintLayout
-           android:animateLayoutChanges="true"
-           android:layout_width="match_parent"
-           android:layout_height="wrap_content">
-           <LinearLayout
-               android:id="@+id/welcome_msg"
-               android:layout_margin="20dp"
-               app:layout_constraintTop_toTopOf="parent"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               app:layout_constraintEnd_toEndOf="parent"
-               app:layout_constraintStart_toStartOf="parent">
-               <TextView
-                   android:id="@+id/messgae_lbl"
-                   android:gravity="center"
-                   android:textColor="@android:color/white"
-                   android:textSize="24sp"
-                   android:layout_width="match_parent"
-                   android:layout_height="wrap_content"
-                   android:text="Well done, Now only two step away!"/>
-           </LinearLayout>
-           <com.google.android.material.card.MaterialCardView
-               android:id="@+id/gif_card"
-               android:layout_margin="20dp"
-               app:layout_constraintTop_toBottomOf="@+id/welcome_msg"
-               android:layout_width="match_parent"
-               android:layout_height="300dp"
-               app:cardCornerRadius="10dp"
-               app:cardElevation="6dp"
-               app:cardPreventCornerOverlap="false"
-               app:layout_constraintEnd_toEndOf="parent"
-               app:layout_constraintStart_toStartOf="parent">
-               <androidx.appcompat.widget.AppCompatImageView
-                   android:scaleType="centerCrop"
-                   android:id="@+id/git_image"
-                   android:layout_width="match_parent"
-                   android:layout_height="match_parent"/>
-           </com.google.android.material.card.MaterialCardView>
-           <com.google.android.material.card.MaterialCardView
-               android:layout_margin="20dp"
-               app:layout_constraintTop_toBottomOf="@+id/gif_card"
-               android:id="@+id/button_layout"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               app:cardCornerRadius="10dp"
-               app:cardElevation="6dp"
-               app:cardPreventCornerOverlap="false"
-               app:layout_constraintEnd_toEndOf="parent"
-               app:layout_constraintStart_toStartOf="parent">
-               <LinearLayout
-                   android:layout_marginVertical="20dp"
-                   android:gravity="center"
-                   android:orientation="vertical"
-                   android:layout_width="match_parent"
-                   android:layout_height="wrap_content">
-                   <Button
-                       android:id="@+id/enable_keyboard_btn"
-                       app:layout_constraintBottom_toBottomOf="parent"
-                       app:layout_constraintLeft_toLeftOf="parent"
-                       app:layout_constraintRight_toRightOf="parent"
-                       app:layout_constraintTop_toTopOf="parent"
-                       android:layout_width="wrap_content"
-                       android:layout_height="wrap_content"
-                       android:text="1. Enable Tibetan Keyboard"/>
-                   <Button
-                       android:id="@+id/input_method_btn"
-                       app:layout_constraintBottom_toBottomOf="parent"
-                       app:layout_constraintLeft_toLeftOf="parent"
-                       app:layout_constraintRight_toRightOf="parent"
-                       app:layout_constraintTop_toBottomOf="@id/enable_keyboard_btn"
-                       android:layout_width="wrap_content"
-                       android:layout_height="wrap_content"
-                       android:text="2. Choose Input method now"/>
-                   <com.google.android.material.textfield.TextInputLayout
-                       android:id="@+id/test_field"
-                       android:visibility="gone"
-                       android:hint="Type something in tibetan..."
-                       android:layout_marginTop="10dp"
-                       app:layout_constraintBottom_toBottomOf="parent"
-                       app:layout_constraintLeft_toLeftOf="parent"
-                       app:layout_constraintRight_toRightOf="parent"
-                       app:layout_constraintTop_toBottomOf="@id/input_method_btn"
-                       android:layout_width="280dp"
-                       android:layout_height="wrap_content">
-                       <com.google.android.material.textfield.TextInputEditText
-                            android:minLines="2"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"/>
-               </com.google.android.material.textfield.TextInputLayout>
-               </LinearLayout>
-           </com.google.android.material.card.MaterialCardView>
-           <LinearLayout
-               android:gravity="center"
-               android:id="@+id/icon_btn_layout"
-               app:layout_constraintLeft_toLeftOf="parent"
-               app:layout_constraintRight_toRightOf="parent"
-               app:layout_constraintTop_toBottomOf="@+id/button_layout"
-               android:layout_marginTop="10dp"
-               android:layout_marginBottom="10dp"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:orientation="horizontal">
-              <RelativeLayout
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content">
-                  <com.google.android.material.card.MaterialCardView
-                      android:clickable="true"
-                      android:id="@+id/shared_card"
-                      android:layout_width="75dp"
-                      android:layout_height="75dp"
-                      android:layout_marginTop="15dp"
-                      app:cardBackgroundColor="@color/brown_700"
-                      app:cardCornerRadius="4dp"
-                      app:cardElevation="5dp"
-                      app:cardPreventCornerOverlap="false"
-                      app:cardUseCompatPadding="true"
-                      android:focusable="true">
-                      <LinearLayout
-                          android:gravity="center"
-                          android:layout_width="match_parent"
-                          android:layout_height="match_parent">
-                          <com.google.android.material.textview.MaterialTextView
-                              android:layout_marginTop="10dp"
-                              android:gravity="center"
-                              android:layout_width="wrap_content"
-                              android:layout_height="wrap_content"
-                              android:text="Share"
-                              android:textSize="13sp"
-                              android:scrollHorizontally="true"
-                              android:ellipsize="end"
-                              android:maxLines="1"
-                              android:textColor="@color/white"/>
-                      </LinearLayout>
 
-                  </com.google.android.material.card.MaterialCardView>
-                  <androidx.appcompat.widget.AppCompatImageView
-                      android:id="@+id/share_icon"
-                      android:layout_width="40dp"
-                      android:layout_height="40dp"
-                      android:layout_alignParentTop="true"
-                      android:layout_centerInParent="true"
-                      app:srcCompat="@drawable/ic_baseline_share_24"
-                      android:elevation="10dp" />
-              </RelativeLayout>
-               <RelativeLayout
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content">
-                   <com.google.android.material.card.MaterialCardView
-                       android:clickable="true"
-                       android:focusable="true"
-                       android:id="@+id/rate_card"
-                       android:layout_width="75dp"
-                       android:layout_height="75dp"
-                       android:layout_marginTop="15dp"
-                       app:cardBackgroundColor="@color/brown_700"
-                       app:cardCornerRadius="4dp"
-                       app:cardElevation="5dp"
-                       app:cardPreventCornerOverlap="false"
-                       app:cardUseCompatPadding="true">
-                       <LinearLayout
-                           android:gravity="center"
-                           android:layout_width="match_parent"
-                           android:layout_height="match_parent">
-                           <com.google.android.material.textview.MaterialTextView
-                               android:layout_marginTop="10dp"
-                               android:gravity="center"
-                               android:layout_width="wrap_content"
-                               android:layout_height="wrap_content"
-                               android:text="Rate Us"
-                               android:textSize="13sp"
-                               android:scrollHorizontally="true"
-                               android:ellipsize="end"
-                               android:maxLines="1"
-                               android:textColor="@color/white"/>
-                       </LinearLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
-                   </com.google.android.material.card.MaterialCardView>
-                   <androidx.appcompat.widget.AppCompatImageView
-                       android:id="@+id/rate_icon"
-                       android:layout_width="40dp"
-                       android:layout_height="40dp"
-                       android:layout_alignParentTop="true"
-                       android:layout_centerInParent="true"
-                       app:srcCompat="@drawable/ic_baseline_star_24"
-                       android:elevation="10dp" />
-               </RelativeLayout>
-               <RelativeLayout
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content">
-                   <com.google.android.material.card.MaterialCardView
-                       android:clickable="true"
-                       android:focusable="true"
-                       android:id="@+id/more_card"
-                       android:layout_width="75dp"
-                       android:layout_height="75dp"
-                       android:layout_marginTop="15dp"
-                       app:cardBackgroundColor="@color/brown_700"
-                       app:cardCornerRadius="4dp"
-                       app:cardElevation="5dp"
-                       app:cardPreventCornerOverlap="false"
-                       app:cardUseCompatPadding="true">
-                       <LinearLayout
-                           android:gravity="center"
-                           android:layout_width="match_parent"
-                           android:layout_height="match_parent">
-                           <com.google.android.material.textview.MaterialTextView
-                               android:layout_marginTop="10dp"
-                               android:gravity="center"
-                               android:layout_width="wrap_content"
-                               android:layout_height="wrap_content"
-                               android:text="More"
-                               android:textSize="13sp"
-                               android:scrollHorizontally="true"
-                               android:ellipsize="end"
-                               android:maxLines="1"
-                               android:textColor="@color/white"/>
-                       </LinearLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:animateLayoutChanges="true">
 
-                   </com.google.android.material.card.MaterialCardView>
-                   <androidx.appcompat.widget.AppCompatImageView
-                       android:id="@+id/more_icon"
-                       android:layout_width="40dp"
-                       android:layout_height="40dp"
-                       android:layout_alignParentTop="true"
-                       android:layout_centerInParent="true"
-                       app:srcCompat="@drawable/ic_baseline_more_24"
-                       android:elevation="10dp" />
-               </RelativeLayout>
-               <RelativeLayout
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content">
-                   <com.google.android.material.card.MaterialCardView
-                       android:clickable="true"
-                       android:focusable="true"
-                       android:id="@+id/exit_card"
-                       android:layout_width="75dp"
-                       android:layout_height="75dp"
-                       android:layout_marginTop="15dp"
-                       app:cardBackgroundColor="@color/brown_700"
-                       app:cardCornerRadius="4dp"
-                       app:cardElevation="5dp"
-                       app:cardPreventCornerOverlap="false"
-                       app:cardUseCompatPadding="true">
-                       <LinearLayout
-                           android:gravity="center"
-                           android:layout_width="match_parent"
-                           android:layout_height="match_parent">
-                           <com.google.android.material.textview.MaterialTextView
-                               android:layout_marginTop="10dp"
-                               android:gravity="center"
-                               android:layout_width="wrap_content"
-                               android:layout_height="wrap_content"
-                               android:text="Exit"
-                               android:textSize="13sp"
-                               android:scrollHorizontally="true"
-                               android:ellipsize="end"
-                               android:maxLines="1"
-                               android:textColor="@color/white"/>
-                       </LinearLayout>
+            <LinearLayout
+                android:id="@+id/welcome_msg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                   </com.google.android.material.card.MaterialCardView>
-                   <androidx.appcompat.widget.AppCompatImageView
-                       android:id="@+id/exit_icon"
-                       android:layout_width="40dp"
-                       android:layout_height="40dp"
-                       android:layout_alignParentTop="true"
-                       android:layout_centerInParent="true"
-                       app:srcCompat="@drawable/ic_baseline_exit_to_app_24"
-                       android:elevation="10dp" />
-               </RelativeLayout>
-           </LinearLayout>
+                <TextView
+                    android:id="@+id/messgae_lbl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Well done, Now only two step away!"
+                    android:textColor="@android:color/white"
+                    android:textSize="24sp" />
+            </LinearLayout>
 
-           <LinearLayout
-               android:visibility="gone"
-               android:id="@+id/native_ads_layout"
-               android:layout_margin="20dp"
-               app:layout_constraintLeft_toLeftOf="parent"
-               app:layout_constraintRight_toRightOf="parent"
-               app:layout_constraintTop_toBottomOf="@+id/icon_btn_layout"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content">
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/gif_card"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_margin="20dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="6dp"
+                app:cardPreventCornerOverlap="false"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/welcome_msg">
 
-               <com.kharagedition.tibetankeyboard.ads.TemplateView
-                   android:id="@+id/template"
-                   app:gnt_template_type="@layout/gnt_small_template_view"
-                   android:layout_width="match_parent"
-                   android:layout_height="match_parent" />
-           </LinearLayout>
-       </androidx.constraintlayout.widget.ConstraintLayout>
-   </ScrollView>
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/git_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/button_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="6dp"
+                app:cardPreventCornerOverlap="false"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/gif_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginVertical="10dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/enable_keyboard_btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="1. Enable Tibetan Keyboard"
+                        android:textAlignment="center"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <Button
+                        android:id="@+id/input_method_btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="2. Choose Input method"
+                        android:textAlignment="center"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/enable_keyboard_btn" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/test_field"
+                        android:layout_width="280dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="Type something in tibetan..."
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/input_method_btn">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minLines="2" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:id="@+id/icon_btn_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/button_layout">
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/shared_card"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginTop="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/brown_700"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:text="Share"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/share_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerInParent="true"
+                        android:elevation="10dp"
+                        app:srcCompat="@drawable/ic_baseline_share_24" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/rate_card"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginTop="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/brown_700"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:text="Rate"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/rate_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerInParent="true"
+                        android:elevation="10dp"
+                        app:srcCompat="@drawable/ic_baseline_star_24" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/more_card"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginTop="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/brown_700"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:text="More"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/more_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerInParent="true"
+                        android:elevation="10dp"
+                        app:srcCompat="@drawable/ic_baseline_more_24" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/setting_card"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginTop="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/brown_700"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:text="Setting"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/setting_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerInParent="true"
+                        android:elevation="10dp"
+                        app:srcCompat="@drawable/ic_baseline_settings_24" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/exit_card"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginTop="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/brown_700"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:text="Exit"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/exit_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerInParent="true"
+                        android:elevation="10dp"
+                        app:srcCompat="@drawable/ic_baseline_exit_to_app_24" />
+                </RelativeLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/native_ads_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:visibility="gone"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/icon_btn_layout">
+
+                <com.kharagedition.tibetankeyboard.ads.TemplateView
+                    android:id="@+id/template"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:gnt_template_type="@layout/gnt_small_template_view" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

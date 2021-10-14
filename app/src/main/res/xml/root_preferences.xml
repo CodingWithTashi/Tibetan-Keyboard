@@ -1,0 +1,38 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:layout="@layout/pref_cat_title"
+        app:title="@string/control_header">
+
+        <ListPreference
+            app:defaultValue="brown"
+            app:entries="@array/color_entries"
+            app:entryValues="@array/color_values"
+            app:key="colors"
+            android:icon="@drawable/ic_baseline_image_24"
+            app:title="@string/keyboard_background"
+            app:useSimpleSummaryProvider="true" />
+        <SeekBarPreference
+            app:icon="@drawable/ic_baseline_font_download_24"
+            app:min="2"
+            android:max="5"
+            app:key="text_size"
+            app:title="Keyboard Text Size"
+            app:defaultValue="0"/>
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:icon="@drawable/ic_baseline_vibration_24"
+            app:color="@color/white"
+            app:key="vibrate"
+            app:title="@string/vibrate" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:icon="@drawable/ic_baseline_campaign_24"
+            app:color="@color/white"
+            app:key="sound"
+            app:title="@string/sound" />
+    </PreferenceCategory>
+=
+</PreferenceScreen>

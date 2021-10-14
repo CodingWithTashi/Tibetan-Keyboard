@@ -15,6 +15,7 @@ import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.kharagedition.tibetankeyboard.application.InputMethodActivity
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.SettingsActivity
 import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
 import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -148,6 +149,9 @@ class HomeActivity : InputMethodActivity() {
         }
         homeBinding.exitCard.setOnClickListener {
             finish();
+        }
+        homeBinding.settingCard.setOnClickListener{
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 
