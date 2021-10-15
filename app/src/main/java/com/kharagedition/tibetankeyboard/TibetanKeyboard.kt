@@ -14,6 +14,8 @@ import android.os.Vibrator
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -26,10 +28,14 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     private var isLanguageTibetan: Boolean = true
     lateinit var prefs: SharedPreferences;
 
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        setInputView(onCreateInputView())
+        super.onStartInputView(info, restarting)
+    }
+
     //Press Ctrl+O
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
-        kv = layoutInflater.inflate(R.layout.keyboard, null) as KeyboardView
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
         setKeyBoardView();
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
@@ -47,7 +53,22 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
 
     private fun setKeyBoardView() {
         val color = prefs.getString("colors", "#FF704C04");
+        kv = when (color) {
+            "#FF704C04" -> {
+                layoutInflater.inflate(R.layout.keyboard_brown, null) as KeyboardView
+
+            }
+            "#FF000000" -> {
+                layoutInflater.inflate(R.layout.keyboard_black, null) as KeyboardView
+            }
+            else -> {
+                layoutInflater.inflate(R.layout.keyboard_green, null) as KeyboardView
+            }
+        }
         kv?.setBackgroundColor(Color.parseColor(color))
+        /*android:keyTextSize="20sp"*/
+
+
     }
 
     override fun onPress(i: Int) {}

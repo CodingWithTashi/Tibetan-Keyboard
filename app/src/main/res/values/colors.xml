@@ -10,12 +10,20 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="keyboard_background_color">#FF704C04</color>
     <color name="keyboard_divider">#99ffffff</color>
-    <color name="keyboard_pressed">#795C22</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="keyboard_pressed_background">#795C22</color>
+    <!--brown-->
+    <color name="keyboard_background_color">#FF704C04</color>
+    <color name="keyboard_pressed">#795C22</color>
 
+    <!--black-->
+    <color name="keyboard_background_black_color">#FF000000</color>
+    <color name="keyboard_pressed_black_color">#FF2E2E2E</color>
+
+    <!--black-->
+    <color name="keyboard_background_green_color">#FF00A300</color>
+    <color name="keyboard_pressed_green_color">#FF007500</color>
     <!--ads-->
     <color name="gnt_test_background_color">#00F4F4F4</color>
     <color name="gnt_test_background_color_2">#00A3A3A3</color>

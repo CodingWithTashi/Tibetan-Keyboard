@@ -3,23 +3,27 @@
 
     <PreferenceCategory
         android:layout="@layout/pref_cat_title"
-        app:title="@string/control_header">
+        app:title="@string/design_ui">
 
         <ListPreference
-            app:defaultValue="brown"
+            app:defaultValue="#FF704C04"
             app:entries="@array/color_entries"
             app:entryValues="@array/color_values"
             app:key="colors"
             android:icon="@drawable/ic_baseline_image_24"
             app:title="@string/keyboard_background"
             app:useSimpleSummaryProvider="true" />
-        <SeekBarPreference
+  <!--      <SeekBarPreference
             app:icon="@drawable/ic_baseline_font_download_24"
             app:min="2"
             android:max="5"
             app:key="text_size"
             app:title="Keyboard Text Size"
-            app:defaultValue="0"/>
+            app:defaultValue="0"/>-->
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:layout="@layout/pref_cat_title"
+        app:title="@string/control_header">
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:icon="@drawable/ic_baseline_vibration_24"

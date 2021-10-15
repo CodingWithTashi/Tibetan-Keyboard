@@ -20,8 +20,8 @@
     <string name="title_activity_settings">SettingsActivity</string>
 
     <!-- Preference Titles -->
-    <string name="control_header">Control</string>
-    <string name="sync_header">Sync</string>
+    <string name="control_header">Sound &amp; Control</string>
+    <string name="design_ui">Design &amp; UI</string>
 
     <!-- Messages Preferences -->
     <string name="sound">Sound on Tap</string>
