@@ -24,11 +24,11 @@
     <string name="design_ui">Design &amp; UI</string>
 
     <!-- Messages Preferences -->
-    <string name="sound">Sound on Tap</string>
+    <string name="sound">Sound on tap</string>
     <string name="keyboard_background">Keyboard Background</string>
 
     <!-- Sync Preferences -->
     <string name="vibrate">Vibrate on tap</string>
     <string name="keyboard_settings">Keyboard Settings</string>
-
+    <string name="default_color">#FF704C04</string>
 </resources>

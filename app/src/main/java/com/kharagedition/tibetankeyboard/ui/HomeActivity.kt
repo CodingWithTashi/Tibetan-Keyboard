@@ -22,7 +22,6 @@ import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
-import com.kharagedition.tibetankeyboard.util.CommonUtils.Companion.hideStatusBar
 
 
 class HomeActivity : InputMethodActivity() {
@@ -38,7 +37,6 @@ class HomeActivity : InputMethodActivity() {
     }
     override fun onStart() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        hideStatusBar(window);
         super.onStart()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +50,7 @@ class HomeActivity : InputMethodActivity() {
 
     @SuppressLint("NewApi")
     private fun initNativeAds() {
-        val adLoader = AdLoader.Builder(this, AppConstant.TEST_ADS_NATIVE)
+        val adLoader = AdLoader.Builder(this, AppConstant.PRODUCTION_ADS_NATIVE)
             .forNativeAd { ad: NativeAd ->
                 if (isDestroyed) {
                     ad.destroy()

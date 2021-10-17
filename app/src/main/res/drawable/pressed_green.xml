@@ -8,7 +8,7 @@
 
     <item android:bottom="2dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/keyboard_background_green_color"/>
+            <solid android:color="@color/keyboard_pressed_green_color"/>
         </shape>
     </item>
 

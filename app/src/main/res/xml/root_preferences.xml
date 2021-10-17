@@ -6,7 +6,7 @@
         app:title="@string/design_ui">
 
         <ListPreference
-            app:defaultValue="#FF704C04"
+            app:defaultValue="@string/default_color"
             app:entries="@array/color_entries"
             app:entryValues="@array/color_values"
             app:key="colors"
@@ -27,14 +27,12 @@
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:icon="@drawable/ic_baseline_vibration_24"
-            app:color="@color/white"
             app:key="vibrate"
             app:title="@string/vibrate" />
 
         <SwitchPreferenceCompat
             android:defaultValue="true"
             android:icon="@drawable/ic_baseline_campaign_24"
-            app:color="@color/white"
             app:key="sound"
             app:title="@string/sound" />
     </PreferenceCategory>

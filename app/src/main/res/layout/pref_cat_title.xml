@@ -5,8 +5,8 @@
         android:textStyle="bold"
         android:padding="10dp"
         android:id="@android:id/title"
-        android:textColor="@color/brown_500"
+        android:textColor="@color/white"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="18sp"/>
+        android:textSize="16sp"/>
 </LinearLayout>

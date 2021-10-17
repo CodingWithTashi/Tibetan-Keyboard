@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/drawable/gnt_outline_shape.xml" value="0.1537037037037037" />
+        <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/drawable/gnt_rounded_corners_shape.xml" value="0.26145833333333335" />
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/drawable/ic_baseline_campaign_24.xml" value="0.14166666666666666" />
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/drawable/ic_baseline_download_24.xml" value="0.20989583333333334" />
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/drawable/ic_baseline_exit_to_app_24.xml" value="0.26145833333333335" />
@@ -32,7 +33,7 @@
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/layout/keyboard_green.xml" value="0.14221014492753623" />
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/layout/pref_cat_title.xml" value="0.14855072463768115" />
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/layout/pref_lan_title.xml" value="0.14855072463768115" />
-        <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/layout/settings_activity.xml" value="0.14855072463768115" />
+        <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/layout/settings_activity.xml" value="0.176" />
         <entry key="..\:/Development/Android/TibetanKeyboard/app/src/main/res/xml/root_preferences.xml" value="0.14855072463768115" />
       </map>
     </option>

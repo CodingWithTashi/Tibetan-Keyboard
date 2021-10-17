@@ -19,12 +19,11 @@ class SplashScreenActivity : AppCompatActivity() {
     lateinit var topAnimation : Animation
     lateinit var bottomAnimation: Animation
     companion object {
-        private var  SECOND : Long = 1500
+        private var  SECOND : Long = 1100
     }
 
     override fun onStart() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        CommonUtils.hideStatusBar(window);
         super.onStart()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
