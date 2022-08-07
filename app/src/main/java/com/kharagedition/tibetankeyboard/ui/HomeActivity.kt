@@ -25,7 +25,7 @@ import com.kharagedition.tibetankeyboard.util.CommonUtils
 
 
 class HomeActivity : InputMethodActivity() {
-    lateinit var homeBinding: ActivityHomeBinding;
+    private lateinit var homeBinding: ActivityHomeBinding
     override fun onResume() {
         checkKeyboardIsEnabledOrNot()
 
@@ -36,12 +36,12 @@ class HomeActivity : InputMethodActivity() {
         checkInputMethodEnableOrNot()
     }
     override fun onStart() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onStart()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        homeBinding = ActivityHomeBinding.inflate(layoutInflater);
+        homeBinding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(homeBinding.root)
         initNativeAds()
         checkKeyboardIsEnabledOrNot()
@@ -152,7 +152,7 @@ class HomeActivity : InputMethodActivity() {
             startActivity(Intent(this,SettingsActivity::class.java))
         }
         homeBinding.exitCard.setOnClickListener {
-            finish();
+            finish()
         }
         homeBinding.settingCard.setOnClickListener{
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -163,19 +163,19 @@ class HomeActivity : InputMethodActivity() {
     }
     private fun checkKeyboardIsEnabledOrNot() {
         val im = applicationContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        var list = im.enabledInputMethodList.toString()
+        val list = im.enabledInputMethodList.toString()
         if(list.contains("com.kharagedition.tibetankeyboard")){
-            homeBinding.messgaeLbl.text = "Vola! Now only one step left";
+            homeBinding.messgaeLbl.text = getString(R.string.one_step_left)
             homeBinding.enableKeyboardBtn.isEnabled = false
-            homeBinding.inputMethodBtn.isEnabled = true;
+            homeBinding.inputMethodBtn.isEnabled = true
             //check input method
             checkInputMethodEnableOrNot()
 
         }else{
-            homeBinding.messgaeLbl.text = "Well done, Now only two step away!";
-            homeBinding.enableKeyboardBtn.isEnabled = true;
-            homeBinding.inputMethodBtn.isEnabled = false;
-            homeBinding.gifCard.visibility = VISIBLE;
+            homeBinding.messgaeLbl.text = getString(R.string.two_step_left)
+            homeBinding.enableKeyboardBtn.isEnabled = true
+            homeBinding.inputMethodBtn.isEnabled = false
+            homeBinding.gifCard.visibility = VISIBLE
             Glide.with(this)
                     .load(R.drawable.keyboard)
                     .into(homeBinding.gitImage)
@@ -184,24 +184,24 @@ class HomeActivity : InputMethodActivity() {
     }
 
     private fun checkInputMethodEnableOrNot() {
-        var string = Settings.Secure.getString(
+        val string = Settings.Secure.getString(
             contentResolver,
             Settings.Secure.DEFAULT_INPUT_METHOD
-        );
+        )
         if(string.contains("com.kharagedition.tibetankeyboard")){
-            homeBinding.messgaeLbl.text = "Great, You are all setup and ready to use!";
-            homeBinding.testField.visibility = VISIBLE;
+            homeBinding.messgaeLbl.text = getString(R.string.setup_done)
+            homeBinding.testField.visibility = VISIBLE
             //homeBinding.inputMethodBtn.isEnabled = false;
-            homeBinding.gifCard.visibility = GONE;
+            homeBinding.gifCard.visibility = GONE
 
         }else{
-            homeBinding.testField.visibility = GONE;
-            homeBinding.gifCard.visibility = VISIBLE;
+            homeBinding.testField.visibility = GONE
+            homeBinding.gifCard.visibility = VISIBLE
             Glide.with(this)
                     .load(R.drawable.input)
                     .into(homeBinding.gitImage)
-            homeBinding.messgaeLbl.text = "Vola! Now only one step left";
-            homeBinding.inputMethodBtn.isEnabled = true;
+            homeBinding.messgaeLbl.text = getString(R.string.one_step_left)
+            homeBinding.inputMethodBtn.isEnabled = true
 
         }
         //homeBinding.inputMethodBtn.isEnabled = !string.contains("com.kharagedition.tibetankeyboard")

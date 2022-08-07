@@ -31,4 +31,7 @@
     <string name="vibrate">Vibrate on tap</string>
     <string name="keyboard_settings">Keyboard Settings</string>
     <string name="default_color">#FF704C04</string>
+    <string name="one_step_left">Vola! Now only one step left</string>
+    <string name="two_step_left">Well done, Now only two step away!</string>
+    <string name="setup_done">Great, You are all setup and ready to use!</string>
 </resources>

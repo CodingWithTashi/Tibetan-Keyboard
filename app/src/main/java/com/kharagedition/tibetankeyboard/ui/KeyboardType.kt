@@ -5,14 +5,16 @@ package com.kharagedition.tibetankeyboard.ui
  */
 class KeyboardType {
     companion object{
-        const val TIBETAN_ALPHABET_1 = -7;
-        const val TIBETAN_ALPHABET_2 = -8;
-        const val SYMBOL_1 = -9;
-        const val QWERTY_SMALL = -10;
-        const val TIBETAN = -11;
-        const val QWERTY_CAP = -12;
-        const val SYMBOL_EN = -13;
+        const val TIBETAN_UCHEN_ALPHABET_1 = -7
+        const val TIBETAN_UCHEN_ALPHABET_2 = -8
+        const val SYMBOL_1 = -9
+        const val QWERTY_SMALL = -10
+        const val TIBETAN = -11
+        const val QWERTY_CAP = -12
+        const val SYMBOL_EN = -13
         const val EMOJI = -14;
+
+
 
 
     }

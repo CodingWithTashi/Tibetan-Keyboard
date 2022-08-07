@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.gms.ads.MobileAds
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.databinding.ActivitySplashScreenBinding
-import com.kharagedition.tibetankeyboard.util.CommonUtils
 
 class SplashScreenActivity : AppCompatActivity() {
     lateinit var activitySplashScreenBinding : ActivitySplashScreenBinding
@@ -23,12 +22,12 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     override fun onStart() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onStart()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        activitySplashScreenBinding = ActivitySplashScreenBinding.inflate(layoutInflater);
+        activitySplashScreenBinding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(activitySplashScreenBinding.root)
         MobileAds.initialize(this) {}
 

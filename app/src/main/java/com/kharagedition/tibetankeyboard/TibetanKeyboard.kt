@@ -15,7 +15,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -26,7 +25,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     private var keyboard: Keyboard? = null
     private var isCaps = false
     private var isLanguageTibetan: Boolean = true
-    lateinit var prefs: SharedPreferences;
+    lateinit var prefs: SharedPreferences
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         setInputView(onCreateInputView())
@@ -37,7 +36,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        setKeyBoardView();
+        setKeyBoardView()
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
             AppConstant.IS_TIB,true)
         keyboard = if(isLanguageTibetan){
@@ -52,7 +51,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     }
 
     private fun setKeyBoardView() {
-        val color = prefs.getString("colors", "#FF704C04");
+        val color = prefs.getString("colors", "#FF704C04")
         kv = when (color) {
             "#FF704C04" -> {
                 layoutInflater.inflate(R.layout.keyboard_brown, null) as KeyboardView
@@ -76,8 +75,8 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onKey(i: Int, ints: IntArray) {
         val ic = currentInputConnection
         Log.i("TAG", "onKey: $i")
-        val vibrate = prefs.getBoolean("vibrate", false);
-        val sound = prefs.getBoolean("sound", true);
+        val vibrate = prefs.getBoolean("vibrate", false)
+        val sound = prefs.getBoolean("sound", true)
         if(vibrate){
             vibratePhone()
         }
@@ -91,7 +90,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                 kv!!.invalidateAllKeys()
             }
             Keyboard.KEYCODE_DONE -> {
-                sendDefaultEditorAction(true);
+                sendDefaultEditorAction(true)
                 ic.sendKeyEvent(
                         KeyEvent(
                                 KeyEvent.ACTION_DOWN,
@@ -100,15 +99,15 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                         )
                 )
             }
-            KeyboardType.TIBETAN_ALPHABET_1 -> {
+            KeyboardType.TIBETAN_UCHEN_ALPHABET_1 -> {
                 val prefs = getSharedPreferences(
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,true)
-                prefs.apply();
+                prefs.apply()
                 kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
             }
 
-            KeyboardType.TIBETAN_ALPHABET_2 -> {
+            KeyboardType.TIBETAN_UCHEN_ALPHABET_2 -> {
                 kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_2)
             }
             KeyboardType.SYMBOL_1 -> {
@@ -118,7 +117,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                 val prefs = getSharedPreferences(
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,false)
-                prefs.apply();
+                prefs.apply()
                 kv?.keyboard = Keyboard(this, R.xml.qwerty)
             }
             KeyboardType.TIBETAN -> {

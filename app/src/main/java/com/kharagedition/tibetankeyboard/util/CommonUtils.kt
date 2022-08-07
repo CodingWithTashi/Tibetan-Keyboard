@@ -1,10 +1,5 @@
 package com.kharagedition.tibetankeyboard.util
 
-import android.graphics.Color
-import android.os.Build
-import android.view.View
-import android.view.Window
-
 /**
  * Created by kharag on 31,July,2021
  */

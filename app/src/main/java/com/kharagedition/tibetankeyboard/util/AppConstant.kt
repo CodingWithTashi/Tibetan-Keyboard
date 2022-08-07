@@ -5,7 +5,7 @@ package com.kharagedition.tibetankeyboard.util
  */
 class AppConstant {
     companion object{
-        var IS_TIB = "isTibetan";
+        var IS_TIB = "isTibetan"
         var TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
         var PROD_APP_ID = "ca-app-pub-8284901143739274~5033675263"
 

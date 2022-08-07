@@ -21,13 +21,13 @@ class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        bottomSheetLayoutBinding = BottomSheetLayoutBinding.inflate(layoutInflater,container,false);
+        bottomSheetLayoutBinding = BottomSheetLayoutBinding.inflate(layoutInflater,container,false)
 
-        bottomSheetLayoutBinding.aboutToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_ios_24);
+        bottomSheetLayoutBinding.aboutToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_ios_24)
         bottomSheetLayoutBinding.aboutToolbar.setNavigationOnClickListener {
             dismiss()
         }
-        initAdmobAds();
+        initAdmobAds()
         bottomSheetLayoutBinding.share.setOnClickListener(this)
         bottomSheetLayoutBinding.rate.setOnClickListener(this)
         bottomSheetLayoutBinding.gmail.setOnClickListener(this)
@@ -36,7 +36,7 @@ class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
         bottomSheetLayoutBinding.facebook.setOnClickListener(this)
         bottomSheetLayoutBinding.downloadCalendar.setOnClickListener(this)
         bottomSheetLayoutBinding.downloadPrayer.setOnClickListener(this)
-        return bottomSheetLayoutBinding.root;
+        return bottomSheetLayoutBinding.root
     }
     private fun initAdmobAds() {
         if(context!=null){
@@ -45,7 +45,7 @@ class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
             bottomSheetLayoutBinding.adView.adListener = object: AdListener() {
                 override fun onAdLoaded() {
                     Log.e("TAG", "onAdLoaded: ")
-                    bottomSheetLayoutBinding.bannerAdsLayout.visibility = VISIBLE;
+                    bottomSheetLayoutBinding.bannerAdsLayout.visibility = VISIBLE
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {

@@ -1,27 +1,24 @@
 package com.kharagedition.tibetankeyboard
 
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.gms.ads.*
-import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
 import com.kharagedition.tibetankeyboard.databinding.SettingsActivityBinding
-import com.kharagedition.tibetankeyboard.util.CommonUtils
 
 class SettingsActivity : AppCompatActivity() {
-    lateinit var settingBinding: SettingsActivityBinding;
+    lateinit var settingBinding: SettingsActivityBinding
 
 
     override fun onStart() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onStart()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        settingBinding = SettingsActivityBinding.inflate(layoutInflater);
+        settingBinding = SettingsActivityBinding.inflate(layoutInflater)
         setContentView(settingBinding.root)
 
         if (savedInstanceState == null) {
@@ -33,7 +30,7 @@ class SettingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         val adRequest = AdRequest.Builder().build()
         loadBannerAds(adRequest)
-        initListener();
+        initListener()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -48,7 +45,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun initListener() {
         settingBinding.settingsToolbar.setNavigationOnClickListener{
-            onBackPressed();
+            onBackPressed()
         }
     }
 
