@@ -20,6 +20,11 @@
             app:key="text_size"
             app:title="Keyboard Text Size"
             app:defaultValue="0"/>-->
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:icon="@drawable/ic_baseline_abc_24"
+            app:key="isUme"
+            app:title="@string/enable_ume" />
     </PreferenceCategory>
     <PreferenceCategory
         android:layout="@layout/pref_cat_title"

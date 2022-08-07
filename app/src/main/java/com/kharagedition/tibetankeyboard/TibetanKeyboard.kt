@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
-import android.inputmethodservice.KeyboardView
 import android.inputmethodservice.KeyboardView.OnKeyboardActionListener
 import android.media.AudioManager
 import android.os.Build
@@ -21,7 +20,7 @@ import com.kharagedition.tibetankeyboard.util.AppConstant
 
 
 class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
-    private var kv: KeyboardView? = null
+    private var keyboardView: TibetanKeyboardView? = null
     private var keyboard: Keyboard? = null
     private var isCaps = false
     private var isLanguageTibetan: Boolean = true
@@ -36,6 +35,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        setKeyBoardLanguage()
         setKeyBoardView()
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
             AppConstant.IS_TIB,true)
@@ -44,27 +44,36 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         }else{
             Keyboard(this, R.xml.qwerty)
         }
-        kv!!.keyboard = keyboard
-        kv!!.setOnKeyboardActionListener(this)
+        keyboardView?.keyboard = keyboard
+        keyboardView?.setOnKeyboardActionListener(this)
 
-        return kv!!
+        return keyboardView!!
+    }
+
+    private fun setKeyBoardLanguage() {
+        val isUme = prefs.getBoolean("isUme", false)
+        if(isUme){
+            FontsOverride.setDefaultFont(this, "DEFAULT", "fonts/qomolangma-tsutong.ttf");
+        }else{
+            FontsOverride.setDefaultFont(this, "DEFAULT", null);
+        }
     }
 
     private fun setKeyBoardView() {
         val color = prefs.getString("colors", "#FF704C04")
-        kv = when (color) {
+        keyboardView = when (color) {
             "#FF704C04" -> {
-                layoutInflater.inflate(R.layout.keyboard_brown, null) as KeyboardView
+                layoutInflater.inflate(R.layout.keyboard_brown, null) as TibetanKeyboardView
 
             }
             "#FF000000" -> {
-                layoutInflater.inflate(R.layout.keyboard_black, null) as KeyboardView
+                layoutInflater.inflate(R.layout.keyboard_black, null) as TibetanKeyboardView
             }
             else -> {
-                layoutInflater.inflate(R.layout.keyboard_green, null) as KeyboardView
+                layoutInflater.inflate(R.layout.keyboard_green, null) as TibetanKeyboardView
             }
         }
-        kv?.setBackgroundColor(Color.parseColor(color))
+        keyboardView?.setBackgroundColor(Color.parseColor(color))
         /*android:keyTextSize="20sp"*/
 
 
@@ -73,7 +82,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
     override fun onPress(i: Int) {}
     override fun onRelease(i: Int) {}
     override fun onKey(i: Int, ints: IntArray) {
-        val ic = currentInputConnection
+        val inputConnection = currentInputConnection
         Log.i("TAG", "onKey: $i")
         val vibrate = prefs.getBoolean("vibrate", false)
         val sound = prefs.getBoolean("sound", true)
@@ -83,15 +92,15 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         if(sound)
             playClick(i)
         when (i) {
-            Keyboard.KEYCODE_DELETE -> ic.deleteSurroundingText(1, 0)
+            Keyboard.KEYCODE_DELETE -> inputConnection.deleteSurroundingText(1, 0)
             Keyboard.KEYCODE_SHIFT -> {
                 isCaps = !isCaps
                 keyboard!!.isShifted = isCaps
-                kv!!.invalidateAllKeys()
+                keyboardView!!.invalidateAllKeys()
             }
             Keyboard.KEYCODE_DONE -> {
                 sendDefaultEditorAction(true)
-                ic.sendKeyEvent(
+                inputConnection.sendKeyEvent(
                         KeyEvent(
                                 KeyEvent.ACTION_DOWN,
                                 KeyEvent.KEYCODE_ENTER
@@ -99,41 +108,42 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                         )
                 )
             }
+            //set keyboard type base on when user change the keyboard type on click on language icon
             KeyboardType.TIBETAN_UCHEN_ALPHABET_1 -> {
                 val prefs = getSharedPreferences(
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,true)
                 prefs.apply()
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
+                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
 
             KeyboardType.TIBETAN_UCHEN_ALPHABET_2 -> {
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_2)
+                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_2)
             }
             KeyboardType.SYMBOL_1 -> {
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_symbol_1)
+                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_symbol_1)
             }
             KeyboardType.QWERTY_SMALL -> {
                 val prefs = getSharedPreferences(
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,false)
                 prefs.apply()
-                kv?.keyboard = Keyboard(this, R.xml.qwerty)
+                keyboardView?.keyboard = Keyboard(this, R.xml.qwerty)
             }
             KeyboardType.TIBETAN -> {
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
+                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
             KeyboardType.QWERTY_CAP -> {
-                kv?.keyboard = Keyboard(this, R.xml.qwerty_cap)
+                keyboardView?.keyboard = Keyboard(this, R.xml.qwerty_cap)
             }
             KeyboardType.SYMBOL_EN -> {
-                kv?.keyboard = Keyboard(this, R.xml.symbol_en)
+                keyboardView?.keyboard = Keyboard(this, R.xml.symbol_en)
             }
 
             else -> {
                 var code = i.toChar()
                 if (Character.isLetter(code) && isCaps) code = Character.toUpperCase(code)
-                ic.commitText(code.toString(), 1)
+                inputConnection.commitText(code.toString(), 1)
             }
         }
     }
