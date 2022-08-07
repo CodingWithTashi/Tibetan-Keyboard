@@ -40,7 +40,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
             AppConstant.IS_TIB,true)
         keyboard = if(isLanguageTibetan){
-            Keyboard(this, R.xml.tibetan_alphabet_1)
+            Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
         }else{
             Keyboard(this, R.xml.qwerty)
         }
@@ -104,14 +104,14 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,true)
                 prefs.apply()
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
 
             KeyboardType.TIBETAN_UCHEN_ALPHABET_2 -> {
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_2)
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_2)
             }
             KeyboardType.SYMBOL_1 -> {
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_symbol_1)
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_symbol_1)
             }
             KeyboardType.QWERTY_SMALL -> {
                 val prefs = getSharedPreferences(
@@ -121,7 +121,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                 kv?.keyboard = Keyboard(this, R.xml.qwerty)
             }
             KeyboardType.TIBETAN -> {
-                kv?.keyboard = Keyboard(this, R.xml.tibetan_alphabet_1)
+                kv?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
             KeyboardType.QWERTY_CAP -> {
                 kv?.keyboard = Keyboard(this, R.xml.qwerty_cap)
