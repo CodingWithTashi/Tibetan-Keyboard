@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
+        android:name=".TibetanKeyboardApp"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
@@ -22,7 +23,8 @@
         <service
             android:name=".TibetanKeyboard"
             android:label="Tibetan Keyboard"
-            android:permission="android.permission.BIND_INPUT_METHOD">
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
             <meta-data
                 android:name="android.view.im"
                 android:resource="@xml/method" />
@@ -32,7 +34,8 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".ui.SplashScreenActivity">
+        <activity android:name=".ui.SplashScreenActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

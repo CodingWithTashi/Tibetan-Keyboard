@@ -41,5 +41,16 @@
             app:key="sound"
             app:title="@string/sound" />
     </PreferenceCategory>
+
+    <PreferenceCategory
+        android:layout="@layout/pref_cat_title"
+            app:title="@string/notification">
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:icon="@drawable/ic_baseline_notifications_active_24"
+            app:key="event_notification"
+            app:title="@string/event_notification" />
+
+    </PreferenceCategory>
 =
 </PreferenceScreen>
