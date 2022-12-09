@@ -19,11 +19,16 @@ object FontsOverride {
         var regular:Typeface? = null;
         //check if font asset name is null or not
         if(fontAssetName!=null){
-            //get type face from asset
-             regular = Typeface.createFromAsset(
-                context.assets,
-                fontAssetName
-            )
+            regular = try{
+                //get type face from asset
+                Typeface.createFromAsset(
+                    context.assets,
+                    fontAssetName
+                )
+            }catch (e:Exception){
+                null
+            }
+
         }
         //replace font
         replaceFont(staticTypefaceFieldName, regular)
