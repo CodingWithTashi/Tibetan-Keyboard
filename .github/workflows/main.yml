@@ -21,9 +21,8 @@ jobs:
       run: chmod +x ./gradlew
     - name: Create Google Services JSON File
       env:
-        TIB_KEYBOARD_GOOGLE_SERVICES_JSON: ${{ secrets.TIB_KEYBOARD_GOOGLE_SERVICES_JSON }}
-      run: echo $TIB_KEYBOARD_GOOGLE_SERVICES_JSON > /home/runner/work/<Project-Name>/Tibetan-Keyboard/app/google-services.json
-
+        GOOGLE_SERVICES_JSON: ${{ secrets.TIB_KEYBOARD_GOOGLE_SERVICES_JSON }}
+      run: echo $GOOGLE_SERVICES_JSON | base64 -di > app/google-services.json
     - name: Build APK
       run: ./gradlew build
 
