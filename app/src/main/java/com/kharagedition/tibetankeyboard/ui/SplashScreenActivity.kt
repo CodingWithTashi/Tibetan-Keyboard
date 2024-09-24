@@ -46,7 +46,7 @@ class SplashScreenActivity : AppCompatActivity() {
 
     private fun setVersion() {
         try {
-            val versionName: String = this.packageManager
+            val versionName: String? = this.packageManager
                 .getPackageInfo(this.packageName, 0).versionName
             activitySplashScreenBinding.version.text = "Version: $versionName"
         } catch (e: PackageManager.NameNotFoundException) {
