@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Color
@@ -138,6 +139,15 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
             }
             KeyboardType.SYMBOL_EN -> {
                 keyboardView?.keyboard = Keyboard(this, R.xml.symbol_en)
+            }
+            KeyboardType.GEMINI -> {
+                // navigate to chatactivity page
+                var chatactivity = "com.kharagedition.tibetankeyboard.ui.ChatActivity"
+                var intent = packageManager.getLaunchIntentForPackage("com.kharagedition.tibetankeyboard")
+                if (intent != null) {
+                    intent.component = ComponentName("com.kharagedition.tibetankeyboard", chatactivity)
+                    startActivity(intent)
+                }
             }
 
             else -> {
