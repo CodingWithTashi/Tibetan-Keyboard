@@ -50,7 +50,7 @@ class HomeActivity : InputMethodActivity() {
 
     @SuppressLint("NewApi")
     private fun initNativeAds() {
-        val adLoader = AdLoader.Builder(this, AppConstant.PRODUCTION_ADS_NATIVE)
+        val adLoader = AdLoader.Builder(this, AppConstant.TEST_ADS_NATIVE)
             .forNativeAd { ad: NativeAd ->
                 if (isDestroyed) {
                     ad.destroy()
@@ -123,6 +123,9 @@ class HomeActivity : InputMethodActivity() {
         }
         homeBinding.inputMethodBtn.setOnClickListener {
             pickInput()
+        }
+        homeBinding.chatCard.setOnClickListener {
+            startActivity(Intent(this, ChatActivity::class.java))
         }
         homeBinding.sharedCard.setOnClickListener {
             try {

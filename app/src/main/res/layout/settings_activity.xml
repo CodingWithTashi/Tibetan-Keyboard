@@ -1,10 +1,14 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/setting_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/brown_500"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".SettingsActivity"
+    android:fitsSystemWindows="true">
+
     <com.google.android.material.appbar.MaterialToolbar
         android:elevation="10dp"
         android:id="@+id/settings_toolbar"
@@ -13,12 +17,12 @@
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:titleTextColor="@android:color/white"
         app:title="@string/keyboard_settings"
-        app:navigationIcon="@drawable/ic_baseline_arrow_back_ios_24"/>
+        app:navigationIcon="@drawable/ic_baseline_arrow_back_ios_24"
+        android:layout_marginTop="16dp"/>
+
     <LinearLayout
         app:layout_constraintTop_toBottomOf="@+id/settings_toolbar"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -32,6 +36,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </LinearLayout>
+
     <com.google.android.gms.ads.AdView
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

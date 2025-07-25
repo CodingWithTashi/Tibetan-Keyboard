@@ -37,4 +37,10 @@
     <string name="two_step_left">Well done, Now only two step away!</string>
     <string name="setup_done">Great, You are all setup and ready to use!</string>
     <string name="event_notification">Event Notification</string>
+
+<!--    Chat-->
+    <string name="chat_assistant">Tibetan Assistant</string>
+    <string name="ask_in_english">Ask in English/Tibetan</string>
+    <string name="send">Send</string>
+    <string name="typing">Typing...</string>
 </resources>

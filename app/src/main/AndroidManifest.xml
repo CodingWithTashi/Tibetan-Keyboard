@@ -5,7 +5,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
         android:name=".TibetanKeyboardApp"
@@ -17,16 +17,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TibetanKeyboard">
         <activity
+            android:name=".ui.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
             android:name=".SettingsActivity"
             android:exported="true"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".ui.HomeActivity"/>
+            android:parentActivityName=".ui.HomeActivity" />
 
         <service
             android:name=".TibetanKeyboard"
+            android:exported="true"
             android:label="Tibetan Keyboard"
-            android:permission="android.permission.BIND_INPUT_METHOD"
-            android:exported="true">
+            android:permission="android.permission.BIND_INPUT_METHOD">
             <meta-data
                 android:name="android.view.im"
                 android:resource="@xml/method" />
@@ -36,7 +40,8 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".ui.SplashScreenActivity"
+        <activity
+            android:name=".ui.SplashScreenActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -51,11 +56,11 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8284901143739274~5033675263" />
+
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
             android:resource="@xml/gma_ad_services_config"
             tools:replace="android:resource" />
-
     </application>
 
 </manifest>

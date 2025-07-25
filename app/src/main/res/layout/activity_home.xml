@@ -137,15 +137,61 @@
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/button_layout">
-
                 <RelativeLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/chat_card"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
+                        android:layout_marginTop="15dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/brown_700"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:text="Chat"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/chat_icon"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerInParent="true"
+                        android:elevation="10dp"
+                        app:srcCompat="@drawable/baseline_generating_tokens_24" />
+                </RelativeLayout>
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/shared_card"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="15dp"
                         android:clickable="true"
                         android:focusable="true"
@@ -169,15 +215,15 @@
                                 android:scrollHorizontally="true"
                                 android:text="Share"
                                 android:textColor="@color/white"
-                                android:textSize="12sp" />
+                                android:textSize="16sp" />
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/share_icon"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
                         android:layout_alignParentTop="true"
                         android:layout_centerInParent="true"
                         android:elevation="10dp"
@@ -186,12 +232,13 @@
 
                 <RelativeLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/rate_card"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="15dp"
                         android:clickable="true"
                         android:focusable="true"
@@ -215,29 +262,45 @@
                                 android:scrollHorizontally="true"
                                 android:text="Rate"
                                 android:textColor="@color/white"
-                                android:textSize="12sp" />
+                                android:textSize="16sp" />
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/rate_icon"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
                         android:layout_alignParentTop="true"
                         android:layout_centerInParent="true"
                         android:elevation="10dp"
                         app:srcCompat="@drawable/ic_baseline_star_24" />
                 </RelativeLayout>
 
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/bottom_btn_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/icon_btn_layout">
                 <RelativeLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/more_card"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="15dp"
                         android:clickable="true"
                         android:focusable="true"
@@ -261,15 +324,15 @@
                                 android:scrollHorizontally="true"
                                 android:text="More"
                                 android:textColor="@color/white"
-                                android:textSize="12sp" />
+                                android:textSize="16sp" />
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/more_icon"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
                         android:layout_alignParentTop="true"
                         android:layout_centerInParent="true"
                         android:elevation="10dp"
@@ -278,12 +341,13 @@
 
                 <RelativeLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/setting_card"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="15dp"
                         android:clickable="true"
                         android:focusable="true"
@@ -307,15 +371,15 @@
                                 android:scrollHorizontally="true"
                                 android:text="Setting"
                                 android:textColor="@color/white"
-                                android:textSize="12sp" />
+                                android:textSize="16sp" />
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/setting_icon"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
                         android:layout_alignParentTop="true"
                         android:layout_centerInParent="true"
                         android:elevation="10dp"
@@ -324,12 +388,13 @@
 
                 <RelativeLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/exit_card"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="15dp"
                         android:clickable="true"
                         android:focusable="true"
@@ -353,21 +418,20 @@
                                 android:scrollHorizontally="true"
                                 android:text="Exit"
                                 android:textColor="@color/white"
-                                android:textSize="12sp" />
+                                android:textSize="16sp" />
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/exit_icon"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
                         android:layout_alignParentTop="true"
                         android:layout_centerInParent="true"
                         android:elevation="10dp"
                         app:srcCompat="@drawable/ic_baseline_exit_to_app_24" />
                 </RelativeLayout>
-
             </LinearLayout>
 
             <LinearLayout
@@ -378,7 +442,7 @@
                 android:visibility="gone"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/icon_btn_layout">
+                app:layout_constraintTop_toBottomOf="@+id/bottom_btn_layout">
 
                 <com.kharagedition.tibetankeyboard.ads.TemplateView
                     android:id="@+id/template"
