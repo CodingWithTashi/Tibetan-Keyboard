@@ -45,4 +45,13 @@
     <color name="gray">#FF808080</color>
     <color name="light_gray">#FFF1F1F1</color>
 <!--    ads-->
+
+    <color name="error_highlight">#FFEBEE</color>
+    <color name="success_highlight">#E8F5E8</color>
+    <color name="success_green">#4CAF50</color>
+    <color name="warning_orange">#FF9800</color>
+    <color name="error_red">#F44336</color>
+    <color name="success_card_bg">#F0F7FF</color>
+    <color name="warning_card_bg">#FFF8E1</color>
+    <color name="error_card_bg">#FFEBEE</color>
 </resources>
