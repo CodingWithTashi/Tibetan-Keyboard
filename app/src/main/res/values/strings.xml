@@ -38,9 +38,32 @@
     <string name="setup_done">Great, You are all setup and ready to use!</string>
     <string name="event_notification">Event Notification</string>
 
-<!--    Chat-->
+    <!--    Chat-->
     <string name="chat_assistant">Tibetan Assistant</string>
     <string name="ask_in_english">Ask in English/Tibetan</string>
     <string name="send">Send</string>
     <string name="typing">Typing...</string>
+    <!-- Login Activity -->
+    <string name="app_logo">App Logo</string>
+    <string name="login_subtitle">Your AI Assistant for Tibetan Language</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="sign_in_to_continue">Sign in to continue chatting</string>
+    <string name="sign_in_with_google">Continue with Google</string>
+    <string name="privacy_policy_text">By signing in, you agree to our Terms of Service and Privacy Policy</string>
+
+    <!-- Chat Activity -->
+    <string name="online_status">Online</string>
+    <string name="back">Back</string>
+    <string name="menu">Menu</string>
+
+    <!-- Menu Items -->
+    <string name="clear_chat">Clear Chat</string>
+    <string name="profile">Profile</string>
+    <string name="sign_out">Sign Out</string>
+
+    <!-- General -->
+    <string name="loading">Loading...</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="try_again">Try Again</string>
+    <string name="default_web_client_id">116616062750-5kt7phap4d1o0vcusigk3ttg3dlcijfd.apps.googleusercontent.com</string>
 </resources>
