@@ -17,19 +17,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.UserPreferences
+import com.kharagedition.tibetankeyboard.repo.UserRepository
 import com.kharagedition.tibetankeyboard.ui.ChatActivity
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
@@ -39,6 +45,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var progressIndicator: CircularProgressIndicator
     private lateinit var userPreferences: UserPreferences
     private lateinit var textViewPrivacyPolicy: TextView
+    private lateinit var userRepository: UserRepository
 
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -59,6 +66,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize Firebase Auth
         auth = Firebase.auth
+        userRepository = UserRepository()
         userPreferences = UserPreferences(this)
 
         // Check if user is already signed in
@@ -173,27 +181,104 @@ class LoginActivity : AppCompatActivity() {
                 hideLoading()
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    user?.let {
-                        // Save user login state
-                        userPreferences.saveUserLoginState(
-                            isLoggedIn = true,
-                            userId = it.uid,
-                            userName = it.displayName ?: "User",
-                            userEmail = it.email ?: "",
-                            userPhotoUrl = it.photoUrl?.toString() ?: ""
-                        )
-
-                        Toast.makeText(this, "Welcome ${it.displayName}!", Toast.LENGTH_SHORT).show()
-                        navigateToChatActivity()
+                    user?.let { firebaseUser ->
+                        handleSuccessfulLogin(firebaseUser, task.result?.additionalUserInfo?.isNewUser ?: false)
                     }
                 } else {
-                    Toast.makeText(
-                        this,
-                        "Authentication failed: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    handleLoginError(task.exception)
                 }
             }
+    }
+
+    private fun handleSuccessfulLogin(firebaseUser: FirebaseUser, isNewUser: Boolean) {
+        // Save user login state locally
+        userPreferences.saveUserLoginState(
+            isLoggedIn = true,
+            userId = firebaseUser.uid,
+            userName = firebaseUser.displayName ?: "User",
+            userEmail = firebaseUser.email ?: "",
+            userPhotoUrl = firebaseUser.photoUrl?.toString() ?: ""
+        )
+
+        // Create or update user in Firestore
+        lifecycleScope.launch {
+            try {
+                showLoading()
+
+                val result = userRepository.createOrUpdateUser(
+                    uid = firebaseUser.uid,
+                    displayName = firebaseUser.displayName ?: "User",
+                    email = firebaseUser.email ?: "",
+                    photoUrl = firebaseUser.photoUrl?.toString() ?: "",
+                    context = this@LoginActivity,
+                    isNewUser = isNewUser
+                )
+
+                hideLoading()
+
+                if (result.isSuccess) {
+                    val user = result.getOrNull()
+                    val welcomeMessage = if (isNewUser) {
+                        "Welcome to our app, ${firebaseUser.displayName}!"
+                    } else {
+                        "Welcome back, ${firebaseUser.displayName}!"
+                    }
+
+                    Toast.makeText(this@LoginActivity, welcomeMessage, Toast.LENGTH_SHORT).show()
+
+                    // Track successful login
+                    userRepository.trackUserEvent(
+                        firebaseUser.uid,
+                        if (isNewUser) "user_registration_completed" else "user_login_success",
+                        mapOf(
+                            "login_method" to "google",
+                            "user_email" to (firebaseUser.email ?: ""),
+                            "has_display_name" to (firebaseUser.displayName != null)
+                        )
+                    )
+
+                    navigateToChatActivity()
+                } else {
+                    // Even if Firestore fails, continue with login but show warning
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Welcome ${firebaseUser.displayName}! (Profile sync pending)",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navigateToChatActivity()
+                }
+            } catch (e: Exception) {
+                hideLoading()
+                // Don't block login for data collection failures
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Welcome ${firebaseUser.displayName}!",
+                    Toast.LENGTH_SHORT
+                ).show()
+                navigateToChatActivity()
+            }
+        }
+    }
+    private fun handleLoginError(exception: Exception?) {
+        val errorMessage = when (exception) {
+            is FirebaseAuthUserCollisionException -> "An account already exists with this email"
+            is FirebaseNetworkException -> "Network error. Please check your connection"
+            else -> "Authentication failed: ${exception?.message}"
+        }
+
+        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+
+        // Track failed login attempt
+        lifecycleScope.launch {
+            userRepository.trackUserEvent(
+                "anonymous",
+                "login_failed",
+                mapOf(
+                    "error_message" to (exception?.message ?: "Unknown error"),
+                    "login_method" to "google"
+                )
+            )
+        }
     }
 
     private fun showLoading() {

@@ -9,13 +9,13 @@ class UserPreferences(context: Context) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     companion object {
-        private const val PREF_NAME = "user_preferences"
-        private const val KEY_IS_LOGGED_IN = "is_logged_in"
-        private const val KEY_USER_ID = "user_id"
-        private const val KEY_USER_NAME = "user_name"
-        private const val KEY_USER_EMAIL = "user_email"
-        private const val KEY_USER_PHOTO_URL = "user_photo_url"
-        private const val KEY_FIRST_TIME_USER = "first_time_user"
+        private const val PREF_NAME = "userPreferences"
+        private const val KEY_IS_LOGGED_IN = "isLoggedIn"
+        private const val KEY_USER_ID = "userId"
+        private const val KEY_USER_NAME = "username"
+        private const val KEY_USER_EMAIL = "userEmail"
+        private const val KEY_USER_PHOTO_URL = "userPhotoUrl"
+        private const val KEY_FIRST_TIME_USER = "firstTimeUser"
     }
 
     fun saveUserLoginState(
