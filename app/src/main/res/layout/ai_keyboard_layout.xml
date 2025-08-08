@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#FF704C04">
+
+    <!-- AI Toolbar -->
+    <LinearLayout
+        android:id="@+id/ai_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="#FF704C04"
+        android:paddingHorizontal="16dp"
+        android:gravity="center_vertical"
+        android:elevation="4dp">
+
+        <ImageView
+            android:id="@+id/ai_options_icon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_ai_options"
+            android:padding="6dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:tint="@android:color/white" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="AI Assistant"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginStart="12dp" />
+
+    </LinearLayout>
+
+    <!-- AI Options Container (Initially Hidden) -->
+    <LinearLayout
+        android:id="@+id/ai_options_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:gravity="center"
+        android:background="#E6664404"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/grammar_btn"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="Grammar"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:background="@drawable/ai_button_background"
+            android:layout_marginEnd="8dp"
+            android:elevation="2dp" />
+
+        <Button
+            android:id="@+id/rephrase_btn"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="Rephrase"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:background="@drawable/ai_button_background"
+            android:layout_marginStart="8dp"
+            android:elevation="2dp" />
+
+    </LinearLayout>
+
+    <!-- Normal Keyboard Container -->
+    <FrameLayout
+        android:id="@+id/normal_keyboard_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Your existing keyboard view will be added here programmatically -->
+
+    </FrameLayout>
+
+    <!-- AI Interface Container (Initially Hidden) -->
+    <LinearLayout
+        android:id="@+id/ai_interface_container"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:background="@android:color/white"
+        android:visibility="gone"
+        android:elevation="8dp">
+
+       <ScrollView
+           android:layout_width="match_parent"
+           android:layout_height="match_parent">
+           <LinearLayout
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:orientation="vertical"
+               android:padding="16dp">
+
+               <!-- Header -->
+               <LinearLayout
+                   android:layout_width="match_parent"
+                   android:layout_height="wrap_content"
+                   android:orientation="horizontal"
+                   android:gravity="center_vertical"
+                   android:layout_marginBottom="16dp">
+
+                   <ImageView
+                       android:id="@+id/ai_back_btn"
+                       android:layout_width="32dp"
+                       android:layout_height="32dp"
+                       android:src="@drawable/ic_arrow_back"
+                       android:padding="6dp"
+                       android:background="?android:attr/selectableItemBackgroundBorderless"
+                       android:tint="#FF704C04" />
+
+                   <TextView
+                       android:id="@+id/ai_title_text"
+                       android:layout_width="0dp"
+                       android:layout_height="wrap_content"
+                       android:layout_weight="1"
+                       android:text="Grammar Check"
+                       android:textSize="18sp"
+                       android:textStyle="bold"
+                       android:textColor="#FF704C04"
+                       android:layout_marginStart="12dp" />
+
+                   <ProgressBar
+                       android:id="@+id/loading_progress_bar"
+                       android:layout_width="24dp"
+                       android:layout_height="24dp"
+                       android:visibility="gone"
+                       android:indeterminateTint="#FF704C04" />
+
+               </LinearLayout>
+
+               <!-- Original Text Section -->
+               <androidx.cardview.widget.CardView
+                   android:layout_width="match_parent"
+                   android:layout_height="wrap_content"
+                   android:layout_marginBottom="12dp"
+                   app:cardCornerRadius="8dp"
+                   app:cardElevation="2dp"
+                   app:cardBackgroundColor="#F5F5F5">
+
+                   <LinearLayout
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content"
+                       android:orientation="vertical"
+                       android:padding="12dp">
+
+                       <TextView
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           android:text="Original Text"
+                           android:textSize="12sp"
+                           android:textStyle="bold"
+                           android:textColor="#666666"
+                           android:layout_marginBottom="4dp" />
+
+                       <TextView
+                           android:id="@+id/original_text_view"
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           android:text="Your original text will appear here..."
+                           android:textSize="14sp"
+                           android:textColor="#333333"
+                           android:minHeight="40dp"
+                           android:gravity="center_vertical" />
+
+                   </LinearLayout>
+
+               </androidx.cardview.widget.CardView>
+
+               <!-- Suggested Text Section -->
+               <androidx.cardview.widget.CardView
+                   android:layout_width="match_parent"
+                   android:layout_height="wrap_content"
+                   android:layout_marginBottom="12dp"
+                   app:cardCornerRadius="8dp"
+                   app:cardElevation="2dp"
+                   app:cardBackgroundColor="#E8F5E8">
+
+                   <LinearLayout
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content"
+                       android:orientation="vertical"
+                       android:padding="12dp">
+
+                       <TextView
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           android:text="Suggested Text"
+                           android:textSize="12sp"
+                           android:textStyle="bold"
+                           android:textColor="#2E7D32"
+                           android:layout_marginBottom="4dp" />
+
+                       <TextView
+                           android:id="@+id/suggested_text_view"
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           android:text="Improved text will appear here..."
+                           android:textSize="14sp"
+                           android:textColor="#333333"
+                           android:minHeight="40dp"
+                           android:gravity="center_vertical" />
+
+                   </LinearLayout>
+
+               </androidx.cardview.widget.CardView>
+
+               <!-- Summary Section -->
+               <androidx.cardview.widget.CardView
+                   android:layout_width="match_parent"
+                   android:layout_height="wrap_content"
+                   android:layout_marginBottom="16dp"
+                   app:cardCornerRadius="8dp"
+                   app:cardElevation="2dp"
+                   app:cardBackgroundColor="#FFF3E0">
+
+                   <LinearLayout
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content"
+                       android:orientation="vertical"
+                       android:padding="12dp">
+
+                       <TextView
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           android:text="Summary"
+                           android:textSize="12sp"
+                           android:textStyle="bold"
+                           android:textColor="#E65100"
+                           android:layout_marginBottom="4dp" />
+
+                       <TextView
+                           android:id="@+id/ai_summary_text"
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           android:text="Analysis summary will appear here..."
+                           android:textSize="14sp"
+                           android:textColor="#333333"
+                           android:minHeight="30dp"
+                           android:gravity="center_vertical" />
+
+                   </LinearLayout>
+
+               </androidx.cardview.widget.CardView>
+
+               <!-- Action Buttons -->
+               <LinearLayout
+                   android:layout_width="match_parent"
+                   android:layout_height="wrap_content"
+                   android:orientation="horizontal"
+                   android:gravity="center">
+
+                   <Button
+                       android:id="@+id/ai_cancel_btn"
+                       android:layout_width="0dp"
+                       android:layout_height="48dp"
+                       android:layout_weight="1"
+                       android:text="Cancel"
+                       android:textColor="#666666"
+                       android:textSize="16sp"
+                       android:background="@drawable/ai_cancel_button_background"
+                       android:layout_marginEnd="8dp"
+                       android:elevation="2dp" />
+
+                   <Button
+                       android:id="@+id/ai_replace_btn"
+                       android:layout_width="0dp"
+                       android:layout_height="48dp"
+                       android:layout_weight="1"
+                       android:text="Replace"
+                       android:textColor="@android:color/white"
+                       android:textSize="16sp"
+                       android:textStyle="bold"
+                       android:background="@drawable/ai_replace_button_background"
+                       android:layout_marginStart="8dp"
+                       android:elevation="2dp" />
+
+               </LinearLayout>
+
+           </LinearLayout>
+       </ScrollView>
+
+    </LinearLayout>
+
+</LinearLayout>

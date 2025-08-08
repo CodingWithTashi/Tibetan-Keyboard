@@ -15,29 +15,50 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.ExtractedText
+import android.view.inputmethod.ExtractedTextRequest
+import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
+import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
 
 
-class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
+class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboardInterface {
     private var keyboardView: TibetanKeyboardView? = null
     private var keyboard: Keyboard? = null
     private var isCaps = false
     private var isLanguageTibetan: Boolean = true
     lateinit var prefs: SharedPreferences
+    private var aiKeyboardView: AIKeyboardView? = null
+    private var currentMode = KeyboardMode.NORMAL
+
+    enum class KeyboardMode {
+        NORMAL,
+        AI_GRAMMAR,
+        AI_REPHRASE
+    }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         setInputView(onCreateInputView())
         super.onStartInputView(info, restarting)
     }
 
-    //Press Ctrl+O
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
         setKeyBoardLanguage()
+
+        // Create the main container with AI toolbar
+        val mainContainer = createMainKeyboardView()
+
+        // Create and set up the normal keyboard view
         setKeyBoardView()
+
+        // Add the normal keyboard to the AI container
+        val normalContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.normal_keyboard_container)
+        normalContainer?.addView(keyboardView)
+
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
             AppConstant.IS_TIB,true)
         keyboard = if(isLanguageTibetan){
@@ -48,7 +69,18 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         keyboardView?.keyboard = keyboard
         keyboardView?.setOnKeyboardActionListener(this)
 
-        return keyboardView!!
+        return mainContainer
+    }
+
+    private fun createMainKeyboardView(): View {
+        val color = prefs.getString("colors", "#FF704C04")
+
+        // Create AIKeyboardView directly
+        aiKeyboardView = AIKeyboardView(this)
+        aiKeyboardView?.setAIKeyboardInterface(this)
+        aiKeyboardView?.setThemeColor(color ?: "#FF704C04")
+
+        return aiKeyboardView!!
     }
 
     private fun setKeyBoardLanguage() {
@@ -65,7 +97,6 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         keyboardView = when (color) {
             "#FF704C04" -> {
                 layoutInflater.inflate(R.layout.keyboard_brown, null) as TibetanKeyboardView
-
             }
             "#FF000000" -> {
                 layoutInflater.inflate(R.layout.keyboard_black, null) as TibetanKeyboardView
@@ -75,23 +106,23 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
             }
         }
         keyboardView?.setBackgroundColor(Color.parseColor(color))
-        /*android:keyTextSize="20sp"*/
-
-
     }
 
     override fun onPress(i: Int) {}
     override fun onRelease(i: Int) {}
+
     override fun onKey(i: Int, ints: IntArray) {
         val inputConnection = currentInputConnection
         Log.i("TAG", "onKey: $i")
         val vibrate = prefs.getBoolean("vibrate", false)
         val sound = prefs.getBoolean("sound", true)
+
         if(vibrate){
             vibratePhone()
         }
         if(sound)
             playClick(i)
+
         when (i) {
             Keyboard.KEYCODE_DELETE -> inputConnection.deleteSurroundingText(1, 0)
             Keyboard.KEYCODE_SHIFT -> {
@@ -102,14 +133,20 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
             Keyboard.KEYCODE_DONE -> {
                 sendDefaultEditorAction(true)
                 inputConnection.sendKeyEvent(
-                        KeyEvent(
-                                KeyEvent.ACTION_DOWN,
-                                KeyEvent.KEYCODE_ENTER
-
-                        )
+                    KeyEvent(
+                        KeyEvent.ACTION_DOWN,
+                        KeyEvent.KEYCODE_ENTER
+                    )
                 )
             }
-            //set keyboard type base on when user change the keyboard type on click on language icon
+
+            // AI Feature Codes - These are handled by AIKeyboardView now
+            AIKeyboardCodes.AI_BACK -> {
+                currentMode = KeyboardMode.NORMAL
+                aiKeyboardView?.showNormalKeyboard()
+            }
+
+            // Existing keyboard type handling
             KeyboardType.TIBETAN_UCHEN_ALPHABET_1 -> {
                 val prefs = getSharedPreferences(
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
@@ -141,7 +178,6 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
                 keyboardView?.keyboard = Keyboard(this, R.xml.symbol_en)
             }
             KeyboardType.GEMINI -> {
-                // navigate to chatactivity page
                 var chatactivity = "com.kharagedition.tibetankeyboard.ui.ChatActivity"
                 var intent = packageManager.getLaunchIntentForPackage("com.kharagedition.tibetankeyboard")
                 if (intent != null) {
@@ -158,12 +194,64 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener {
         }
     }
 
+    private fun getCurrentInputText(): String {
+        val inputConnection = currentInputConnection ?: return ""
+
+        // Try to get all text from the input field
+        val extractedTextRequest = ExtractedTextRequest()
+        extractedTextRequest.flags = 0
+        extractedTextRequest.hintMaxChars = 10000
+        extractedTextRequest.hintMaxLines = 100
+
+        val extractedText: ExtractedText? = inputConnection.getExtractedText(extractedTextRequest, 0)
+
+        return extractedText?.text?.toString() ?: run {
+            // Fallback: get text before and after cursor
+            val textBefore = inputConnection.getTextBeforeCursor(1000, 0)?.toString() ?: ""
+            val textAfter = inputConnection.getTextAfterCursor(1000, 0)?.toString() ?: ""
+            textBefore + textAfter
+        }
+    }
+
+    // AIKeyboardInterface implementation
+    override fun getCurrentText(): String {
+        return getCurrentInputText()
+    }
+
+    override fun onGrammarReplace(originalText: String, correctedText: String) {
+        val inputConnection = currentInputConnection
+        if (inputConnection != null) {
+            // Clear current text and insert corrected text
+            val textLength = originalText.length
+            inputConnection.deleteSurroundingText(textLength, 0)
+            inputConnection.commitText(correctedText, 1)
+        }
+        currentMode = KeyboardMode.NORMAL
+        aiKeyboardView?.showNormalKeyboard()
+    }
+
+    override fun onRephraseReplace(originalText: String, rephrasedText: String) {
+        val inputConnection = currentInputConnection
+        if (inputConnection != null) {
+            // Clear current text and insert rephrased text
+            val textLength = originalText.length
+            inputConnection.deleteSurroundingText(textLength, 0)
+            inputConnection.commitText(rephrasedText, 1)
+        }
+        currentMode = KeyboardMode.NORMAL
+        aiKeyboardView?.showNormalKeyboard()
+    }
+
+    override fun onAICancel() {
+        currentMode = KeyboardMode.NORMAL
+        aiKeyboardView?.showNormalKeyboard()
+    }
+
     private fun vibratePhone() {
         val v = getSystemService(VIBRATOR_SERVICE) as Vibrator
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             v.vibrate(VibrationEffect.createOneShot(50, 1))
         } else {
-            //deprecated in API 26
             v.vibrate(50)
         }
     }
