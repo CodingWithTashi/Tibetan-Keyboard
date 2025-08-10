@@ -1,0 +1,26 @@
+{
+  "name": "firestore-migration",
+  "version": "1.0.0",
+  "description": "Migration script to fix obfuscated Firestore field names",
+  "main": "migrate.js",
+  "scripts": {
+    "dry-run": "node migrate.js --dry-run",
+    "test-user": "node migrate.js --test-user",
+    "migrate": "node migrate.js --migrate --confirm",
+    "start": "node migrate.js"
+  },
+  "keywords": [
+    "firestore",
+    "migration",
+    "firebase",
+    "proguard"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
