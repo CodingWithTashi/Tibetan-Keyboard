@@ -16,6 +16,8 @@ class UserPreferences(context: Context) {
         private const val KEY_USER_EMAIL = "userEmail"
         private const val KEY_USER_PHOTO_URL = "userPhotoUrl"
         private const val KEY_FIRST_TIME_USER = "firstTimeUser"
+        private const val KEY_PREMIUM_USER = "premiumUser"
+        private const val KEY_LAST_ACTIVE = "lastActive"
     }
 
     fun saveUserLoginState(
@@ -71,5 +73,15 @@ class UserPreferences(context: Context) {
             putString(KEY_USER_PHOTO_URL, "")
             apply()
         }
+    }
+
+    fun setPremiumUser(premium: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_PREMIUM_USER, premium).apply()
+        if (premium) {
+            updateLastActive()
+        }
+    }
+    fun updateLastActive() {
+        sharedPreferences.edit().putLong(KEY_LAST_ACTIVE, System.currentTimeMillis()).apply()
     }
 }
