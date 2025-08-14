@@ -1,46 +1,42 @@
 package com.kharagedition.tibetankeyboard.ui
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.inputmethod.EditorInfo
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.widget.addTextChangedListener
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.textfield.TextInputEditText
-import com.kharagedition.tibetankeyboard.R
-import androidx.recyclerview.widget.RecyclerView
 import android.view.View
-import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
+import androidx.core.widget.addTextChangedListener
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.LottieAnimationView
-import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.imageview.ShapeableImageView
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
-import com.kharagedition.tibetankeyboard.LoginActivity
+import com.google.android.material.textfield.TextInputEditText
+import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.chat.ChatAdapter
 import com.kharagedition.tibetankeyboard.chat.ChatViewModel
-import com.kharagedition.tibetankeyboard.UserPreferences
+import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
+import com.kharagedition.tibetankeyboard.util.*
 
-class ChatActivity : AppCompatActivity() {
+class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback {
 
+    // ViewModels and Managers
     private val viewModel: ChatViewModel by viewModels()
+    private lateinit var authManager: AuthManager
+    private lateinit var subscriptionUIComponent: SubscriptionUIComponent
+
+    // UI Components
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var layoutEmptyChat: LinearLayout
@@ -50,68 +46,37 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var materialToolbar: MaterialToolbar
     private lateinit var userProfileImage: ShapeableImageView
     private lateinit var userNameText: TextView
-    private  lateinit var mainLayout: ConstraintLayout;
-    private lateinit var auth: FirebaseAuth
-    private lateinit var userPreferences: UserPreferences
-    private lateinit var buttonBack: ImageButton;
+    private lateinit var mainLayout: ConstraintLayout
+    private lateinit var buttonBack: ImageButton
+    private lateinit var buyPremium: ShapeableImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize Firebase and preferences
-        auth = Firebase.auth
-        userPreferences = UserPreferences(this)
+        // Initialize managers
+        authManager = AuthManager(this)
 
-        // Check if user is authenticated
-        if (!isUserAuthenticated()) {
-            redirectToLogin()
+        // Check authentication first
+        if (!authManager.isUserAuthenticated()) {
+            authManager.redirectToLogin()
             return
         }
-
-        // Set window soft input mode to resize
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_chat)
 
         initializeViews()
-
-        ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-
-            // Apply the maximum of system bars and IME insets to the bottom padding
-            val bottomPadding = if (imeInsets.bottom > systemBars.bottom) imeInsets.bottom else systemBars.bottom
-
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding)
-            insets
-        }
-
-
-        setupToolbar()
-        setupRecyclerView()
-        setupListeners()
-        observeViewModel()
-        //loadUserProfile()
+        setupUI()
+        setupObservers()
+        initializeServices()
 
         // Show welcome message for first-time users
-        if (userPreferences.isFirstTimeUser()) {
+        if (authManager.isFirstTimeUser()) {
             showWelcomeMessage()
         }
 
-        // Add welcome message
+        // Add welcome message to chat
         viewModel.addWelcomeMessage()
-    }
-
-    private fun isUserAuthenticated(): Boolean {
-        return auth.currentUser != null && userPreferences.isUserLoggedIn()
-    }
-
-    private fun redirectToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
-        //intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK aor Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
     }
 
     private fun initializeViews() {
@@ -125,32 +90,41 @@ class ChatActivity : AppCompatActivity() {
         mainLayout = findViewById(R.id.main_container)
         layoutEmptyChat = findViewById(R.id.layoutEmptyChat)
         buttonBack = findViewById(R.id.buttonBack)
+        buyPremium = findViewById(R.id.buyPremium)
+    }
+
+    private fun setupUI() {
+        // Setup edge-to-edge with keyboard handling
+        setupEdgeToEdgeWithKeyboard(mainLayout)
+
+        // Setup toolbar
+        setupToolbar()
+
+        // Setup RecyclerView
+        setupRecyclerView()
+
+        // Setup listeners
+        setupListeners()
+
+        // Load user profile
+        loadUserProfile()
+
+        // Initialize subscription UI component
+        subscriptionUIComponent = SubscriptionUIComponent(this, buyPremium)
     }
 
     private fun setupToolbar() {
         setSupportActionBar(materialToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-
-        materialToolbar.setNavigationOnClickListener {
-            onBackPressed()
-        }
+        materialToolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
     private fun loadUserProfile() {
-        val userName = userPreferences.getUserName()
-        val userPhotoUrl = userPreferences.getUserPhotoUrl()
+        val userName = authManager.getCurrentUserName()
+        val userPhotoUrl = authManager.getCurrentUserPhotoUrl()
 
-        userNameText.text = if (userName.isNotEmpty()) userName else "User"
-
-        if (userPhotoUrl.isNotEmpty()) {
-            Glide.with(this)
-                .load(userPhotoUrl)
-                .placeholder(R.drawable.ic_default_avatar)
-                .error(R.drawable.ic_default_avatar)
-                .into(userProfileImage)
-        } else {
-            userProfileImage.setImageResource(R.drawable.ic_default_avatar)
-        }
+        userNameText.text = userName
+        userProfileImage.loadProfileImage(userPhotoUrl)
     }
 
     private fun setupRecyclerView() {
@@ -160,19 +134,14 @@ class ChatActivity : AppCompatActivity() {
                 stackFromEnd = true
             }
             adapter = chatAdapter
-            // Add extra padding at the bottom of the RecyclerView to ensure messages aren't hidden
             setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom + 16)
             clipToPadding = false
         }
     }
 
     private fun setupListeners() {
-        buttonSend.setOnClickListener {
-            sendMessage()
-        }
-        buttonBack.setOnClickListener {
-            onBackPressed()
-        }
+        buttonSend.setOnClickListener { sendMessage() }
+        buttonBack.setOnClickListener { onBackPressed() }
 
         editTextMessage.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -182,13 +151,11 @@ class ChatActivity : AppCompatActivity() {
             false
         }
 
-        // Enable/disable send button based on text input
         editTextMessage.addTextChangedListener {
             buttonSend.isEnabled = !it.isNullOrBlank()
         }
 
-        // Scroll RecyclerView when keyboard appears
-        ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { _, insets ->
             if (chatAdapter.itemCount > 0) {
                 recyclerView.scrollToPosition(chatAdapter.itemCount - 1)
             }
@@ -196,21 +163,18 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun observeViewModel() {
+    private fun setupObservers() {
+        // Observe chat messages
         viewModel.messages.observe(this) { messages ->
             chatAdapter.submitList(messages) {
-                // Scroll to the bottom when a new message is added
                 if (messages.isNotEmpty()) {
                     recyclerView.smoothScrollToPosition(messages.size - 1)
                 }
-                if(messages.isEmpty()) {
-                    layoutEmptyChat.visibility = View.VISIBLE
-                }else{
-                    layoutEmptyChat.visibility = View.GONE
-                }
+                layoutEmptyChat.visibility = if (messages.isEmpty()) View.VISIBLE else View.GONE
             }
         }
 
+        // Observe loading state
         viewModel.isLoading.observe(this) { isLoading ->
             animationViewLoading.visibility = if (isLoading) View.VISIBLE else View.GONE
             editTextMessage.isEnabled = !isLoading
@@ -218,27 +182,24 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun initializeServices() {
+        // Initialize user session and RevenueCat
+        authManager.initializeUserSession(this)
+    }
+
     private fun sendMessage() {
         val messageText = editTextMessage.text.toString().trim()
-        if (messageText.isNotEmpty() && messageText.length <= 300) {
+        if (messageText.isValidMessage()) {
             viewModel.sendMessage(messageText)
             editTextMessage.setText("")
         } else {
-            Toast.makeText(this, "Message too long or short", Toast.LENGTH_SHORT).show()
+            showToast("Message too long or short")
         }
     }
 
     private fun showWelcomeMessage() {
-        val userName = userPreferences.getUserName()
-        val welcomeMessage = if (userName.isNotEmpty()) {
-            "Welcome to the chat, $userName! 🎉"
-        } else {
-            "Welcome to the chat! 🎉"
-        }
-
-        Snackbar.make(mainLayout, welcomeMessage, Snackbar.LENGTH_LONG)
-            .setAction("Got it!") { }
-            .show()
+        val userName = authManager.getCurrentUserName()
+        mainLayout.showWelcomeSnackbar(userName)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -261,46 +222,55 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun showLogoutDialog() {
-        AlertDialog.Builder(this,R.style.CustomAlertDialog)
-            .setTitle("Sign Out")
-            .setMessage("Are you sure you want to sign out?")
-            .setPositiveButton("Sign Out") { _, _ ->
-                signOut()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        showConfirmationDialog(
+            title = "Sign Out",
+            message = "Are you sure you want to sign out?",
+            positiveText = "Sign Out",
+            onPositive = { signOut() }
+        )
     }
 
     private fun showClearChatDialog() {
-        AlertDialog.Builder(this,R.style.CustomAlertDialog)
-            .setTitle("Clear Chat")
-            .setMessage("Are you sure you want to clear all messages?")
-            .setPositiveButton("Clear") { _, _ ->
+        showConfirmationDialog(
+            title = "Clear Chat",
+            message = "Are you sure you want to clear all messages?",
+            positiveText = "Clear",
+            onPositive = {
                 viewModel.clearMessages()
-                Toast.makeText(this, "Chat cleared", Toast.LENGTH_SHORT).show()
+                showToast("Chat cleared")
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        )
     }
 
     private fun signOut() {
-        // Sign out from Firebase
-        auth.signOut()
-
-        // Clear user preferences
-        userPreferences.clearUserData()
-
-        // Navigate to login
-        redirectToLogin()
-
-        Toast.makeText(this, "Signed out successfully", Toast.LENGTH_SHORT).show()
+        authManager.signOut {
+            authManager.redirectToLogin()
+            showToast("Signed out successfully")
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        // Check authentication status when app resumes
-        if (!isUserAuthenticated()) {
-            redirectToLogin()
+        if (!authManager.isUserAuthenticated()) {
+            authManager.redirectToLogin()
+        } else {
+            // Refresh subscription status when resuming
+            subscriptionUIComponent.refreshSubscriptionStatus()
         }
+    }
+
+    // RevenueCatManager.SubscriptionCallback implementations
+    override fun onSuccess(message: String) {
+        // Handle successful initialization
+        println("RevenueCat initialized: $message")
+    }
+
+    override fun onError(error: String) {
+        println("RevenueCat error: $error")
+        showToast("Premium services temporarily unavailable")
+    }
+
+    override fun onUserCancelled() {
+        // Not applicable for initialization
     }
 }

@@ -52,6 +52,18 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:shapeAppearanceOverlay="@style/CircularImageView" />
 
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/buyPremium"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/baseline_generating_tokens_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/userProfileImage"
+                app:layout_constraintTop_toTopOf="parent"
+                app:shapeAppearanceOverlay="@style/CircularImageView" />
+
             <!-- User Info -->
             <LinearLayout
                 android:layout_width="0dp"
@@ -60,7 +72,7 @@
                 android:layout_marginEnd="8dp"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/userProfileImage"
+                app:layout_constraintStart_toEndOf="@+id/buyPremium"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
