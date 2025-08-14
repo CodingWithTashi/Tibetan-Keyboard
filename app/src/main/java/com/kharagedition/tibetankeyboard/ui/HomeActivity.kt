@@ -22,6 +22,8 @@ import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
+import com.kharagedition.tibetankeyboard.BuildConfig
+
 
 
 class HomeActivity : InputMethodActivity() {
@@ -50,7 +52,12 @@ class HomeActivity : InputMethodActivity() {
 
     @SuppressLint("NewApi")
     private fun initNativeAds() {
-        val adLoader = AdLoader.Builder(this, AppConstant.TEST_ADS_NATIVE)
+        val adUnitId = if (BuildConfig.DEBUG) {
+            AppConstant.TEST_APP_ID
+        } else {
+            AppConstant.PRODUCTION_ADS_NATIVE
+        }
+        val adLoader = AdLoader.Builder(this, adUnitId)
             .forNativeAd { ad: NativeAd ->
                 if (isDestroyed) {
                     ad.destroy()

@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep Firestore model classes
+-keep class com.kharagedition.tibetankeyboard.util.User { *; }
+-keep class com.kharagedition.tibetankeyboard.util.DeviceInfo { *; }
+-keep class com.kharagedition.tibetankeyboard.util.** { *; }
+
+# Keep Firebase Firestore
+-keep class com.google.firebase.firestore.** { *; }

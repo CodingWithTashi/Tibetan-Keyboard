@@ -15,4 +15,8 @@
 .cxx
 local.properties
 /app/release
+/data-migration/node_modules
+/data-migration/.env
+/data-migration/tibetan-keyboard.json
+
 
