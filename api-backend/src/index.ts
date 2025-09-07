@@ -14,12 +14,24 @@ import {
 import {
   validateTranslateRequest,
   validateGrammarRequest,
+  validateChatRequest,
 } from "./middleware/validation";
 import { errorHandler } from "./middleware/errorHandler";
-import { ApiResponse, TranslateRequest, GrammarRequest } from "./types";
+import {
+  ApiResponse,
+  TranslateRequest,
+  GrammarRequest,
+  GeminiChatRequest,
+  GeminiChatResponse,
+} from "./types";
 import { translateText } from "./services/translationService";
 import { freeTranslateText } from "./services/freeTranslationService";
 import { log } from "console";
+import {
+  ChatSessionManager,
+  generateSessionId,
+} from "./manager/ChatSessionManager";
+import { user } from "firebase-functions/v1/auth";
 
 // Set global options for all functions
 setGlobalOptions({
@@ -111,6 +123,100 @@ app.post(
     }
   }
 );
+
+// Chat with gemini
+
+app.post(
+  "/chat",
+  //validateApiKey,
+  validateChatRequest,
+  //checkUserLimits("translation"),
+  async (req, res) => {
+    try {
+      console.log("Received chat request:", req.body);
+
+      const { message, sessionId, resetChat }: GeminiChatRequest = req.body;
+      const userId = req.headers["userid"] as string;
+
+      // Generate or use provided session ID
+      //const currentSessionId = sessionId || generateSessionId();
+      const currentSessionId = userId;
+      console.log(
+        `Processing chat for user ${userId}, session: ${currentSessionId}`
+      );
+
+      // Reset chat session if requested
+      if (resetChat) {
+        ChatSessionManager.resetSession(currentSessionId);
+      }
+
+      // Send message to Gemini and get Tibetan response
+      const tibetanResponse = await ChatSessionManager.sendMessage(
+        currentSessionId,
+        message
+      );
+
+      console.log("Chat response generated successfully");
+
+      // Calculate usage
+      const charactersUsed = message.length + tibetanResponse.length;
+      const remainingCharacters = Math.max(
+        0,
+        ((req as any).remainingCredits || 2000) - charactersUsed
+      );
+
+      const response: GeminiChatResponse = {
+        success: true,
+        data: {
+          response: tibetanResponse,
+          sessionId: currentSessionId,
+        },
+        usage: {
+          charactersUsed,
+          remainingCharacters,
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error("Chat error:", error);
+
+      res.status(500).json({
+        success: false,
+        error: "Chat failed",
+        message:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  }
+);
+
+// Additional endpoint to reset specific chat session
+app.post("/chat/reset", async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({
+        success: false,
+        error: "Session ID required",
+      });
+    }
+
+    ChatSessionManager.resetSession(sessionId);
+
+    return res.json({
+      success: true,
+      message: "Chat session reset successfully",
+    });
+  } catch (error) {
+    console.error("Reset session error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to reset session",
+    });
+  }
+});
 
 // Grammar check endpoint
 app.post(

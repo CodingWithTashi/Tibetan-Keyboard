@@ -81,3 +81,39 @@ export function validateGrammarRequest(
 
   next();
 }
+
+export function validateChatRequest(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  console.log("Header userId:", req.headers["userid"]);
+
+  if (req.headers["userid"] == null || req.headers["userid"] === "undefined") {
+    res.status(400).json({
+      success: false,
+      error: "Invalid request",
+      message: "User ID is required in headers",
+    });
+    return;
+  }
+  const { message } = req.body;
+
+  if (!message || typeof message !== "string" || message.trim().length === 0) {
+    res.status(400).json({
+      success: false,
+      error: "Invalid request",
+      message: "Message is required and must be a non-empty string",
+    });
+  }
+
+  if (message.length > 5000) {
+    res.status(400).json({
+      success: false,
+      error: "Message too long",
+      message: "Message must be less than 5000 characters",
+    });
+  }
+
+  next();
+}

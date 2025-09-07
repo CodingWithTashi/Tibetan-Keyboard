@@ -50,8 +50,8 @@ class AIKeyboardView @JvmOverloads constructor(
     private var isOptionsExpanded = false
     private var currentOriginalText = ""
     private var currentSuggestedText = ""
-    private var currentSourceLang = "bo" // Tibetan
-    private var currentTargetLang = "en" // English
+    private var currentSourceLang = "en" // English
+    private var currentTargetLang = "bo" // Tibetan
     private val aiService = AIService()
 
     init {

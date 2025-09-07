@@ -37,3 +37,23 @@ export interface UserLimits {
   grammarUsed: number;
   resetDate: string;
 }
+
+export interface GeminiChatRequest {
+  message: string;
+  sessionId?: string;
+  resetChat?: boolean;
+}
+
+export interface GeminiChatResponse {
+  success: boolean;
+  data?: {
+    response: string;
+    sessionId: string;
+  };
+  error?: string;
+  message?: string;
+  usage?: {
+    charactersUsed: number;
+    remainingCharacters: number;
+  };
+}

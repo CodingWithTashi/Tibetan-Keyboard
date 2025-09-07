@@ -190,7 +190,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     private fun sendMessage() {
         val messageText = editTextMessage.text.toString().trim()
         if (messageText.isValidMessage()) {
-            viewModel.sendMessage(messageText)
+            viewModel.sendMessage(messageText,authManager.getUser()?.uid ?: "")
             editTextMessage.setText("")
         } else {
             showToast("Message too long or short")

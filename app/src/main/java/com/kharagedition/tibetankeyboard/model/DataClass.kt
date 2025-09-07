@@ -97,3 +97,22 @@ data class GrammarCheckResponse(
     @SerialName("processing_time_ms")
     val processingTimeMs: Double
 )
+@Serializable
+data class GeminiChatRequest(
+    val message: String,
+    val sessionId: String? = null,
+    val resetChat: Boolean? = false
+)
+@Serializable
+data class GeminiChatResponse(
+    val success: Boolean,
+    val data: ChatData? = null,
+    val error: String? = null,
+    val message: String? = null,
+    val usage: UsageInfo? = null
+)
+@Serializable
+data class ChatData(
+    val response: String,
+    val sessionId: String
+)
