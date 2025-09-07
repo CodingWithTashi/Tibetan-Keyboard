@@ -23,6 +23,34 @@ class AIService {
         val improvements: List<String>
     )
 
+    data class TranslationResult(
+        val translatedText: String,
+        val sourceLanguage: String,
+        val targetLanguage: String,
+        val confidence: Double
+    )
+
+    // Translation API Request/Response data classes
+    @Serializable
+    data class TranslationRequest(
+        val text: String,
+        @SerialName("source_lang")
+        val sourceLang: String,
+        @SerialName("target_lang")
+        val targetLang: String
+    )
+
+    @Serializable
+    data class TranslationResponse(
+        @SerialName("translated_text")
+        val translatedText: String,
+        @SerialName("source_language")
+        val sourceLanguage: String,
+        @SerialName("target_language")
+        val targetLanguage: String,
+        val confidence: Double
+    )
+
     // API Request/Response data classes
     @Serializable
     data class GrammarCheckRequest(
@@ -89,9 +117,90 @@ class AIService {
 
             } catch (e: Exception) {
                 println("Error: ${e.message}")
-                e.printStackTrace() // Add this to see the full stack trace
+                e.printStackTrace()
                 GrammarResult(text, listOf("Error occurred during grammar check: ${e.message}"))
             }
+        }
+    }
+
+    suspend fun translateText(text: String, sourceLang: String, targetLang: String): TranslationResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (text.isEmpty()) {
+                    return@withContext TranslationResult("", sourceLang, targetLang, 0.0)
+                }
+
+                val response = RetrofitClient.api.translateText(TranslationRequest(text = text, sourceLang = sourceLang, targetLang = targetLang))
+
+
+                // Simulate API delay for now
+                delay(1500)
+
+                // Mock translation logic - replace with actual API call later
+                val translatedText = when {
+                    sourceLang == "bo" && targetLang == "en" -> {
+                        // Tibetan to English mock translation
+                        mockTibetanToEnglish(text)
+                    }
+                    sourceLang == "en" && targetLang == "bo" -> {
+                        // English to Tibetan mock translation
+                        mockEnglishToTibetan(text)
+                    }
+                    else -> text
+                }
+
+                TranslationResult(
+                    translatedText = translatedText,
+                    sourceLanguage = getLanguageName(sourceLang),
+                    targetLanguage = getLanguageName(targetLang),
+                    confidence = 0.95
+                )
+
+            } catch (e: Exception) {
+                println("Translation error: ${e.message}")
+                e.printStackTrace()
+                TranslationResult(
+                    translatedText = text,
+                    sourceLanguage = getLanguageName(sourceLang),
+                    targetLanguage = getLanguageName(targetLang),
+                    confidence = 0.0
+                )
+            }
+        }
+    }
+
+    private fun mockTibetanToEnglish(tibetanText: String): String {
+        // Mock translations for common Tibetan phrases
+        val mockTranslations = mapOf(
+            "བཀྲ་ཤིས་བདེ་ལེགས།" to "Hello and good fortune!",
+            "ཐུགས་རྗེ་ཆེ།" to "Thank you very much.",
+            "ཁྱོད་ཀྱི་མིང་ལ་གང་ཟེར་གྱི་ཡོད།" to "What is your name?",
+            "ང་ལ་དགའ་པོ་བྱུང་།" to "I am happy.",
+            "བོད་སྐད།" to "Tibetan language"
+        )
+
+        return mockTranslations[tibetanText] ?: "English translation of: $tibetanText"
+    }
+
+    private fun mockEnglishToTibetan(englishText: String): String {
+        // Mock translations for common English phrases
+        val mockTranslations = mapOf(
+            "hello" to "བཀྲ་ཤིས་བདེ་ལེགས།",
+            "thank you" to "ཐུགས་རྗེ་ཆེ།",
+            "what is your name" to "ཁྱོད་ཀྱི་མིང་ལ་གང་ཟེར་གྱི་ཡོད།",
+            "i am happy" to "ང་ལ་དགའ་པོ་བྱུང་།",
+            "tibetan" to "བོད་པ།"
+        )
+
+        val lowerText = englishText.lowercase().trim()
+        return mockTranslations[lowerText] ?: "བོད་སྐད་དུ་བསྒྱུར་བ། $englishText"
+    }
+
+    private fun getLanguageName(langCode: String): String {
+        return when (langCode) {
+            "bo" -> "Tibetan"
+            "en" -> "English"
+            else -> langCode
         }
     }
 

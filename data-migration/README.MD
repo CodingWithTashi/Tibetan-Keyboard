@@ -1,0 +1,3 @@
+# Migrade
+
+npm run migrate

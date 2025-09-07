@@ -1,0 +1,8 @@
+export const LIMITS = {
+  DAILY_TRANSLATION_CHARS: 5000,
+  DAILY_GRAMMAR_CHARS: 3000,
+  MAX_TEXT_LENGTH: 1000,
+  MIN_TEXT_LENGTH: 1,
+};
+
+export const SUPPORTED_LANGUAGES = ["en", "bo", "zh-CN"];

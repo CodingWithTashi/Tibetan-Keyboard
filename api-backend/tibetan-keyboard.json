@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "tibetan-keyboard",
+  "private_key_id": "24d5d3e31a9d8d29aac0a9697b503d197920c39e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCmN3OdgqqXEYPB\nSOiynaGVWqG96RVkRFY1y/C5Q3TUVulOvZawuPtkHF1nj4ksKfe8Jw7auanV+IUA\nKydDGdHFMMe4H1g3FtDRdwhItjqEAAITIl4tQmKWC/k2As4KocITQrja8iEDNG1T\n/VIcjxdS/jkT2vP0c6Ox08hPo4BdYAB6fdUQDN+fgOYv1GkGVwW1JTsFGxFpq5dj\nGI31yTDpqxfW3JGWUuCkULE0HdsZuPjQgl6W73gnNby71vU4F4nWrtcUM1aWgFP6\nArBe7zgLHsRssnrgbPKNlMPW0Sc+BQWGmwldn7KGIBYLWP6VbNEoNLFTCydEw4cP\n44Z8io3DAgMBAAECggEAOwOgIHHmqHlW+rasq9Isrw79MyTA7BcZNsOAZf6tycBL\n2KGWkYsz8mDhxuWe8de6tgp2CzF1O9ufOSaZK4lMwcLmfhhe5TxMCrrE7bAJiZlJ\nI0sF/fK+dwCsTEFlrz+sXNNJN69VCkLAeFwOHcauJNDPKh4IlKfEHFyRl7j41+2t\nl2xJrvo1zvcQA+7uL0LOavjjNFsOJhZjJfkBPqLpLuEcoB7eGIX3WYe2RXtRFHAO\n+ImWzXkolZtslHv5kf9rrXsGdpFCn9iYlOl0i66hljI4q20qRJyApFUXF2JDWdA9\nle0uSUjA+6EI0V0knJEzpE4YhyXDgdKNSiW6XzBPcQKBgQDdOQ/WAYzVwBRuFvKz\nfUvN6C6OwvuSN5Nz+6s9OUrMuhuf1WozzlAJfyYR/RyxC0SKunTQ1X4ncNh6dHwZ\nTJo6z7YGhT5pEQTAAJPHDYau4IMGhZdtonYjVSQLhZhltD8j/E09jlUuxY2L+Jfn\n/c9bdJ+0eJDhV2UIwDg1Zh9acwKBgQDAWLSqnm9Z0+2T6nFdzaQxe4BcZzJoxDvC\nmr6AkknQldTuCbygoAje833l8zhjXPJxQlipH1bxXyKFzfPoQkjLUso7m1qB1Srz\nX2IDE+Ia3L/UcFA7tiFlOTlyYLsKAetWo1/gJbYZqrBy6OAlrHXd5VX9+nwXn9Ze\ntK2o81CbcQKBgC6Lm/5eEyDCKkpDf8suGK35JRqagc3w7ZBgqlXWYRuUKM3HXHIL\n/aER5JOyWsARa9l4g62QzdtEjfet3JKCII0xOM5EaK44i3ROasld2jGfQVI093h0\nz0B94HigIkF73DEZG7NQ6DFQFYkWw/dm2qMWdafGGk2fUr21m934X65rAoGAZzZy\nY+e2eq5FGw0/ngU+KStLWsope5xpMOjWdqmJIHt2EfF5nXuipvhjw2O7C16R3gKr\nDr15avYQ0VoNmsEOzMP1Lv0TGP4pGQVC08H0n1N7QGSwOQpnayjE0cJkO1+CSDBM\nvzudNrKoElEyDiU37kUk2q9xrT+gyZsMYM+HnpECgYAs3WqFg8nLg0eIA9cMFDqN\nolwKabHLYPwAQcB1egDLLhpAgao71PgK9/BolPfoVsLT11jqJy+WgHHsNo1+McOy\nLyQLIpULykNFOjzJLtRoItUeAV7yaNZGN/nwQBdJI1MqcUoNQ5qfKPJ4l1grvpT9\n1UmpYcQipmLFGqGQ7tWyEA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-4krrt@tibetan-keyboard.iam.gserviceaccount.com",
+  "client_id": "108195716904026534963",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-4krrt%40tibetan-keyboard.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

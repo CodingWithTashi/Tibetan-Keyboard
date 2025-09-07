@@ -230,6 +230,10 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         aiKeyboardView?.showNormalKeyboard()
     }
 
+    override fun onTranslateReplace(originalText: String, translatedText: String) {
+
+    }
+
     override fun onRephraseReplace(originalText: String, rephrasedText: String) {
         val inputConnection = currentInputConnection
         if (inputConnection != null) {
