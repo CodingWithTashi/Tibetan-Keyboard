@@ -13,6 +13,9 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ai.AIService
+import com.kharagedition.tibetankeyboard.model.GrammarResult
+import com.kharagedition.tibetankeyboard.model.RephraseResult
+import com.kharagedition.tibetankeyboard.model.TranslationResult
 import kotlinx.coroutines.*
 
 class AIKeyboardView @JvmOverloads constructor(
@@ -375,7 +378,7 @@ class AIKeyboardView @JvmOverloads constructor(
         aiReplaceBtn.alpha = 0.5f
     }
 
-    private fun showGrammarResult(result: AIService.GrammarResult) {
+    private fun showGrammarResult(result: GrammarResult) {
         loadingProgressBar.visibility = View.GONE
         currentSuggestedText = result.correctedText
         suggestedTextView.text = result.correctedText
@@ -385,17 +388,17 @@ class AIKeyboardView @JvmOverloads constructor(
         aiReplaceBtn.text = "Apply Corrections"
     }
 
-    private fun showTranslationResult(result: AIService.TranslationResult) {
+    private fun showTranslationResult(result: TranslationResult) {
         loadingProgressBar.visibility = View.GONE
         currentSuggestedText = result.translatedText
         suggestedTextView.text = result.translatedText
-        aiSummaryText.text = "Translated from ${result.sourceLanguage} to ${result.targetLanguage} (${(result.confidence * 100).toInt()}% confidence)"
+        aiSummaryText.text = "Translated from ${result.sourceLanguage} to ${result.targetLanguage}"
         aiReplaceBtn.isEnabled = true
         aiReplaceBtn.alpha = 1f
         aiReplaceBtn.text = "Use Translation"
     }
 
-    private fun showRephraseResult(result: AIService.RephraseResult) {
+    private fun showRephraseResult(result: RephraseResult) {
         loadingProgressBar.visibility = View.GONE
         currentSuggestedText = result.rephrasedText
         suggestedTextView.text = result.rephrasedText

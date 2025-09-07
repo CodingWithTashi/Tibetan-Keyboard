@@ -72,14 +72,20 @@ app.post(
     try {
       console.log("Received translation request:", req.body);
 
-      const { text, from, to }: TranslateRequest = req.body;
+      const { text, sourceLang, targetLang }: TranslateRequest = req.body;
       //const userId = (req as any).userId;
       const userId = req.headers["userid"] as string;
 
-      console.log(`Translating text for user ${userId} from ${from} to ${to}`);
+      console.log(
+        `Translating text for user ${userId} from ${sourceLang} to ${targetLang}`
+      );
 
       //const translatedText = await translateText(text, from, to);
-      const translatedText = await freeTranslateText(text, from, to);
+      const translatedText = await freeTranslateText(
+        text,
+        sourceLang,
+        targetLang
+      );
       console.log("Translation successful:", translatedText);
 
       // Update user usage

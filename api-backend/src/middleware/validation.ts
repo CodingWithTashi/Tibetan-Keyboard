@@ -12,7 +12,7 @@ const translateSchema = Joi.object({
       "string.max": `Text must not exceed ${LIMITS.MAX_TEXT_LENGTH} characters`,
       "any.required": "Text is required",
     }),
-  from: Joi.string()
+  sourceLang: Joi.string()
     .valid(...SUPPORTED_LANGUAGES, "auto")
     .required()
     .messages({
@@ -21,7 +21,7 @@ const translateSchema = Joi.object({
       )}, auto`,
       "any.required": "Source language is required",
     }),
-  to: Joi.string()
+  targetLang: Joi.string()
     .valid(...SUPPORTED_LANGUAGES)
     .required()
     .messages({

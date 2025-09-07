@@ -26,12 +26,21 @@ object RetrofitClient {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    val api: YigChikAPI by lazy {
+    val geminiAPI: YigChikGeminiAPI by lazy {
         Retrofit.Builder()
             .baseUrl("https://yig-chik-gfg2cdb5a3dycvh8.centralindia-01.azurewebsites.net/")
             .client(httpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(YigChikAPI::class.java)
+            .create(YigChikGeminiAPI::class.java)
+    }
+
+    val translateAPI: YigChikTranslateAPI by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://asia-south1-tibetan-keyboard.cloudfunctions.net/api/")
+            .client(httpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(YigChikTranslateAPI::class.java)
     }
 }

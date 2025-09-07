@@ -11,8 +11,8 @@ export interface ApiResponse<T = any> {
 
 export interface TranslateRequest {
   text: string;
-  from: string;
-  to: string;
+  sourceLang: string;
+  targetLang: string;
 }
 
 export interface GrammarRequest {
