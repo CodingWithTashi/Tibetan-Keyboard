@@ -42,3 +42,4 @@ next-env.d.ts
 /dist
 
 /tibetan-keyboard.json
+/firebase-debug.log

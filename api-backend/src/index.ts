@@ -1,4 +1,5 @@
-import * as functions from "firebase-functions";
+import { onRequest } from "firebase-functions/v2/https";
+import { setGlobalOptions } from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import express from "express";
 import cors from "cors";
@@ -19,6 +20,14 @@ import { ApiResponse, TranslateRequest, GrammarRequest } from "./types";
 import { translateText } from "./services/translationService";
 import { freeTranslateText } from "./services/freeTranslationService";
 import { log } from "console";
+
+// Set global options for all functions
+setGlobalOptions({
+  region: "asia-south1", // Mumbai region
+  maxInstances: 10,
+  timeoutSeconds: 60,
+  memory: "256MiB",
+});
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -137,5 +146,18 @@ app.post(
 // Error handling middleware
 app.use(errorHandler);
 
-// Export the function
-export const api = functions.https.onRequest(app);
+// Export the v2 function with specific configuration
+export const api = onRequest(
+  {
+    cors: true,
+    region: "asia-south1", // Mumbai region
+    maxInstances: 10,
+    timeoutSeconds: 60,
+    memory: "256MiB",
+    // Add additional options if needed
+    // invoker: 'public', // Makes function publicly accessible
+    // secrets: [], // Add secrets if needed
+    // serviceAccount: '', // Custom service account if needed
+  },
+  app
+);
