@@ -8,6 +8,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.LottieAnimationView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
@@ -25,11 +27,13 @@ import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.chat.ChatAdapter
 import com.kharagedition.tibetankeyboard.chat.ChatViewModel
+import com.kharagedition.tibetankeyboard.subscription.IsPremiumListener
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
 import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
 import com.kharagedition.tibetankeyboard.util.*
 
-class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback {
+class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback,
+    IsPremiumListener {
 
     // ViewModels and Managers
     private val viewModel: ChatViewModel by viewModels()
@@ -49,7 +53,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var buttonBack: ImageButton
     private lateinit var buyPremium: ShapeableImageView
-
+    private var isPremium: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -110,7 +114,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
         loadUserProfile()
 
         // Initialize subscription UI component
-        subscriptionUIComponent = SubscriptionUIComponent(this, buyPremium)
+        subscriptionUIComponent = SubscriptionUIComponent(this, buyPremium,this)
     }
 
     private fun setupToolbar() {
@@ -140,7 +144,13 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     }
 
     private fun setupListeners() {
-        buttonSend.setOnClickListener { sendMessage() }
+        buttonSend.setOnClickListener {
+            if(!isPremium){
+                Toast.makeText(this, ("This feature is available only for Premium users"), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            sendMessage()
+        }
         buttonBack.setOnClickListener { onBackPressed() }
 
         editTextMessage.setOnEditorActionListener { _, actionId, _ ->
@@ -272,5 +282,29 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
 
     override fun onUserCancelled() {
         // Not applicable for initialization
+    }
+
+    override fun onPremiumStatusChanged(isPremium: Boolean) {
+        buyPremium.visibility = if (isPremium) View.GONE else View.VISIBLE
+        this.isPremium = isPremium
+        if(!isPremium){
+            editTextMessage.setText("")
+            editTextMessage.isEnabled = false
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Premium Required")
+                .setMessage("This feature is available only for Premium users.\n\nUpgrade now to unlock all features!")
+                .setIcon(R.drawable.baseline_generating_tokens_24)
+                .setPositiveButton("Upgrade") { dialog, _ ->
+
+                    subscriptionUIComponent.purchasePremium()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Maybe Later") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }else{
+            editTextMessage.isEnabled = true
+        }
     }
 }

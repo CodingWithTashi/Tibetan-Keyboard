@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard.auth
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -69,11 +70,17 @@ class AuthManager(private val context: Context) {
      * Redirect to login activity
      */
     fun redirectToLogin() {
-        if (context is AppCompatActivity) {
-            val intent = Intent(context, LoginActivity::class.java)
-            context.startActivity(intent)
-            context.finish()
+
+
+        val intent = Intent(context, LoginActivity::class.java)
+
+        if (context !is Activity) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+
+        context.startActivity(intent)
+
+        (context as? Activity)?.finish()
     }
 
     /**

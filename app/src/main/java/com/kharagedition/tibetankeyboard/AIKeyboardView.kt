@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.*
 import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ai.AIService
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.model.GrammarResult
 import com.kharagedition.tibetankeyboard.model.RephraseResult
 import com.kharagedition.tibetankeyboard.model.TranslationResult
@@ -31,7 +32,7 @@ class AIKeyboardView @JvmOverloads constructor(
     private lateinit var rephraseBtn: Button
     private lateinit var normalKeyboardContainer: FrameLayout
     private lateinit var aiInterfaceContainer: LinearLayout
-
+    private lateinit var authManager: AuthManager
     private lateinit var aiBackBtn: ImageView
     private lateinit var aiTitleText: TextView
     private lateinit var originalTextView: TextView
@@ -61,6 +62,8 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun setupView() {
         LayoutInflater.from(context).inflate(R.layout.ai_keyboard_layout, this, true)
+        authManager = AuthManager(context)
+
         initializeViews()
         setupClickListeners()
         updateLanguageLabels()
@@ -90,7 +93,16 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun setupClickListeners() {
-        aiOptionsIcon.setOnClickListener { toggleAIOptions() }
+        aiOptionsIcon.setOnClickListener {
+
+            // Check authentication first
+            if (!authManager.isUserAuthenticated()) {
+                authManager.redirectToLogin()
+            }else{
+                toggleAIOptions()
+            }
+
+        }
 
         grammarBtn.setOnClickListener {
             Toast.makeText(context, "Coming in next release....", Toast.LENGTH_SHORT).show()
@@ -372,12 +384,16 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun swapTranslationLanguages() {
         val tempLang = currentSourceLang
+
         currentSourceLang = currentTargetLang
+
         currentTargetLang = tempLang
 
         // Animate the swap
         val rotateAnimator = ObjectAnimator.ofFloat(translateSwapBtn, "rotation", 0f, 180f)
+
         rotateAnimator.duration = 30
+
         rotateAnimator.start()
 
         updateLanguageLabels()

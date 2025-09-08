@@ -75,7 +75,12 @@ class ChatViewModel : ViewModel() {
         }
     }
 
-    fun clearMessages() {
-        _messages.value = emptyList()
+     fun clearMessages() {
+        viewModelScope.launch {
+            repository.resetChat();
+            _messages.value = emptyList()
+
+        }
+
     }
 }
