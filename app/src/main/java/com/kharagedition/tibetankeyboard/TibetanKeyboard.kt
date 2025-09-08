@@ -231,7 +231,15 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onTranslateReplace(originalText: String, translatedText: String) {
-
+        val inputConnection = currentInputConnection
+        if (inputConnection != null) {
+            // Clear current text and insert rephrased text
+            val textLength = originalText.length
+            inputConnection.deleteSurroundingText(textLength, 0)
+            inputConnection.commitText(translatedText, 1)
+        }
+        currentMode = KeyboardMode.NORMAL
+        aiKeyboardView?.showNormalKeyboard()
     }
 
     override fun onRephraseReplace(originalText: String, rephrasedText: String) {

@@ -66,4 +66,11 @@
     <string name="error_occurred">An error occurred</string>
     <string name="try_again">Try Again</string>
     <string name="default_web_client_id">116616062750-5kt7phap4d1o0vcusigk3ttg3dlcijfd.apps.googleusercontent.com</string>
+    <string name="fix">Fix</string>
+    <string name="translate">Translate</string>
+    <string name="rephrase">Rephrase</string>
+    <string name="retry">Retry</string>
+    <string name="use_translation">Use Translation</string>
+    <string name="use_rephrase">Use Rephrase</string>
+    <string name="apply_corrections">Apply Corrections</string>
 </resources>

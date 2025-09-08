@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
-import androidx.core.content.ContextCompat
 import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ai.AIService
 import com.kharagedition.tibetankeyboard.model.GrammarResult
@@ -40,6 +39,7 @@ class AIKeyboardView @JvmOverloads constructor(
     private lateinit var aiSummaryText: TextView
     private lateinit var aiReplaceBtn: Button
     private lateinit var aiCancelBtn: Button
+    private lateinit var aiInrBtn: Button
     private lateinit var loadingProgressBar: ProgressBar
     private lateinit var translateSwapBtn: ImageView
     private lateinit var sourceLanguageText: TextView
@@ -77,6 +77,7 @@ class AIKeyboardView @JvmOverloads constructor(
         aiInterfaceContainer = findViewById(R.id.ai_interface_container)
         aiBackBtn = findViewById(R.id.ai_back_btn)
         aiTitleText = findViewById(R.id.ai_title_text)
+        aiInrBtn = findViewById(R.id.ai_inner_btn)
         originalTextView = findViewById(R.id.original_text_view)
         suggestedTextView = findViewById(R.id.suggested_text_view)
         aiSummaryText = findViewById(R.id.ai_summary_text)
@@ -92,13 +93,15 @@ class AIKeyboardView @JvmOverloads constructor(
         aiOptionsIcon.setOnClickListener { toggleAIOptions() }
 
         grammarBtn.setOnClickListener {
+            Toast.makeText(context, "Coming in next release....", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener;
             val currentText = getCurrentInputText()
-            if(currentText.isEmpty()) {
+            if (currentText.isEmpty()) {
                 Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            showGrammarInterface(currentText)
-            hideAIOptions()
+            handleGrammarClick(currentText)
+            showAIInterface()
         }
 
         translateBtn.setOnClickListener {
@@ -107,8 +110,8 @@ class AIKeyboardView @JvmOverloads constructor(
                 Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            showTranslateInterface(currentText)
-            hideAIOptions()
+           handleTranslateClick(currentText)
+            showAIInterface()
         }
 
         rephraseBtn.setOnClickListener {
@@ -117,8 +120,20 @@ class AIKeyboardView @JvmOverloads constructor(
                 Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            showRephraseInterface(currentText)
-            hideAIOptions()
+          handleRephraseClick(currentText)
+            showAIInterface()
+        }
+        aiInrBtn.setOnClickListener() {
+            val currentText = getCurrentInputText()
+            if(currentText.isEmpty()) {
+                Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            when (aiInrBtn.text.toString()) {
+                context.resources.getString(R.string.fix) -> handleGrammarClick(currentText)
+                context.resources.getString(R.string.translate) ->  handleTranslateClick(currentText)
+                context.resources.getString(R.string.rephrase) -> handleRephraseClick(currentText)
+            }
         }
 
         aiBackBtn.setOnClickListener {
@@ -128,10 +143,10 @@ class AIKeyboardView @JvmOverloads constructor(
 
         aiReplaceBtn.setOnClickListener {
             if (currentSuggestedText.isNotEmpty()) {
-                when (aiTitleText.text.toString()) {
-                    "Grammar Check" -> aiKeyboardInterface?.onGrammarReplace(currentOriginalText, currentSuggestedText)
-                    "Translate Text" -> aiKeyboardInterface?.onTranslateReplace(currentOriginalText, currentSuggestedText)
-                    "Rephrase Text" -> aiKeyboardInterface?.onRephraseReplace(currentOriginalText, currentSuggestedText)
+                when (aiReplaceBtn.text.toString()) {
+                    context.resources.getString(R.string.apply_corrections) -> aiKeyboardInterface?.onGrammarReplace(currentOriginalText, currentSuggestedText)
+                    context.resources.getString(R.string.use_translation) -> aiKeyboardInterface?.onTranslateReplace(currentOriginalText, currentSuggestedText)
+                    context.resources.getString(R.string.use_rephrase) -> aiKeyboardInterface?.onRephraseReplace(currentOriginalText, currentSuggestedText)
                 }
             }
         }
@@ -144,6 +159,24 @@ class AIKeyboardView @JvmOverloads constructor(
         translateSwapBtn.setOnClickListener {
             swapTranslationLanguages()
         }
+    }
+
+    private fun handleRephraseClick(currentText: String) {
+
+        showRephraseInterface(currentText)
+        hideAIOptions()
+    }
+
+    private fun handleTranslateClick(currentText: String) {
+
+        showTranslateInterface(currentText)
+        hideAIOptions()
+    }
+
+    private fun handleGrammarClick(currentText: String) {
+
+        showGrammarInterface(currentText)
+        hideAIOptions()
     }
 
     private fun getCurrentInputText(): String {
@@ -167,7 +200,7 @@ class AIKeyboardView @JvmOverloads constructor(
         grammarBtn.setBackgroundColor(lighterColor)
         translateBtn.setBackgroundColor(lighterColor)
         rephraseBtn.setBackgroundColor(lighterColor)
-        aiReplaceBtn.setBackgroundColor(lighterColor)
+        //aiReplaceBtn.setBackgroundColor(lighterColor)
         val textColor = if (isColorDark(colorInt)) Color.WHITE else Color.BLACK
         grammarBtn.setTextColor(textColor)
         translateBtn.setTextColor(textColor)
@@ -197,7 +230,7 @@ class AIKeyboardView @JvmOverloads constructor(
         rotateAnimator.duration = 300
 
         aiOptionsContainer.visibility = View.VISIBLE
-        val expandAnimator = ValueAnimator.ofInt(0, 120)
+        val expandAnimator = ValueAnimator.ofInt(0, 60)
         expandAnimator.duration = 300
         expandAnimator.addUpdateListener { animator ->
             val value = animator.animatedValue as Int
@@ -230,7 +263,7 @@ class AIKeyboardView @JvmOverloads constructor(
         val rotateAnimator = ObjectAnimator.ofFloat(aiOptionsIcon, "rotation", 180f, 0f)
         rotateAnimator.duration = 300
 
-        val collapseAnimator = ValueAnimator.ofInt(120, 0)
+        val collapseAnimator = ValueAnimator.ofInt(60, 0)
         collapseAnimator.duration = 300
         collapseAnimator.addUpdateListener { animator ->
             val value = animator.animatedValue as Int
@@ -264,7 +297,7 @@ class AIKeyboardView @JvmOverloads constructor(
         originalTextView.text = text
         hideTranslationControls()
         showLoadingState()
-        showAIInterface()
+
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -284,7 +317,7 @@ class AIKeyboardView @JvmOverloads constructor(
         originalTextView.text = text
         showTranslationControls()
         showLoadingState()
-        showAIInterface()
+
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -304,7 +337,7 @@ class AIKeyboardView @JvmOverloads constructor(
         originalTextView.text = text
         hideTranslationControls()
         showLoadingState()
-        showAIInterface()
+
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -371,6 +404,7 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun showLoadingState() {
+        aiInrBtn.visibility = View.GONE
         loadingProgressBar.visibility = View.VISIBLE
         suggestedTextView.text = "Analyzing text..."
         aiSummaryText.text = "Please wait while we process your request."
@@ -379,13 +413,16 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun showGrammarResult(result: GrammarResult) {
+
         loadingProgressBar.visibility = View.GONE
         currentSuggestedText = result.correctedText
         suggestedTextView.text = result.correctedText
         aiSummaryText.text = "${result.corrections.size} corrections found: ${result.corrections.joinToString(", ")}"
         aiReplaceBtn.isEnabled = true
         aiReplaceBtn.alpha = 1f
-        aiReplaceBtn.text = "Apply Corrections"
+        aiReplaceBtn.text = context.getString(R.string.apply_corrections)
+        aiInrBtn.visibility = View.VISIBLE
+        aiInrBtn.text = context.getString(R.string.fix);
     }
 
     private fun showTranslationResult(result: TranslationResult) {
@@ -395,7 +432,9 @@ class AIKeyboardView @JvmOverloads constructor(
         aiSummaryText.text = "Translated from ${result.sourceLanguage} to ${result.targetLanguage}"
         aiReplaceBtn.isEnabled = true
         aiReplaceBtn.alpha = 1f
-        aiReplaceBtn.text = "Use Translation"
+        aiReplaceBtn.text = context.getString(R.string.use_translation)
+        aiInrBtn.visibility = View.VISIBLE
+        aiInrBtn.text = context.getString(R.string.translate);
     }
 
     private fun showRephraseResult(result: RephraseResult) {
@@ -405,7 +444,9 @@ class AIKeyboardView @JvmOverloads constructor(
         aiSummaryText.text = "Style: ${result.style} - ${result.improvements.joinToString(", ")}"
         aiReplaceBtn.isEnabled = true
         aiReplaceBtn.alpha = 1f
-        aiReplaceBtn.text = "Use Rephrase"
+        aiReplaceBtn.text = context.getString(R.string.use_rephrase)
+        aiInrBtn.visibility = View.VISIBLE
+        aiInrBtn.text = context.getString(R.string.rephrase);
     }
 
     private fun showError(message: String) {
@@ -414,6 +455,8 @@ class AIKeyboardView @JvmOverloads constructor(
         aiSummaryText.text = message
         aiReplaceBtn.isEnabled = false
         aiReplaceBtn.alpha = 0.5f
+        aiInrBtn.visibility = View.VISIBLE
+        aiInrBtn.text = context.getString(R.string.retry);
     }
 
     private fun showAIInterface() {
