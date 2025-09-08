@@ -10,12 +10,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
+import androidx.lifecycle.LifecycleOwner
 import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ai.AIService
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.model.GrammarResult
 import com.kharagedition.tibetankeyboard.model.RephraseResult
 import com.kharagedition.tibetankeyboard.model.TranslationResult
+import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
 import kotlinx.coroutines.*
 
 class AIKeyboardView @JvmOverloads constructor(
@@ -54,10 +57,13 @@ class AIKeyboardView @JvmOverloads constructor(
     private var currentSourceLang = "en" // English
     private var currentTargetLang = "bo" // Tibetan
     private val aiService = AIService()
-
+    private var isPremiumUser = false;
     init {
         orientation = VERTICAL
         setupView()
+        RevenueCatManager.getInstance().isPremiumUser.observeForever{ isPremium ->
+            isPremiumUser = isPremium;
+        }
     }
 
     private fun setupView() {
@@ -96,7 +102,7 @@ class AIKeyboardView @JvmOverloads constructor(
         aiOptionsIcon.setOnClickListener {
 
             // Check authentication first
-            if (!authManager.isUserAuthenticated()) {
+            if (!authManager.isUserAuthenticated() || !isPremiumUser) {
                 authManager.redirectToLogin()
             }else{
                 toggleAIOptions()

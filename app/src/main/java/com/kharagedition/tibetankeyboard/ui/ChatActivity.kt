@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
@@ -54,6 +55,8 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     private lateinit var buttonBack: ImageButton
     private lateinit var buyPremium: ShapeableImageView
     private var isPremium: Boolean = false
+    private var premiumAlertDialog: AlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -287,10 +290,15 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     override fun onPremiumStatusChanged(isPremium: Boolean) {
         buyPremium.visibility = if (isPremium) View.GONE else View.VISIBLE
         this.isPremium = isPremium
+        if(isPremium && premiumAlertDialog?.isShowing==true){
+            premiumAlertDialog?.dismiss()
+        }
         if(!isPremium){
             editTextMessage.setText("")
             editTextMessage.isEnabled = false
-            MaterialAlertDialogBuilder(this)
+            if(premiumAlertDialog?.isShowing==true)
+                return
+            premiumAlertDialog = MaterialAlertDialogBuilder(this)
                 .setTitle("Premium Required")
                 .setMessage("This feature is available only for Premium users.\n\nUpgrade now to unlock all features!")
                 .setIcon(R.drawable.baseline_generating_tokens_24)
@@ -301,8 +309,8 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
                 }
                 .setNegativeButton("Maybe Later") { dialog, _ ->
                     dialog.dismiss()
-                }
-                .show()
+                }.create()
+            premiumAlertDialog?.show()
         }else{
             editTextMessage.isEnabled = true
         }
