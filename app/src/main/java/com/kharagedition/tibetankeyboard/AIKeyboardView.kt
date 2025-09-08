@@ -227,11 +227,11 @@ class AIKeyboardView @JvmOverloads constructor(
     private fun showAIOptions() {
         isOptionsExpanded = true
         val rotateAnimator = ObjectAnimator.ofFloat(aiOptionsIcon, "rotation", 0f, 180f)
-        rotateAnimator.duration = 300
+        rotateAnimator.duration = 30
 
         aiOptionsContainer.visibility = View.VISIBLE
         val expandAnimator = ValueAnimator.ofInt(0, 60)
-        expandAnimator.duration = 300
+        expandAnimator.duration = 30
         expandAnimator.addUpdateListener { animator ->
             val value = animator.animatedValue as Int
             val layoutParams = aiOptionsContainer.layoutParams
@@ -261,10 +261,10 @@ class AIKeyboardView @JvmOverloads constructor(
     private fun hideAIOptions() {
         isOptionsExpanded = false
         val rotateAnimator = ObjectAnimator.ofFloat(aiOptionsIcon, "rotation", 180f, 0f)
-        rotateAnimator.duration = 300
+        rotateAnimator.duration = 30
 
         val collapseAnimator = ValueAnimator.ofInt(60, 0)
-        collapseAnimator.duration = 300
+        collapseAnimator.duration = 30
         collapseAnimator.addUpdateListener { animator ->
             val value = animator.animatedValue as Int
             val layoutParams = aiOptionsContainer.layoutParams
@@ -332,17 +332,24 @@ class AIKeyboardView @JvmOverloads constructor(
 
     fun showRephraseInterface(text: String) {
         Log.d("AIKeyboardView", "showRephraseInterface called with text: $text")
-        currentOriginalText = text
-        aiTitleText.text = "Rephrase Text"
-        originalTextView.text = text
-        hideTranslationControls()
-        showLoadingState()
 
+        currentOriginalText = text
+
+        aiTitleText.text = "Rephrase Text"
+
+        originalTextView.text = text
+
+        hideTranslationControls()
+
+        showLoadingState()
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
+
                 val result = aiService.rephraseText(text)
+
                 showRephraseResult(result)
+
             } catch (e: Exception) {
                 Log.e("AIKeyboardView", "Rephrase failed", e)
                 showError("Failed to rephrase text")
@@ -370,7 +377,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
         // Animate the swap
         val rotateAnimator = ObjectAnimator.ofFloat(translateSwapBtn, "rotation", 0f, 180f)
-        rotateAnimator.duration = 300
+        rotateAnimator.duration = 30
         rotateAnimator.start()
 
         updateLanguageLabels()
