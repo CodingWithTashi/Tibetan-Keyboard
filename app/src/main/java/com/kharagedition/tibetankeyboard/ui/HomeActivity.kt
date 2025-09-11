@@ -23,14 +23,15 @@ import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 import com.kharagedition.tibetankeyboard.BuildConfig
-
+import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
 
 
 class HomeActivity : InputMethodActivity() {
     private lateinit var homeBinding: ActivityHomeBinding
+    private var isPremiumUser:Boolean = false;
     override fun onResume() {
         checkKeyboardIsEnabledOrNot()
-
+        premiumListener()
         super.onResume()
     }
 
@@ -45,9 +46,10 @@ class HomeActivity : InputMethodActivity() {
         super.onCreate(savedInstanceState)
         homeBinding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(homeBinding.root)
-        initNativeAds()
+
         checkKeyboardIsEnabledOrNot()
         initClickListener()
+
     }
 
     @SuppressLint("NewApi")
@@ -134,6 +136,9 @@ class HomeActivity : InputMethodActivity() {
         homeBinding.chatCard.setOnClickListener {
             startActivity(Intent(this, ChatActivity::class.java))
         }
+        homeBinding.manageSubscriptionCard.setOnClickListener() {
+            openView(CommonUtils.PLAY_STORE_SUBSCRIPTION_URL)
+        }
         homeBinding.sharedCard.setOnClickListener {
             try {
                 val shareIntent = Intent(Intent.ACTION_SEND)
@@ -155,7 +160,9 @@ class HomeActivity : InputMethodActivity() {
 
         }
         homeBinding.moreCard.setOnClickListener {
-            val sheet = BottomSheetDialog()
+            val sheet = BottomSheetDialog(
+                showAd = !isPremiumUser
+            )
             sheet.show(this.supportFragmentManager, "ModalBottomSheet")
         }
         homeBinding.settingCard.setOnClickListener{
@@ -167,7 +174,40 @@ class HomeActivity : InputMethodActivity() {
         homeBinding.settingCard.setOnClickListener{
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        premiumListener()
     }
+
+    private fun premiumListener() {
+        RevenueCatManager.getInstance().refreshCustomerInfo()
+        RevenueCatManager.getInstance().isPremiumUser.observe(this) { isPremium ->
+            isPremiumUser = isPremium;
+            if (isPremium) {
+                homeBinding.nativeAdsLayout.visibility = GONE
+                homeBinding.bottomBtnLayout.visibility = VISIBLE
+         /*       homeBinding.chatIcon.setColorFilter(getColor(R.color.premium_yellow))
+                homeBinding.shareIcon.setColorFilter(getColor(R.color.premium_yellow))
+                homeBinding.rateIcon.setColorFilter(getColor(R.color.premium_yellow))
+                homeBinding.moreIcon.setColorFilter(getColor(R.color.premium_yellow))
+                homeBinding.settingIcon.setColorFilter(getColor(R.color.premium_yellow))
+                homeBinding.exitIcon.setColorFilter(getColor(R.color.premium_yellow))
+                homeBinding.bagIcon.setColorFilter(getColor(R.color.premium_yellow))
+           */
+            } else {
+                homeBinding.bottomBtnLayout.visibility = GONE
+                homeBinding.nativeAdsLayout.visibility = VISIBLE
+              /*  homeBinding.chatIcon.setColorFilter(getColor(R.color.white))
+                homeBinding.shareIcon.setColorFilter(getColor(R.color.white))
+                homeBinding.rateIcon.setColorFilter(getColor(R.color.white))
+                homeBinding.moreIcon.setColorFilter(getColor(R.color.white))
+                homeBinding.settingIcon.setColorFilter(getColor(R.color.white))
+                homeBinding.exitIcon.setColorFilter(getColor(R.color.white))
+                homeBinding.bagIcon.setColorFilter(getColor(R.color.white))*/
+                initNativeAds()
+            }
+        }
+    }
+
     private fun openView(playStoreUrl: String) {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(playStoreUrl)))
     }

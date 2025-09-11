@@ -24,7 +24,8 @@
             android:defaultValue="false"
             android:icon="@drawable/ic_baseline_abc_24"
             app:key="isUme"
-            app:title="@string/enable_ume" />
+            app:title="@string/enable_ume"
+            app:isPreferenceVisible="false"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:layout="@layout/pref_cat_title"

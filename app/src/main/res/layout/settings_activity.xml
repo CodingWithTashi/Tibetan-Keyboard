@@ -21,7 +21,18 @@
         app:titleTextColor="@android:color/white"
         app:title="@string/keyboard_settings"
         app:navigationIcon="@drawable/ic_baseline_arrow_back_ios_24"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp">
+
+        <ImageView
+            android:id="@+id/premium_icon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/premium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </com.google.android.material.appbar.MaterialToolbar>
 
     <LinearLayout
         app:layout_constraintTop_toBottomOf="@+id/settings_toolbar"

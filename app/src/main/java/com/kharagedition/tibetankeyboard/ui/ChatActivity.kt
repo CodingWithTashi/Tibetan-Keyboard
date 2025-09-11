@@ -8,7 +8,6 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -135,7 +134,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     }
 
     private fun setupRecyclerView() {
-        chatAdapter = ChatAdapter()
+        chatAdapter = ChatAdapter(isPremium)
         recyclerView.apply {
             layoutManager = LinearLayoutManager(this@ChatActivity).apply {
                 stackFromEnd = true
@@ -149,7 +148,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
     private fun setupListeners() {
         buttonSend.setOnClickListener {
             if(!isPremium){
-                Toast.makeText(this, ("This feature is available only for Premium users"), Toast.LENGTH_SHORT).show()
+                subscriptionUIComponent.purchasePremium()
                 return@setOnClickListener
             }
             sendMessage()
@@ -165,7 +164,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
         }
 
         editTextMessage.addTextChangedListener {
-            buttonSend.isEnabled = !it.isNullOrBlank()
+            //buttonSend.isEnabled = !it.isNullOrBlank()
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { _, insets ->
@@ -191,7 +190,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
         viewModel.isLoading.observe(this) { isLoading ->
             animationViewLoading.visibility = if (isLoading) View.VISIBLE else View.GONE
             editTextMessage.isEnabled = !isLoading
-            buttonSend.isEnabled = !isLoading && !editTextMessage.text.isNullOrBlank()
+            buttonSend.isEnabled = !isLoading //&& !editTextMessage.text.isNullOrBlank()
         }
     }
 

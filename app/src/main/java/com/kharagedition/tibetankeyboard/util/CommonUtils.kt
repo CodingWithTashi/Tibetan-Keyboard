@@ -5,6 +5,7 @@ package com.kharagedition.tibetankeyboard.util
  */
 class CommonUtils {
     companion object {
+        val PLAY_STORE_SUBSCRIPTION_URL: String = "https://play.google.com/store/account/subscriptions?sku=monthly_premium_subscription:base-renew-plan&package=com.kharagedition.tibetankeyboard";
         var INSTAGRAM_URL = "https://www.instagram.com/kharagkunchok/"
         var FACEBOOK_URL = "https://www.facebook.com/kharagedition"
         var GITHUB_URL = "https://github.com/CodingWithTashi/Tibetan-Keyboard"

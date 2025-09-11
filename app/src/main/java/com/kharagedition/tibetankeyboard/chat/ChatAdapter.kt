@@ -13,11 +13,15 @@ import com.kharagedition.tibetankeyboard.R
 import java.text.SimpleDateFormat
 import java.util.Locale
 import android.content.ClipboardManager
-class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCallback()) {
+class ChatAdapter(isPremium: Boolean) : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCallback()) {
 
     companion object {
         private const val VIEW_TYPE_USER = 1
         private const val VIEW_TYPE_ASSISTANT = 2
+    }
+    private var isPremiumUser: Boolean = isPremium;
+    init {
+        this.isPremiumUser = isPremium
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -30,6 +34,15 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             VIEW_TYPE_ASSISTANT -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_chat_assistant, parent, false)
+                //change view imageViewAssistant color if isPremiumUser
+                val assistantImageView = view.findViewById<ImageView>(R.id.imageViewAssistant)
+
+                if(isPremiumUser){
+                    assistantImageView.setColorFilter(view.context.getColor(R.color.premium_yellow))
+                }else{
+                    // remove and make it default
+                    assistantImageView.colorFilter = null
+                }
                 AssistantMessageViewHolder(view)
             }
             else -> throw IllegalArgumentException("Invalid view type")
