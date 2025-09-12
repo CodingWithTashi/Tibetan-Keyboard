@@ -217,6 +217,7 @@ class RevenueCatManager private constructor() {
             val premiumDetails = hashMapOf(
                 "isPremium" to true,
                 "subscribed" to true,
+                "isSubscribed" to true,
                 "subscriptionType" to "premium",
                 "activeSubscription" to customerInfo.activeSubscriptions.toList(),
                 "premiumExpiryDate" to customerInfo.requestDate,
@@ -237,7 +238,11 @@ class RevenueCatManager private constructor() {
         } else {
             val userRef = db.collection("users").document(userId)
 
-            userRef.update("isPremium", false)
+            userRef.update(mapOf<String, Boolean>(
+                "isPremium" to false,
+                "subscribed" to false,
+                "isSubscribed" to false,
+            ))
                 .addOnSuccessListener {
                     println("Firestore: User premium status set to false.")
                 }

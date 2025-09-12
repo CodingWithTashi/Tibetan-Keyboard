@@ -7,14 +7,14 @@ plugins {
 }
 
 android {
-    compileSdk 35
+    compileSdk 36
     namespace = "com.kharagedition.tibetankeyboard"
     defaultConfig {
         applicationId "com.kharagedition.tibetankeyboard"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 30
-        versionName "2.0.0"
+        versionCode 32
+        versionName "2.1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
