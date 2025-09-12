@@ -23,12 +23,14 @@ import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 import com.kharagedition.tibetankeyboard.BuildConfig
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
 
 
 class HomeActivity : InputMethodActivity() {
     private lateinit var homeBinding: ActivityHomeBinding
     private var isPremiumUser:Boolean = false;
+    private lateinit var authManager: AuthManager
     override fun onResume() {
         checkKeyboardIsEnabledOrNot()
         premiumListener()
@@ -46,7 +48,7 @@ class HomeActivity : InputMethodActivity() {
         super.onCreate(savedInstanceState)
         homeBinding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(homeBinding.root)
-
+        authManager = AuthManager(this)
         checkKeyboardIsEnabledOrNot()
         initClickListener()
 
@@ -182,7 +184,7 @@ class HomeActivity : InputMethodActivity() {
         RevenueCatManager.getInstance().refreshCustomerInfo()
         RevenueCatManager.getInstance().isPremiumUser.observe(this) { isPremium ->
             isPremiumUser = isPremium;
-            if (isPremium) {
+            if (authManager.isUserAuthenticated() && isPremium) {
                 homeBinding.nativeAdsLayout.visibility = GONE
                 homeBinding.bottomBtnLayout.visibility = VISIBLE
          /*       homeBinding.chatIcon.setColorFilter(getColor(R.color.premium_yellow))

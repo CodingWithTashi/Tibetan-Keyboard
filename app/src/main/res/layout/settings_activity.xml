@@ -24,6 +24,7 @@
         android:layout_marginTop="16dp">
 
         <ImageView
+            android:visibility="gone"
             android:id="@+id/premium_icon"
             android:layout_width="32dp"
             android:layout_height="32dp"
@@ -46,6 +47,34 @@
             android:id="@+id/settings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:id="@+id/logout_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center"
+            android:gravity="center_vertical"
+            android:layout_marginHorizontal="18dp"
+            android:layout_marginVertical="10dp">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_logout"
+                app:tint="@color/white" />
+            <TextView
+                android:layout_marginStart="30dp"
+                android:id="@+id/logout_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/brown_800"
+                android:text="Logout"
+                android:textSize="16sp"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.google.android.gms.ads.AdView

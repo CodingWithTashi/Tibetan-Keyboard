@@ -8,12 +8,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.gms.ads.*
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.databinding.SettingsActivityBinding
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.util.showConfirmationDialog
+import com.kharagedition.tibetankeyboard.util.showToast
 
 class SettingsActivity : AppCompatActivity() {
     lateinit var settingBinding: SettingsActivityBinding
     var isPremiumUser = false;
+    private lateinit var authManager: AuthManager
 
     override fun onStart() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -36,7 +40,12 @@ class SettingsActivity : AppCompatActivity() {
                 .commit()
         }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
+        authManager = AuthManager(this)
+        if (!authManager.isUserAuthenticated()) {
+            settingBinding.logoutBtn.visibility = GONE
+        }else{
+            settingBinding.logoutBtn.visibility = VISIBLE
+        }
         initListener()
         val adRequest = AdRequest.Builder().build()
         loadBannerAds(adRequest)
@@ -56,14 +65,29 @@ class SettingsActivity : AppCompatActivity() {
         settingBinding.settingsToolbar.setNavigationOnClickListener{
             onBackPressed()
         }
+        settingBinding.logoutBtn.setOnClickListener {
+            showConfirmationDialog(
+                title = "Sign Out",
+                message = "Are you sure you want to sign out?",
+                positiveText = "Sign Out",
+                onPositive = { signOut() }
+            )
+        }
         setPremiumListener();
+    }
+
+    private fun signOut() {
+        authManager.signOut {
+            authManager.redirectToLogin()
+            showToast("Signed out successfully")
+        }
     }
 
     private fun setPremiumListener() {
         RevenueCatManager.getInstance().refreshCustomerInfo()
         RevenueCatManager.getInstance().isPremiumUser.observeForever{ isPremium ->
             isPremiumUser = isPremium;
-            if(isPremiumUser) {
+            if(authManager.isUserAuthenticated() && isPremiumUser) {
                 settingBinding.premiumIcon.visibility = VISIBLE
                 settingBinding.bannerAd.visibility = GONE
             }else{
