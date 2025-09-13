@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.revenuecat.purchases.*
 import com.revenuecat.purchases.interfaces.*
 import com.revenuecat.purchases.models.StoreTransaction
@@ -208,9 +209,46 @@ class RevenueCatManager private constructor() {
 
         println("RevenueCat: Premium status - $isPremium")
 
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        val db = FirebaseFirestore.getInstance()
+        if(userId==null) return
+
         if (isPremium) {
-            val activeSubscriptions = customerInfo.activeSubscriptions
-            println("RevenueCat: Active subscriptions count - ${activeSubscriptions.size}")
+            val premiumDetails = hashMapOf(
+                "isPremium" to true,
+                "subscribed" to true,
+                "isSubscribed" to true,
+                "subscriptionType" to "premium",
+                "activeSubscription" to customerInfo.activeSubscriptions.toList(),
+                "premiumExpiryDate" to customerInfo.requestDate,
+                "activeSubscriptions" to customerInfo.activeSubscriptions.toList()
+            )
+            val userRef = db.collection("users").document(userId)
+
+
+            userRef.update(premiumDetails)
+                .addOnSuccessListener {
+                    println("Firestore: User premium details updated successfully.")
+                }
+                .addOnFailureListener { e ->
+                    println("Firestore: Failed to update premium details - ${e.message}")
+                }
+
+            println("RevenueCat: Active subscriptions count - ${customerInfo.activeSubscriptions.size}")
+        } else {
+            val userRef = db.collection("users").document(userId)
+
+            userRef.update(mapOf<String, Boolean>(
+                "isPremium" to false,
+                "subscribed" to false,
+                "isSubscribed" to false,
+            ))
+                .addOnSuccessListener {
+                    println("Firestore: User premium status set to false.")
+                }
+                .addOnFailureListener { e ->
+                    println("Firestore: Failed to set premium status - ${e.message}")
+                }
         }
     }
 

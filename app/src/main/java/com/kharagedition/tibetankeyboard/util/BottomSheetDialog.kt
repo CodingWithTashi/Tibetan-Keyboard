@@ -13,14 +13,17 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.databinding.BottomSheetLayoutBinding
 
-class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
+class BottomSheetDialog(showAd: Boolean) : BottomSheetDialogFragment(),View.OnClickListener {
     lateinit var bottomSheetLayoutBinding: BottomSheetLayoutBinding
-
+    private var showAd: Boolean = false
+    init {
+        this.showAd = showAd
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
+    ) : View {
         bottomSheetLayoutBinding = BottomSheetLayoutBinding.inflate(layoutInflater,container,false)
 
         bottomSheetLayoutBinding.aboutToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_ios_24)
@@ -39,7 +42,7 @@ class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
         return bottomSheetLayoutBinding.root
     }
     private fun initAdmobAds() {
-        if(context!=null){
+        if(context!=null && showAd){
             val adRequest = AdRequest.Builder().build()
             bottomSheetLayoutBinding.adView.loadAd(adRequest)
             bottomSheetLayoutBinding.adView.adListener = object: AdListener() {
@@ -64,6 +67,8 @@ class BottomSheetDialog : BottomSheetDialogFragment(),View.OnClickListener {
                     Log.e("TAG", "onAdLoaded: ")
                 }
             }
+        }else{
+            bottomSheetLayoutBinding.bannerAdsLayout.visibility = View.GONE
         }
 
 

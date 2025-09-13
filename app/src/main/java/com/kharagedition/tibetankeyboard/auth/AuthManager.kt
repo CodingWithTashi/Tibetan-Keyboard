@@ -1,9 +1,11 @@
 package com.kharagedition.tibetankeyboard.auth
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.LoginActivity
@@ -68,11 +70,17 @@ class AuthManager(private val context: Context) {
      * Redirect to login activity
      */
     fun redirectToLogin() {
-        if (context is AppCompatActivity) {
-            val intent = Intent(context, LoginActivity::class.java)
-            context.startActivity(intent)
-            context.finish()
+
+
+        val intent = Intent(context, LoginActivity::class.java)
+
+        if (context !is Activity) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+
+        context.startActivity(intent)
+
+        (context as? Activity)?.finish()
     }
 
     /**
@@ -93,5 +101,8 @@ class AuthManager(private val context: Context) {
      */
     fun isFirstTimeUser(): Boolean {
         return userPreferences.isFirstTimeUser()
+    }
+    fun getUser(): FirebaseUser? {
+        return auth.currentUser
     }
 }

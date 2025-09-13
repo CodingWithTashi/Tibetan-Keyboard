@@ -15,7 +15,7 @@ class ChatViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    fun sendMessage(messageText: String) {
+    fun sendMessage(messageText: String, userId: String) {
         if (messageText.isBlank()) return
 
         val userMessage = ChatMessage(
@@ -35,7 +35,7 @@ class ChatViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 // Simulate an AI response
-                val response = repository.getResponse(messageText)
+                val response = repository.sendMessage(messageText,userId)
 
                 // Add assistant message to the list
                 val updatedList = _messages.value.orEmpty().toMutableList()
@@ -75,7 +75,12 @@ class ChatViewModel : ViewModel() {
         }
     }
 
-    fun clearMessages() {
-        _messages.value = emptyList()
+     fun clearMessages() {
+        viewModelScope.launch {
+            repository.resetChat();
+            _messages.value = emptyList()
+
+        }
+
     }
 }

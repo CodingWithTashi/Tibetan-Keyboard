@@ -37,21 +37,22 @@ class UserRepository {
             val deviceInfo = getDeviceInfo(context)
             val existingUser = if (!isNewUser) getUserById(uid) else null
 
-            val user = if (existingUser != null) {
-                // Update existing user
-                existingUser.copy(
-                    displayName = displayName,
-                    email = email,
-                    photoUrl = photoUrl,
-                    lastLoginAt = System.currentTimeMillis(),
-                    deviceInfo = deviceInfo,
-                    analytics = existingUser.analytics.copy(
-                        totalLogins = existingUser.analytics.totalLogins + 1,
-                        lastActiveDate = System.currentTimeMillis()
-                    )
-                )
-            } else {
-                // Create new user
+            val user = existingUser?.// Update existing user
+            copy(
+                displayName = displayName,
+                email = email,
+                photoUrl = photoUrl,
+                lastLoginAt = System.currentTimeMillis(),
+                deviceInfo = deviceInfo,
+                analytics = existingUser.analytics.copy(
+                    totalLogins = existingUser.analytics.totalLogins + 1,
+                    lastActiveDate = System.currentTimeMillis()
+                ),
+                isSubscribed = false
+
+
+            )
+                ?: // Create new user
                 User(
                     uid = uid,
                     displayName = displayName,
@@ -59,7 +60,6 @@ class UserRepository {
                     photoUrl = photoUrl,
                     deviceInfo = deviceInfo
                 )
-            }
 
             // Save to Firestore
             usersCollection.document(uid)

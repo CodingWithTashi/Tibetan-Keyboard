@@ -11,9 +11,13 @@ import com.kharagedition.tibetankeyboard.util.showToast
  * UI component to handle subscription-related UI operations
  * This can be used in any activity/fragment that needs subscription functionality
  */
+interface IsPremiumListener {
+    fun onPremiumStatusChanged(isPremium: Boolean)
+}
 class SubscriptionUIComponent(
     private val activity: AppCompatActivity,
-    private val buyPremiumButton: ShapeableImageView
+    private val buyPremiumButton: ShapeableImageView,
+    private val isPremiumListener: IsPremiumListener
 ) : RevenueCatManager.SubscriptionCallback {
 
     private val revenueCatManager = RevenueCatManager.getInstance()
@@ -32,7 +36,7 @@ class SubscriptionUIComponent(
     private fun observeSubscriptionStatus() {
         // Observe premium status changes
         revenueCatManager.isPremiumUser.observe(activity as LifecycleOwner) { isPremium ->
-            updatePremiumUI(isPremium)
+            isPremiumListener.onPremiumStatusChanged(isPremium)
         }
 
         // Observe loading state
@@ -49,15 +53,6 @@ class SubscriptionUIComponent(
         }
     }
 
-    /**
-     * Update UI based on premium status
-     */
-    private fun updatePremiumUI(isPremium: Boolean) {
-        buyPremiumButton.visibility = if (isPremium) View.GONE else View.VISIBLE
-
-        // You can add more UI updates here for premium users
-        // For example: unlock premium features, change UI colors, etc.
-    }
 
     /**
      * Initiate premium purchase

@@ -1,5 +1,10 @@
 package com.kharagedition.tibetankeyboard.ai
 
+import com.kharagedition.tibetankeyboard.model.GrammarCheckRequest
+import com.kharagedition.tibetankeyboard.model.GrammarResult
+import com.kharagedition.tibetankeyboard.model.RephraseResult
+import com.kharagedition.tibetankeyboard.model.TranslationRequest
+import com.kharagedition.tibetankeyboard.model.TranslationResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,61 +17,6 @@ import java.net.URL
 
 class AIService {
 
-    data class GrammarResult(
-        val correctedText: String,
-        val corrections: List<String>
-    )
-
-    data class RephraseResult(
-        val rephrasedText: String,
-        val style: String,
-        val improvements: List<String>
-    )
-
-    // API Request/Response data classes
-    @Serializable
-    data class GrammarCheckRequest(
-        val text: String,
-        val model: String = "openai",
-        val language: String = "auto",
-        @SerialName("max_chunk_size")
-        val maxChunkSize: Int = 500
-    )
-
-    @Serializable
-    data class Correction(
-        @SerialName("word_index")
-        val wordIndex: Int,
-        @SerialName("incorrect_word")
-        val incorrectWord: String,
-        val suggestion: List<String>,
-        val reason: String
-    )
-
-    @Serializable
-    data class CorrectedText(
-        @SerialName("word_counting")
-        val wordCounting: List<String>,
-        val corrections: List<Correction>,
-        @SerialName("corrected_statement")
-        val correctedStatement: String
-    )
-
-    @Serializable
-    data class GrammarCheckResponse(
-        @SerialName("detected_language")
-        val detectedLanguage: String,
-        @SerialName("original_text")
-        val originalText: String,
-        @SerialName("corrected_text")
-        val correctedText: CorrectedText,
-        @SerialName("chunks_count")
-        val chunksCount: Int,
-        @SerialName("model_used")
-        val modelUsed: String,
-        @SerialName("processing_time_ms")
-        val processingTimeMs: Double
-    )
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -79,7 +29,7 @@ class AIService {
             try {
                 if (text.isEmpty()) return@withContext GrammarResult("", emptyList())
 
-                val response = RetrofitClient.api.checkGrammar(GrammarCheckRequest(text = text))
+                val response = RetrofitClient.geminiAPI.checkGrammar(GrammarCheckRequest(text = text))
 
                 val corrections = response.correctedText.corrections.map {
                     "${it.incorrectWord} → ${it.suggestion.firstOrNull() ?: ""} (${it.reason})"
@@ -89,9 +39,50 @@ class AIService {
 
             } catch (e: Exception) {
                 println("Error: ${e.message}")
-                e.printStackTrace() // Add this to see the full stack trace
+                e.printStackTrace()
                 GrammarResult(text, listOf("Error occurred during grammar check: ${e.message}"))
             }
+        }
+    }
+
+    suspend fun translateText(text: String, sourceLang: String, targetLang: String): TranslationResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (text.isEmpty()) {
+                    return@withContext TranslationResult("", sourceLang, targetLang,)
+                }
+
+                val response = RetrofitClient.translateAPI.translateText(
+                    TranslationRequest(
+                        text = text,
+                        sourceLang = sourceLang,
+                        targetLang = targetLang
+                    )
+                )
+
+                TranslationResult(
+                    translatedText = response.data.translatedText,
+                    sourceLanguage = sourceLang,
+                    targetLanguage = targetLang,
+                )
+
+            } catch (e: Exception) {
+                println("Translation error: ${e.message}")
+                e.printStackTrace()
+                TranslationResult(
+                    translatedText = text,
+                    sourceLanguage = getLanguageName(sourceLang),
+                    targetLanguage = getLanguageName(targetLang),
+                )
+            }
+        }
+    }
+
+    private fun getLanguageName(langCode: String): String {
+        return when (langCode) {
+            "bo" -> "Tibetan"
+            "en" -> "English"
+            else -> langCode
         }
     }
 
