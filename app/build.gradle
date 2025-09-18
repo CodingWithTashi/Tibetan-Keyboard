@@ -13,8 +13,8 @@ android {
         applicationId "com.kharagedition.tibetankeyboard"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 32
-        versionName "2.1.1"
+        versionCode 35
+        versionName "2.1.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
