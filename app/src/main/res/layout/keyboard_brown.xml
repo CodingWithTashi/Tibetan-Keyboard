@@ -9,6 +9,7 @@
     android:keyPreviewLayout="@layout/key_preview"
     android:background="@color/keyboard_background_color"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:paddingBottom="20dp">
 
 </com.kharagedition.tibetankeyboard.TibetanKeyboardView>

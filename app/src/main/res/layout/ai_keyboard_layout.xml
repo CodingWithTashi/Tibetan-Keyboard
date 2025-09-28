@@ -24,7 +24,7 @@
             android:src="@drawable/ic_ai_options"
             android:padding="6dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:tint="@android:color/white" />
+            app:tint="@android:color/white" />
 
         <TextView
             android:layout_width="0dp"
@@ -93,13 +93,27 @@
 
     </LinearLayout>
 
-    <!-- Normal Keyboard Container -->
+    <!-- Main Keyboard Container - This will switch between normal keyboard and emoji keyboard -->
     <FrameLayout
-        android:id="@+id/normal_keyboard_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Your existing keyboard view will be added here programmatically -->
+        <!-- Normal Keyboard Container -->
+        <FrameLayout
+            android:id="@+id/normal_keyboard_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!-- Your existing keyboard view will be added here programmatically -->
+        </FrameLayout>
+
+        <!-- Emoji Keyboard Container (Initially Hidden) -->
+        <FrameLayout
+            android:id="@+id/emoji_keyboard_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+            <!-- Emoji keyboard will be added here programmatically -->
+        </FrameLayout>
 
     </FrameLayout>
 
@@ -283,7 +297,7 @@
                             android:textSize="14sp"
                             android:textColor="#333333"
                             android:gravity="center_vertical"
-                            android:textIsSelectable="true" />/>
+                            android:textIsSelectable="true" />
 
                     </LinearLayout>
 

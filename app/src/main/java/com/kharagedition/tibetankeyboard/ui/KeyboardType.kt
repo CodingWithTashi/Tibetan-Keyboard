@@ -14,6 +14,7 @@ class KeyboardType {
         const val SYMBOL_EN = -13
         const val EMOJI = -14;
         const val GEMINI = -20;
+        const val EMOJI_KEYBOARD = -30;
 
 
 

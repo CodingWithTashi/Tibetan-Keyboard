@@ -39,7 +39,7 @@ class TibetanKeyboardApp : Application() {
         }
         Purchases.configure(
             PurchasesConfiguration.Builder(this, apiKey)
-                .appUserID(null)
+                //.appUserID(null)
                 .purchasesAreCompletedBy(REVENUECAT)
                 .build()
 

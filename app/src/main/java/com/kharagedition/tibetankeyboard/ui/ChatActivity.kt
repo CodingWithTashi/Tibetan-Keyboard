@@ -299,7 +299,7 @@ class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback
                 return
             premiumAlertDialog = MaterialAlertDialogBuilder(this)
                 .setTitle("Premium Required")
-                .setMessage("This feature is available only for Premium users.\n\nUpgrade now to unlock all features!")
+                .setMessage("This feature is available only for Premium users.\n\nUpgrade now to unlock all features!\n1.AI Chat\n2.Google Translate\n3.Tibetan Icon\n4.Ad-free Experience\n5.Priority Support")
                 .setIcon(R.drawable.baseline_generating_tokens_24)
                 .setPositiveButton("Upgrade") { dialog, _ ->
 

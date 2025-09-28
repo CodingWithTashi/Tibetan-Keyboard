@@ -14,10 +14,12 @@ import android.os.Vibrator
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -32,7 +34,8 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     lateinit var prefs: SharedPreferences
     private var aiKeyboardView: AIKeyboardView? = null
     private var currentMode = KeyboardMode.NORMAL
-
+    private var emojiKeyboardView: EmojiKeyboardView? = null
+    private var isEmojiMode = false
     enum class KeyboardMode {
         NORMAL,
         AI_GRAMMAR,
@@ -79,7 +82,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         aiKeyboardView = AIKeyboardView(this)
         aiKeyboardView?.setAIKeyboardInterface(this)
         aiKeyboardView?.setThemeColor(color ?: "#FF704C04")
-
+        isEmojiMode = false
         return aiKeyboardView!!
     }
 
@@ -185,6 +188,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                     startActivity(intent)
                 }
             }
+            KeyboardType.EMOJI_KEYBOARD -> {
+                toggleEmojiKeyboard()
+            }
 
             else -> {
                 var code = i.toChar()
@@ -194,6 +200,67 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         }
     }
 
+    private fun toggleEmojiKeyboard() {
+        if (!isEmojiMode) {
+            showEmojiKeyboard()
+        } else {
+            hideEmojiKeyboard()
+        }
+    }
+
+
+    private fun showEmojiKeyboard() {
+        if (emojiKeyboardView == null) {
+            emojiKeyboardView = EmojiKeyboardView(this)
+            val themeColor = prefs.getString("colors", "#FF704C04") ?: "#FF704C04"
+            emojiKeyboardView?.setThemeColor(themeColor)
+
+            emojiKeyboardView?.setOnEmojiClickListener { emoji ->
+                // Insert the selected emoji into the text field
+                currentInputConnection?.commitText(emoji, 1)
+            }
+
+            emojiKeyboardView?.setOnBackClickListener {
+                hideEmojiKeyboard()
+            }
+        }
+
+        // Hide the normal keyboard container
+        val normalContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.normal_keyboard_container)
+        normalContainer?.visibility = View.GONE
+
+        // Show the emoji keyboard container
+        val emojiContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.emoji_keyboard_container)
+        emojiContainer?.let { container ->
+            container.removeAllViews()
+            container.addView(emojiKeyboardView)
+            container.visibility = View.VISIBLE
+        }
+
+        isEmojiMode = true
+    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && isEmojiMode) {
+            hideEmojiKeyboard()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    private fun hideEmojiKeyboard() {
+        // Show the normal keyboard container
+        val normalContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.normal_keyboard_container)
+        normalContainer?.visibility = View.VISIBLE
+
+        // Hide the emoji keyboard container
+        val emojiContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.emoji_keyboard_container)
+        emojiContainer?.let { container ->
+            container.visibility = View.GONE
+            container.removeAllViews()
+        }
+
+        isEmojiMode = false
+    }
     private fun getCurrentInputText(): String {
         val inputConnection = currentInputConnection ?: return ""
 
