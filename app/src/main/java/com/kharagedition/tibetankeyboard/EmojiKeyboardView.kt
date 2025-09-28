@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -26,14 +27,18 @@ class EmojiKeyboardView @JvmOverloads constructor(
     private lateinit var emojiRecyclerView: RecyclerView
     private lateinit var categoryRecyclerView: RecyclerView
     private lateinit var backButton: ImageButton
+    private lateinit var searchKeyboardContainer: FrameLayout
 
     private lateinit var emojiAdapter: EmojiAdapter
     private lateinit var categoryAdapter: EmojiCategoryAdapter
     private var emojiClickListener: ((String) -> Unit)? = null
     private var backClickListener: (() -> Unit)? = null
+    private var showSearchKeyboardListener: (() -> Unit)? = null
+    private var hideSearchKeyboardListener: (() -> Unit)? = null
 
     private val allEmojis = mutableListOf<EmojiItem>()
     private val filteredEmojis = mutableListOf<EmojiItem>()
+    private var isSearchMode = false
 
     init {
         orientation = VERTICAL
@@ -42,6 +47,7 @@ class EmojiKeyboardView @JvmOverloads constructor(
         setupRecyclerViews()
         setupSearch()
         setupBackButton()
+        setupSearchKeyboard()
     }
 
     private fun setupView() {
@@ -51,6 +57,7 @@ class EmojiKeyboardView @JvmOverloads constructor(
         emojiRecyclerView = findViewById(R.id.emoji_recycler_view)
         categoryRecyclerView = findViewById(R.id.category_recycler_view)
         backButton = findViewById(R.id.emoji_back_button)
+        searchKeyboardContainer = findViewById(R.id.search_keyboard_container)
     }
 
     private fun setupRecyclerViews() {
@@ -64,16 +71,30 @@ class EmojiKeyboardView @JvmOverloads constructor(
         // Setup category horizontal list
         val categories = EmojiCategory.values().toList()
         categoryAdapter = EmojiCategoryAdapter(categories) { category ->
+            // Clear search when switching categories
+            if (searchEditText.text.isNotEmpty()) {
+                searchEditText.setText("")
+            }
+            // Filter emojis by selected category
             filterByCategory(category)
         }
         categoryRecyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         categoryRecyclerView.adapter = categoryAdapter
 
-        // Show all emojis initially
+        // Show smileys initially
         filterByCategory(EmojiCategory.SMILEYS)
+        categoryAdapter.setSelectedCategory(EmojiCategory.SMILEYS)
     }
 
     private fun setupSearch() {
+        searchEditText.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                enterSearchMode()
+            } else {
+                exitSearchMode()
+            }
+        }
+
         searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -90,8 +111,25 @@ class EmojiKeyboardView @JvmOverloads constructor(
 
     private fun setupBackButton() {
         backButton.setOnClickListener {
-            backClickListener?.invoke()
+            if (isSearchMode) {
+                exitSearchMode()
+                searchEditText.clearFocus()
+                searchEditText.setText("")
+            } else {
+                backClickListener?.invoke()
+            }
         }
+    }
+
+    private fun setupSearchKeyboard() {
+        val searchKeyboard = SimpleSearchKeyboard(context)
+        searchKeyboard.setOnKeyClickListener { key ->
+            insertTextInSearch(key)
+        }
+        searchKeyboard.setOnDeleteClickListener {
+            deleteFromSearch()
+        }
+        searchKeyboardContainer.addView(searchKeyboard)
     }
 
     private fun initializeEmojis() {
@@ -104,7 +142,9 @@ class EmojiKeyboardView @JvmOverloads constructor(
             "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡",
             "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶",
             "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴",
-            "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀"
+            "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀",
+            "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆",
+            "👇", "☝️", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✍️", "👃", "👂", "👀"
         )
 
         // Animals & Nature
@@ -113,7 +153,8 @@ class EmojiKeyboardView @JvmOverloads constructor(
             "🙈", "🙉", "🙊", "🐒", "🐔", "🐧", "🐦", "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗",
             "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷️", "🦂", "🐢", "🐍", "🦎", "🦖",
             "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆",
-            "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏"
+            "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏",
+            "🌲", "🌳", "🌴", "🌵", "🌶️", "🍄", "🌾", "💐", "🌷", "🌹", "🥀", "🌺", "🌸", "🌼", "🌻", "🌞"
         )
 
         // Food & Drink
@@ -122,7 +163,8 @@ class EmojiKeyboardView @JvmOverloads constructor(
             "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌶️", "🫑", "🌽", "🥕", "🫒", "🧄", "🧅", "🥔", "🍠", "🥐",
             "🥯", "🍞", "🥖", "🥨", "🧀", "🥚", "🍳", "🧈", "🥞", "🧇", "🥓", "🥩", "🍗", "🍖", "🦴", "🌭",
             "🍔", "🍟", "🍕", "🫓", "🥪", "🥙", "🧆", "🌮", "🌯", "🫔", "🥗", "🥘", "🫕", "🍝", "🍜", "🍲",
-            "🍛", "🍣", "🍱", "🥟", "🦪", "🍤", "🍙", "🍚", "🍘", "🍥", "🥠", "🥮", "🍢", "🍡", "🍧", "🍨"
+            "🍛", "🍣", "🍱", "🥟", "🦪", "🍤", "🍙", "🍚", "🍘", "🍥", "🥠", "🥮", "🍢", "🍡", "🍧", "🍨",
+            "🍦", "🥧", "🧁", "🍰", "🎂", "🍮", "🍭", "🍬", "🍫", "🍿", "🍩", "🍪", "☕", "🍵", "🧃", "🥤"
         )
 
         // Activity & Sports
@@ -130,7 +172,8 @@ class EmojiKeyboardView @JvmOverloads constructor(
             "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸", "🏒", "🏑", "🥍",
             "🏏", "🪃", "🥅", "⛳", "🪁", "🏹", "🎣", "🤿", "🥊", "🥋", "🎽", "🛹", "🛷", "⛸️", "🥌", "🎿",
             "⛷️", "🏂", "🪂", "🏋️", "🤼", "🤸", "⛹️", "🤺", "🤾", "🏌️", "🏇", "🧘", "🏄", "🏊", "🤽", "🚣",
-            "🧗", "🚵", "🚴", "🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🏵️", "🎗️", "🎫", "🎟️", "🎪", "🤹", "🎭"
+            "🧗", "🚵", "🚴", "🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🏵️", "🎗️", "🎫", "🎟️", "🎪", "🤹", "🎭",
+            "🩰", "🎨", "🎬", "🎤", "🎧", "🎼", "🎵", "🎶", "🥁", "🪘", "🎹", "🎷", "🎺", "🪗", "🎸", "🪕"
         )
 
         // Travel & Places
@@ -138,7 +181,8 @@ class EmojiKeyboardView @JvmOverloads constructor(
             "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑", "🚒", "🚐", "🛻", "🚚", "🚛", "🚜", "🏍️", "🛵",
             "🚲", "🛴", "🛺", "🚨", "🚔", "🚍", "🚘", "🚖", "🚡", "🚠", "🚟", "🚃", "🚋", "🚞", "🚝", "🚄",
             "🚅", "🚈", "🚂", "🚆", "🚇", "🚊", "🚉", "✈️", "🛫", "🛬", "🛩️", "💺", "🛰️", "🚀", "🛸", "🚁",
-            "🛶", "⛵", "🚤", "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🪝", "⛽", "🚧", "🚦", "🚥", "🗺️", "🗿", "🗽"
+            "🛶", "⛵", "🚤", "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🪝", "⛽", "🚧", "🚦", "🚥", "🗺️", "🗿", "🗽",
+            "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠", "⛲", "⛱️", "🏖️", "🏝️", "🏜️", "🌋", "⛰️", "🏔️", "🗻", "🏕️"
         )
 
         // Objects & Symbols
@@ -146,16 +190,18 @@ class EmojiKeyboardView @JvmOverloads constructor(
             "⌚", "📱", "📲", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "🖲️", "🕹️", "🗜️", "💽", "💾", "💿", "📀", "📼",
             "📷", "📸", "📹", "🎥", "📽️", "🎞️", "📞", "☎️", "📟", "📠", "📺", "📻", "🎙️", "🎚️", "🎛️", "🧭",
             "⏱️", "⏲️", "⏰", "🕰️", "⌛", "⏳", "📡", "🔋", "🔌", "💡", "🔦", "🕯️", "🪔", "🧯", "🛢️", "💸",
-            "💵", "💴", "💶", "💷", "🪙", "💰", "💳", "💎", "⚖️", "🪜", "🧰", "🔧", "🔨", "⚒️", "🛠️", "⛏️"
+            "💵", "💴", "💶", "💷", "🪙", "💰", "💳", "💎", "⚖️", "🪜", "🧰", "🔧", "🔨", "⚒️", "🛠️", "⛏️",
+            "🔩", "⚙️", "🪤", "🧱", "⛓️", "🧲", "🔫", "💣", "🧨", "🪓", "🔪", "🗡️", "⚔️", "🛡️", "🚬", "⚰️",
+            "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖"
         )
 
         // Add all emojis with their categories and search tags
-        addEmojiItems(smileys, EmojiCategory.SMILEYS, listOf("smile", "happy", "sad", "face", "emotion"))
-        addEmojiItems(animals, EmojiCategory.ANIMALS, listOf("animal", "pet", "zoo", "wild", "nature"))
-        addEmojiItems(food, EmojiCategory.FOOD, listOf("food", "eat", "drink", "fruit", "vegetable", "meal"))
-        addEmojiItems(activities, EmojiCategory.ACTIVITIES, listOf("sport", "game", "play", "activity", "ball"))
-        addEmojiItems(travel, EmojiCategory.TRAVEL, listOf("car", "travel", "transport", "plane", "vehicle"))
-        addEmojiItems(objects, EmojiCategory.OBJECTS, listOf("object", "tool", "tech", "phone", "computer"))
+        addEmojiItems(smileys, EmojiCategory.SMILEYS, listOf("smile", "happy", "sad", "face", "emotion", "laugh", "cry", "angry", "love", "heart", "hand", "finger"))
+        addEmojiItems(animals, EmojiCategory.ANIMALS, listOf("animal", "pet", "zoo", "wild", "nature", "dog", "cat", "bird", "fish", "tree", "plant", "flower"))
+        addEmojiItems(food, EmojiCategory.FOOD, listOf("food", "eat", "drink", "fruit", "vegetable", "meal", "hungry", "delicious", "sweet", "coffee", "tea"))
+        addEmojiItems(activities, EmojiCategory.ACTIVITIES, listOf("sport", "game", "play", "activity", "ball", "music", "art", "dance", "sing", "exercise", "fun"))
+        addEmojiItems(travel, EmojiCategory.TRAVEL, listOf("car", "travel", "transport", "plane", "vehicle", "train", "bus", "road", "building", "place", "vacation"))
+        addEmojiItems(objects, EmojiCategory.OBJECTS, listOf("object", "tool", "tech", "phone", "computer", "money", "heart", "love", "time", "clock", "weapon"))
     }
 
     private fun addEmojiItems(emojis: List<String>, category: EmojiCategory, tags: List<String>) {
@@ -171,8 +217,12 @@ class EmojiKeyboardView @JvmOverloads constructor(
         } else {
             filteredEmojis.addAll(allEmojis.filter { it.category == category })
         }
+
+        // Debug logging (you can remove this later)
+        android.util.Log.d("EmojiKeyboard", "Filtering by ${category.displayName}, found ${filteredEmojis.size} emojis")
+
         emojiAdapter.notifyDataSetChanged()
-        categoryAdapter.setSelectedCategory(category)
+        // Note: We don't call setSelectedCategory here to avoid circular calls
     }
 
     private fun searchEmojis(query: String) {
@@ -186,6 +236,49 @@ class EmojiKeyboardView @JvmOverloads constructor(
         emojiAdapter.notifyDataSetChanged()
     }
 
+    private fun enterSearchMode() {
+        isSearchMode = true
+        // Reduce emoji grid height to make space for search keyboard
+        val layoutParams = emojiRecyclerView.layoutParams
+        layoutParams.height = (120 * context.resources.displayMetrics.density).toInt() // 120dp
+        emojiRecyclerView.layoutParams = layoutParams
+
+        // Show search keyboard
+        searchKeyboardContainer.visibility = View.VISIBLE
+        showSearchKeyboardListener?.invoke()
+    }
+
+    private fun exitSearchMode() {
+        isSearchMode = false
+        // Restore emoji grid height
+        val layoutParams = emojiRecyclerView.layoutParams
+        layoutParams.height = (200 * context.resources.displayMetrics.density).toInt() // 200dp
+        emojiRecyclerView.layoutParams = layoutParams
+
+        // Hide search keyboard
+        searchKeyboardContainer.visibility = View.GONE
+        hideSearchKeyboardListener?.invoke()
+    }
+
+    private fun insertTextInSearch(text: String) {
+        val currentText = searchEditText.text.toString()
+        val start = searchEditText.selectionStart
+        val newText = currentText.substring(0, start) + text + currentText.substring(start)
+        searchEditText.setText(newText)
+        searchEditText.setSelection(start + text.length)
+    }
+
+    private fun deleteFromSearch() {
+        val currentText = searchEditText.text.toString()
+        val start = searchEditText.selectionStart
+        if (start > 0) {
+            val newText = currentText.substring(0, start - 1) + currentText.substring(start)
+            searchEditText.setText(newText)
+            searchEditText.setSelection(start - 1)
+        }
+    }
+
+    // Public methods
     fun setOnEmojiClickListener(listener: (String) -> Unit) {
         emojiClickListener = listener
     }
@@ -198,9 +291,17 @@ class EmojiKeyboardView @JvmOverloads constructor(
         // Apply theme color to the view if needed
         // You can customize the appearance based on the theme
     }
+
+    fun setOnShowSearchKeyboardListener(listener: () -> Unit) {
+        showSearchKeyboardListener = listener
+    }
+
+    fun setOnHideSearchKeyboardListener(listener: () -> Unit) {
+        hideSearchKeyboardListener = listener
+    }
 }
 
-// Data classes
+// Data classes and enums
 data class EmojiItem(
     val emoji: String,
     val category: EmojiCategory,
@@ -271,21 +372,37 @@ class EmojiCategoryAdapter(
         holder.itemView.alpha = if (category == selectedCategory) 1.0f else 0.6f
 
         holder.itemView.setOnClickListener {
-            val oldSelected = selectedCategory
-            selectedCategory = category
-            onCategoryClick(category)
-            // Notify changes for old and new selection
-            notifyItemChanged(categories.indexOf(oldSelected))
-            notifyItemChanged(position)
+            if (selectedCategory != category) {
+                val oldSelectedIndex = categories.indexOf(selectedCategory)
+                selectedCategory = category
+
+                // Notify the callback BEFORE updating UI
+                onCategoryClick(category)
+
+                // Update UI - notify old and new selections
+                if (oldSelectedIndex != -1) {
+                    notifyItemChanged(oldSelectedIndex)
+                }
+                notifyItemChanged(position)
+            }
         }
     }
 
     override fun getItemCount(): Int = categories.size
 
     fun setSelectedCategory(category: EmojiCategory) {
-        val oldSelected = selectedCategory
-        selectedCategory = category
-        notifyItemChanged(categories.indexOf(oldSelected))
-        notifyItemChanged(categories.indexOf(category))
+        if (selectedCategory != category) {
+            val oldSelectedIndex = categories.indexOf(selectedCategory)
+            selectedCategory = category
+
+            // Update UI - notify old and new selections
+            if (oldSelectedIndex != -1) {
+                notifyItemChanged(oldSelectedIndex)
+            }
+            val newSelectedIndex = categories.indexOf(category)
+            if (newSelectedIndex != -1) {
+                notifyItemChanged(newSelectedIndex)
+            }
+        }
     }
 }

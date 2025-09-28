@@ -39,4 +39,17 @@
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColorSecondary">@color/white</item>
     </style>
+
+        <style name="SearchKeyStyle">
+            <item name="android:layout_width">0dp</item>
+            <item name="android:layout_height">match_parent</item>
+            <item name="android:gravity">center</item>
+            <item name="android:textColor">#FFFFFF</item>
+            <item name="android:textSize">14sp</item>
+            <item name="android:background">@drawable/search_key_background</item>
+            <item name="android:layout_margin">1dp</item>
+            <item name="android:clickable">true</item>
+            <item name="android:focusable">true</item>
+        </style>
+
 </resources>

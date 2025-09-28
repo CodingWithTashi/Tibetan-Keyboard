@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#E6704C04"
+    android:padding="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="2dp">
+
+        <TextView
+            android:id="@+id/key_q"
+            style="@style/SearchKeyStyle"
+            android:text="q"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_w"
+            style="@style/SearchKeyStyle"
+            android:text="w"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_e"
+            style="@style/SearchKeyStyle"
+            android:text="e"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_r"
+            style="@style/SearchKeyStyle"
+            android:text="r"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_t"
+            style="@style/SearchKeyStyle"
+            android:text="t"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_y"
+            style="@style/SearchKeyStyle"
+            android:text="y"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_u"
+            style="@style/SearchKeyStyle"
+            android:text="u"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_i"
+            style="@style/SearchKeyStyle"
+            android:text="i"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_o"
+            style="@style/SearchKeyStyle"
+            android:text="o"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_p"
+            style="@style/SearchKeyStyle"
+            android:text="p"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- Third Row: ASDF -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="2dp">
+
+        <TextView
+            android:id="@+id/key_a"
+            style="@style/SearchKeyStyle"
+            android:text="a"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_s"
+            style="@style/SearchKeyStyle"
+            android:text="s"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_d"
+            style="@style/SearchKeyStyle"
+            android:text="d"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_f"
+            style="@style/SearchKeyStyle"
+            android:text="f"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_g"
+            style="@style/SearchKeyStyle"
+            android:text="g"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_h"
+            style="@style/SearchKeyStyle"
+            android:text="h"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_j"
+            style="@style/SearchKeyStyle"
+            android:text="j"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_k"
+            style="@style/SearchKeyStyle"
+            android:text="k"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_l"
+            style="@style/SearchKeyStyle"
+            android:text="l"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- Fourth Row: ZXCV with Delete -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/key_z"
+            style="@style/SearchKeyStyle"
+            android:text="z"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_x"
+            style="@style/SearchKeyStyle"
+            android:text="x"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_c"
+            style="@style/SearchKeyStyle"
+            android:text="c"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_v"
+            style="@style/SearchKeyStyle"
+            android:text="v"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_b"
+            style="@style/SearchKeyStyle"
+            android:text="b"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_n"
+            style="@style/SearchKeyStyle"
+            android:text="n"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_m"
+            style="@style/SearchKeyStyle"
+            android:text="m"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/key_space"
+            style="@style/SearchKeyStyle"
+            android:text="Space"
+            android:layout_weight="2" />
+
+        <ImageView
+            android:id="@+id/key_delete"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.5"
+            android:src="@drawable/ic_backspace"
+            android:background="@drawable/search_key_background"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            android:layout_margin="1dp"
+            android:contentDescription="Delete"
+            app:tint="#FFFFFF" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
