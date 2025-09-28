@@ -197,7 +197,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.5"
-            android:src="@drawable/ic_backspace"
+            android:src="@drawable/ic_baseline_arrow_back_ios_24"
             android:background="@drawable/search_key_background"
             android:scaleType="centerInside"
             android:padding="8dp"
