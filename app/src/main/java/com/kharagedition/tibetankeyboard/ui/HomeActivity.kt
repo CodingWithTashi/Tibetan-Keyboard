@@ -1,8 +1,11 @@
 package com.kharagedition.tibetankeyboard.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -10,10 +13,13 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
+import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.application.InputMethodActivity
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.SettingsActivity
@@ -23,6 +29,7 @@ import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 import com.kharagedition.tibetankeyboard.BuildConfig
+import com.kharagedition.tibetankeyboard.UpdateNotificationManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
 
@@ -31,6 +38,8 @@ class HomeActivity : InputMethodActivity() {
     private lateinit var homeBinding: ActivityHomeBinding
     private var isPremiumUser:Boolean = false;
     private lateinit var authManager: AuthManager
+    private lateinit var updateManager: UpdateNotificationManager
+
     override fun onResume() {
         checkKeyboardIsEnabledOrNot()
         premiumListener()
@@ -51,7 +60,56 @@ class HomeActivity : InputMethodActivity() {
         authManager = AuthManager(this)
         checkKeyboardIsEnabledOrNot()
         initClickListener()
+        updateManager = UpdateNotificationManager(this)
+        requestNotificationPermission()
 
+        // subscribe to all-users topic
+        subscribeToAllUsersTopic()
+        // Initialize Firebase and get FCM token
+        initializeFirebase()
+
+
+        updateManager.checkForUpdates()
+    }
+
+    private fun subscribeToAllUsersTopic() {
+        FirebaseMessaging.getInstance().subscribeToTopic("all-users")
+            .addOnCompleteListener { task ->
+                var msg = "Subscribed to all-users topic"
+                if (!task.isSuccessful) {
+                    msg = "Failed to subscribe to all-users topic"
+                }
+                Log.d("FCM", msg)
+            }
+    }
+
+    private fun initializeFirebase() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            Log.d("FCM", "FCM Registration Token: $token")
+
+            // Send token to your server
+        }
+    }
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    101
+                )
+            }
+        }
     }
 
     @SuppressLint("NewApi")
