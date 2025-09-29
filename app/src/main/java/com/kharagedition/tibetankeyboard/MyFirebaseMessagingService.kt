@@ -16,13 +16,53 @@ import com.google.firebase.messaging.RemoteMessage
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
+    companion object {
+        private const val TAG = "FCMService"
+        private const val CHANNEL_ID = "app_update_channel"
+        private const val NOTIFICATION_ID = 1001
+    }
+
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // Check if message contains data payload for update notification
-        remoteMessage.data.isNotEmpty().let {
-            if (remoteMessage.data["type"] == "app_update") {
-                handleUpdateNotification(remoteMessage.data)
+        Log.d(TAG, "Message received from: ${remoteMessage.from}")
+
+        // Handle both notification and data payloads
+        // This ensures the notification works in all app states
+
+        // Check if message contains a notification payload (background/terminated state)
+        remoteMessage.notification?.let {
+            Log.d(TAG, "Notification Title: ${it.title}")
+            Log.d(TAG, "Notification Body: ${it.body}")
+
+            // When app is in background/terminated, system handles notification
+            // but we can still process data payload
+            if (remoteMessage.data.isNotEmpty()) {
+                handleDataPayload(remoteMessage.data)
+            }
+        }
+
+        // Check if message contains a data payload (foreground state)
+        if (remoteMessage.data.isNotEmpty()) {
+            Log.d(TAG, "Data Payload: ${remoteMessage.data}")
+
+            // When app is in foreground, we must manually show notification
+            if (isAppInForeground()) {
+                handleDataPayload(remoteMessage.data)
+            }
+        }
+    }
+
+    private fun handleDataPayload(data: Map<String, String>) {
+        val type = data["type"]
+
+        when (type) {
+            "app_update" -> handleUpdateNotification(data)
+            "general" -> handleGeneralNotification(data)
+            else -> {
+                // Handle unknown notification types
+                Log.w(TAG, "Unknown notification type: $type")
+                handleGeneralNotification(data)
             }
         }
     }
@@ -31,46 +71,57 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val title = data["title"] ?: "Update Available"
         val message = data["message"] ?: "A new version of the app is available"
         val version = data["version"] ?: ""
+        val updateUrl = data["update_url"] // Optional custom URL
 
-        showUpdateNotification(title, message, version)
+        showUpdateNotification(title, message, version, updateUrl)
     }
 
-    private fun showUpdateNotification(title: String, message: String, version: String) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "app_update_channel"
+    private fun handleGeneralNotification(data: Map<String, String>) {
+        val title = data["title"] ?: "Notification"
+        val message = data["message"] ?: ""
 
-        // Create notification channel (for Android O and above)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "App Updates",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications for app updates"
-                enableLights(true)
-                lightColor = Color.BLUE
-                enableVibration(true)
-            }
-            notificationManager.createNotificationChannel(channel)
+        showGeneralNotification(title, message)
+    }
+
+    private fun showUpdateNotification(
+        title: String,
+        message: String,
+        version: String,
+        customUrl: String? = null
+    ) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        createNotificationChannel(notificationManager)
+
+        // Create intent to open Play Store or custom URL
+        val intent = if (customUrl != null) {
+            createCustomUrlIntent(customUrl)
+        } else {
+            createPlayStoreIntent()
         }
 
-        // Create intent to open Play Store
-        val playStoreIntent = createPlayStoreIntent()
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
-            playStoreIntent,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Build notification
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_update) // Add your update icon
+        // Build notification with full details
+        val fullMessage = if (version.isNotEmpty()) {
+            "$message\nVersion: $version"
+        } else {
+            message
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_update)
             .setContentTitle(title)
             .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(fullMessage))
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .addAction(
                 R.drawable.ic_download,
@@ -79,30 +130,118 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             )
             .build()
 
-        notificationManager.notify(1001, notification)
+        notificationManager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun showGeneralNotification(title: String, message: String) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        createNotificationChannel(notificationManager)
+
+        // Create intent to open the app
+        val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID + 1, notification)
+    }
+
+    private fun createNotificationChannel(notificationManager: NotificationManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "App Updates & Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications for app updates and important messages"
+                enableLights(true)
+                lightColor = Color.BLUE
+                enableVibration(true)
+                setShowBadge(true)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     private fun createPlayStoreIntent(): Intent {
         val packageName = packageName
 
-        // Try to open Play Store app first
         return try {
-            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
         } catch (e: ActivityNotFoundException) {
-            // Fallback to Play Store website
-            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+    }
+
+    private fun createCustomUrlIntent(url: String): Intent {
+        return Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+    }
+
+    private fun isAppInForeground(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val appProcesses = activityManager.runningAppProcesses ?: return false
+
+        return appProcesses.any {
+            it.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                    && it.processName == packageName
         }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        Log.d(TAG, "New FCM token: $token")
+
         // Send token to your server
         sendTokenToServer(token)
+
+        // Store token locally
+        saveTokenLocally(token)
     }
 
     private fun sendTokenToServer(token: String) {
-        // Implement your server communication here
-        // This is where you'd send the FCM token to your backend
-        Log.d("FCM", "New token: $token")
+        // TODO: Implement your server communication here
+        // Example: Use Retrofit or OkHttp to send token to your backend
+        Log.d(TAG, "Sending token to server: $token")
+
+        // Example implementation:
+        // RetrofitClient.instance.updateFcmToken(token)
+        //     .enqueue(object : Callback<Response> {
+        //         override fun onResponse(call: Call<Response>, response: Response<Response>) {
+        //             Log.d(TAG, "Token sent successfully")
+        //         }
+        //         override fun onFailure(call: Call<Response>, t: Throwable) {
+        //             Log.e(TAG, "Failed to send token", t)
+        //         }
+        //     })
+    }
+
+    private fun saveTokenLocally(token: String) {
+        val sharedPreferences = getSharedPreferences("FCM_PREFS", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString("FCM_TOKEN", token).apply()
+        Log.d(TAG, "Token saved locally")
     }
 }

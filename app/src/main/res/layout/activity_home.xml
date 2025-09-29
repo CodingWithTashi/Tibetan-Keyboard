@@ -479,7 +479,8 @@
                                 android:scrollHorizontally="true"
                                 android:text="Manage Subscription"
                                 android:textColor="@color/white"
-                                android:textSize="16sp" />
+                                android:textSize="16sp"
+                                android:visibility="gone"/>
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>

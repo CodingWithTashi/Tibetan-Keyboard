@@ -73,7 +73,7 @@ class HomeActivity : InputMethodActivity() {
     }
 
     private fun subscribeToAllUsersTopic() {
-        FirebaseMessaging.getInstance().subscribeToTopic("all-users")
+        FirebaseMessaging.getInstance().subscribeToTopic("test-users")
             .addOnCompleteListener { task ->
                 var msg = "Subscribed to all-users topic"
                 if (!task.isSuccessful) {
@@ -244,7 +244,7 @@ class HomeActivity : InputMethodActivity() {
             isPremiumUser = isPremium;
             if (authManager.isUserAuthenticated() && isPremium) {
                 homeBinding.nativeAdsLayout.visibility = GONE
-                homeBinding.bottomBtnLayout.visibility = VISIBLE
+                homeBinding.bottomBtnLayout.visibility = GONE // For now
          /*       homeBinding.chatIcon.setColorFilter(getColor(R.color.premium_yellow))
                 homeBinding.shareIcon.setColorFilter(getColor(R.color.premium_yellow))
                 homeBinding.rateIcon.setColorFilter(getColor(R.color.premium_yellow))
