@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView.OnKeyboardActionListener
@@ -11,6 +12,9 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ImageSpan
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -19,7 +23,6 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.widget.FrameLayout
-import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -36,6 +39,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     private var currentMode = KeyboardMode.NORMAL
     private var emojiKeyboardView: EmojiKeyboardView? = null
     private var isEmojiMode = false
+
     enum class KeyboardMode {
         NORMAL,
         AI_GRAMMAR,
@@ -208,22 +212,25 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         }
     }
 
-
     private fun showEmojiKeyboard() {
         if (emojiKeyboardView == null) {
             emojiKeyboardView = EmojiKeyboardView(this)
             val themeColor = prefs.getString("colors", "#FF704C04") ?: "#FF704C04"
             emojiKeyboardView?.setThemeColor(themeColor)
 
-            emojiKeyboardView?.setOnEmojiClickListener { emoji ->
-                // Insert the selected emoji into the text field
-                currentInputConnection?.commitText(emoji, 1)
+
+            emojiKeyboardView?.setOnEmojiClickListener { content->
+                currentInputConnection?.commitText(content, 1)
+            }
+            emojiKeyboardView?.setOnStickerClickListener { stickerInfo->
+                insertStickerIntoInput(stickerInfo)
             }
 
+            }
             emojiKeyboardView?.setOnBackClickListener {
                 hideEmojiKeyboard()
             }
-        }
+
 
         // Hide the normal keyboard container
         val normalContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.normal_keyboard_container)
@@ -232,6 +239,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         // Show the emoji keyboard container
         val emojiContainer = aiKeyboardView?.findViewById<FrameLayout>(R.id.emoji_keyboard_container)
         emojiContainer?.let { container ->
+            emojiKeyboardView?.parent?.let { parent ->
+                (parent as? ViewGroup)?.removeView(emojiKeyboardView)
+            }
             container.removeAllViews()
             container.addView(emojiKeyboardView)
             container.visibility = View.VISIBLE
@@ -239,6 +249,44 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
         isEmojiMode = true
     }
+
+    /**
+     * Insert sticker as ImageSpan into the input field
+     * Format: "STICKER:resourceId:fileName"
+     */
+    private fun insertStickerIntoInput(stickerItem: StickerItem) {
+        val inputConnection = currentInputConnection ?: return
+
+
+        val resourceId = stickerItem.resourceId
+        val fileName = stickerItem.fileName
+
+        try {
+            // Load the drawable
+            val drawable = resources.getDrawable(resourceId, null)
+
+            // Get the current text size from input (approximate)
+            val textSize = 48 // Default text size in pixels, you can adjust this
+            val stickerSize = (textSize * 1.5).toInt()
+            drawable.setBounds(0, 0, stickerSize, stickerSize)
+
+            // Create ImageSpan with placeholder text
+            val span = ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM)
+            val placeholder = "[$fileName]"
+            val spannable = SpannableString(placeholder)
+            spannable.setSpan(span, 0, placeholder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+            // Commit the spannable text
+            inputConnection.commitText(spannable, 1)
+
+            Log.d("TAG", "Sticker inserted: $fileName")
+        } catch (e: Exception) {
+            Log.e("TAG", "Error inserting sticker", e)
+            // Fallback: insert as text placeholder
+            inputConnection.commitText("[$fileName]", 1)
+        }
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && isEmojiMode) {
             hideEmojiKeyboard()
@@ -261,6 +309,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
         isEmojiMode = false
     }
+
     private fun getCurrentInputText(): String {
         val inputConnection = currentInputConnection ?: return ""
 

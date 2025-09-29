@@ -1,8 +1,14 @@
 package com.kharagedition.tibetankeyboard
 
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.text.Editable
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextWatcher
+import android.text.style.ImageSpan
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -10,12 +16,12 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
-import java.util.*
 
 class EmojiKeyboardView @JvmOverloads constructor(
     context: Context,
@@ -29,21 +35,24 @@ class EmojiKeyboardView @JvmOverloads constructor(
     private lateinit var backButton: ImageButton
     private lateinit var searchKeyboardContainer: FrameLayout
 
-    private lateinit var emojiAdapter: EmojiAdapter
+    private lateinit var unifiedAdapter: UnifiedAdapter
     private lateinit var categoryAdapter: EmojiCategoryAdapter
+
+    // Updated callbacks
     private var emojiClickListener: ((String) -> Unit)? = null
+    private var stickerClickListener: ((StickerItem) -> Unit)? = null
     private var backClickListener: (() -> Unit)? = null
     private var showSearchKeyboardListener: (() -> Unit)? = null
     private var hideSearchKeyboardListener: (() -> Unit)? = null
 
-    private val allEmojis = mutableListOf<EmojiItem>()
-    private val filteredEmojis = mutableListOf<EmojiItem>()
+    private val allItems = mutableListOf<DisplayItem>()
+    private val filteredItems = mutableListOf<DisplayItem>()
     private var isSearchMode = false
 
     init {
         orientation = VERTICAL
         setupView()
-        initializeEmojis()
+        initializeItems()
         setupRecyclerViews()
         setupSearch()
         setupBackButton()
@@ -61,12 +70,14 @@ class EmojiKeyboardView @JvmOverloads constructor(
     }
 
     private fun setupRecyclerViews() {
-        // Setup emoji grid
-        emojiAdapter = EmojiAdapter(filteredEmojis) { emoji ->
-            emojiClickListener?.invoke(emoji)
-        }
+        // Setup unified grid for emojis and stickers
+        unifiedAdapter = UnifiedAdapter(
+            items = filteredItems,
+            onEmojiClick = { emoji -> emojiClickListener?.invoke(emoji) },
+            onStickerClick = { sticker -> stickerClickListener?.invoke(sticker) }
+        )
         emojiRecyclerView.layoutManager = GridLayoutManager(context, 8)
-        emojiRecyclerView.adapter = emojiAdapter
+        emojiRecyclerView.adapter = unifiedAdapter
 
         // Setup category horizontal list
         val categories = EmojiCategory.values().toList()
@@ -75,7 +86,6 @@ class EmojiKeyboardView @JvmOverloads constructor(
             if (searchEditText.text.isNotEmpty()) {
                 searchEditText.setText("")
             }
-            // Filter emojis by selected category
             filterByCategory(category)
         }
         categoryRecyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -103,7 +113,7 @@ class EmojiKeyboardView @JvmOverloads constructor(
                 if (query.isEmpty()) {
                     filterByCategory(EmojiCategory.SMILEYS)
                 } else {
-                    searchEmojis(query)
+                    searchItems(query)
                 }
             }
         })
@@ -132,57 +142,67 @@ class EmojiKeyboardView @JvmOverloads constructor(
         searchKeyboardContainer.addView(searchKeyboard)
     }
 
-    private fun initializeEmojis() {
-        allEmojis.clear()
-        allEmojis.addAll(EmojiItemList.allEmojis.toMutableList())
-       }
+    private fun initializeItems() {
+        allItems.clear()
 
-    private fun filterByCategory(category: EmojiCategory) {
-        filteredEmojis.clear()
-        if (category == EmojiCategory.ALL) {
-            filteredEmojis.addAll(allEmojis)
-        } else {
-            filteredEmojis.addAll(allEmojis.filter { it.category == category })
-        }
+        // Add all emojis
+        allItems.addAll(EmojiItemList.allEmojis.map { DisplayItem.EmojiDisplay(it) })
 
-        // Debug logging (you can remove this later)
-        android.util.Log.d("EmojiKeyboard", "Filtering by ${category.displayName}, found ${filteredEmojis.size} emojis")
-
-        emojiAdapter.notifyDataSetChanged()
-        // Note: We don't call setSelectedCategory here to avoid circular calls
+        // Add all stickers
+        //allItems.addAll(StickerItemList.allStickers.map { DisplayItem.StickerDisplay(it) })
     }
 
-    private fun searchEmojis(query: String) {
-        filteredEmojis.clear()
+    private fun filterByCategory(category: EmojiCategory) {
+        filteredItems.clear()
+        if (category == EmojiCategory.ALL) {
+            filteredItems.addAll(allItems)
+        } else {
+            filteredItems.addAll(allItems.filter {
+                when (it) {
+                    is DisplayItem.EmojiDisplay -> it.emoji.category == category
+                    is DisplayItem.StickerDisplay -> it.sticker.category == category
+                }
+            })
+        }
+
+        android.util.Log.d("EmojiKeyboard", "Filtering by ${category.displayName}, found ${filteredItems.size} items")
+        unifiedAdapter.notifyDataSetChanged()
+    }
+
+    private fun searchItems(query: String) {
+        filteredItems.clear()
         val lowercaseQuery = query.lowercase()
-        filteredEmojis.addAll(allEmojis.filter { emojiItem ->
-            emojiItem.searchTags.any { tag ->
-                tag.lowercase().contains(lowercaseQuery)
+        filteredItems.addAll(allItems.filter { item ->
+            when (item) {
+                is DisplayItem.EmojiDisplay -> {
+                    item.emoji.searchTags.any { tag ->
+                        tag.lowercase().contains(lowercaseQuery)
+                    }
+                }
+                is DisplayItem.StickerDisplay -> {
+                    item.sticker.searchTags.any { tag ->
+                        tag.lowercase().contains(lowercaseQuery)
+                    }
+                }
             }
         })
-        emojiAdapter.notifyDataSetChanged()
+        unifiedAdapter.notifyDataSetChanged()
     }
 
     private fun enterSearchMode() {
         isSearchMode = true
-        // Reduce emoji grid height to make space for search keyboard
         val layoutParams = emojiRecyclerView.layoutParams
-        layoutParams.height = (120 * context.resources.displayMetrics.density).toInt() // 120dp
+        layoutParams.height = (120 * context.resources.displayMetrics.density).toInt()
         emojiRecyclerView.layoutParams = layoutParams
-
-        // Show search keyboard
         searchKeyboardContainer.visibility = View.VISIBLE
         showSearchKeyboardListener?.invoke()
     }
 
     private fun exitSearchMode() {
         isSearchMode = false
-        // Restore emoji grid height
         val layoutParams = emojiRecyclerView.layoutParams
-        layoutParams.height = (200 * context.resources.displayMetrics.density).toInt() // 200dp
+        layoutParams.height = (200 * context.resources.displayMetrics.density).toInt()
         emojiRecyclerView.layoutParams = layoutParams
-
-        // Hide search keyboard
         searchKeyboardContainer.visibility = View.GONE
         hideSearchKeyboardListener?.invoke()
     }
@@ -210,13 +230,16 @@ class EmojiKeyboardView @JvmOverloads constructor(
         emojiClickListener = listener
     }
 
+    fun setOnStickerClickListener(listener: (StickerItem) -> Unit) {
+        stickerClickListener = listener
+    }
+
     fun setOnBackClickListener(listener: () -> Unit) {
         backClickListener = listener
     }
 
     fun setThemeColor(color: String) {
-        // Apply theme color to the view if needed
-        // You can customize the appearance based on the theme
+        // Apply theme color if needed
     }
 
     fun setOnShowSearchKeyboardListener(listener: () -> Unit) {
@@ -228,13 +251,27 @@ class EmojiKeyboardView @JvmOverloads constructor(
     }
 }
 
-// Data classes and enums
+// Sealed class for unified display
+sealed class DisplayItem {
+    data class EmojiDisplay(val emoji: EmojiItem) : DisplayItem()
+    data class StickerDisplay(val sticker: StickerItem) : DisplayItem()
+}
+
+// Data classes
 data class EmojiItem(
     val emoji: String,
     val category: EmojiCategory,
     val searchTags: List<String>
 )
 
+data class StickerItem(
+    val resourceId: Int,
+    val fileName: String,
+    val category: EmojiCategory,
+    val searchTags: List<String>
+)
+
+// Updated enum with Tibetan category
 enum class EmojiCategory(val displayName: String, val icon: String) {
     ALL("All", "🔍"),
     SMILEYS("Smileys", "😀"),
@@ -242,37 +279,76 @@ enum class EmojiCategory(val displayName: String, val icon: String) {
     FOOD("Food", "🍎"),
     ACTIVITIES("Activities", "⚽"),
     TRAVEL("Travel", "🚗"),
-    OBJECTS("Objects", "💡")
+    OBJECTS("Objects", "💡"),
+    //TIBETAN("Tibetan", "ཨ")  // New Tibetan sticker category
 }
 
-// Emoji Adapter
-class EmojiAdapter(
-    private val emojis: List<EmojiItem>,
-    private val onEmojiClick: (String) -> Unit
-) : RecyclerView.Adapter<EmojiAdapter.EmojiViewHolder>() {
+// Unified Adapter for both emojis and stickers
+class UnifiedAdapter(
+    private val items: List<DisplayItem>,
+    private val onEmojiClick: (String) -> Unit,
+    private val onStickerClick: (StickerItem) -> Unit
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    companion object {
+        private const val TYPE_EMOJI = 0
+        private const val TYPE_STICKER = 1
+    }
 
     class EmojiViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val emojiText: TextView = itemView.findViewById(R.id.emoji_text)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EmojiViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.emoji_item, parent, false)
-        return EmojiViewHolder(view)
+    class StickerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val stickerImage: ImageView = itemView.findViewById(R.id.sticker_image)
     }
 
-    override fun onBindViewHolder(holder: EmojiViewHolder, position: Int) {
-        val emoji = emojis[position].emoji
-        holder.emojiText.text = emoji
-        holder.itemView.setOnClickListener {
-            onEmojiClick(emoji)
+    override fun getItemViewType(position: Int): Int {
+        return when (items[position]) {
+            is DisplayItem.EmojiDisplay -> TYPE_EMOJI
+            is DisplayItem.StickerDisplay -> TYPE_STICKER
         }
     }
 
-    override fun getItemCount(): Int = emojis.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            TYPE_EMOJI -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.emoji_item, parent, false)
+                EmojiViewHolder(view)
+            }
+            TYPE_STICKER -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.sticker_item, parent, false)
+                StickerViewHolder(view)
+            }
+            else -> throw IllegalArgumentException("Unknown view type")
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val item = items[position]) {
+            is DisplayItem.EmojiDisplay -> {
+                val emojiHolder = holder as EmojiViewHolder
+                emojiHolder.emojiText.text = item.emoji.emoji
+                holder.itemView.setOnClickListener {
+                    onEmojiClick(item.emoji.emoji)
+                }
+            }
+            is DisplayItem.StickerDisplay -> {
+                val stickerHolder = holder as StickerViewHolder
+                stickerHolder.stickerImage.setImageResource(item.sticker.resourceId)
+                holder.itemView.setOnClickListener {
+                    onStickerClick(item.sticker)
+                }
+            }
+        }
+    }
+
+    override fun getItemCount(): Int = items.size
 }
 
-// Category Adapter
+// Category Adapter (unchanged)
 class EmojiCategoryAdapter(
     private val categories: List<EmojiCategory>,
     private val onCategoryClick: (EmojiCategory) -> Unit
@@ -294,7 +370,6 @@ class EmojiCategoryAdapter(
         val category = categories[position]
         holder.categoryIcon.text = category.icon
 
-        // Highlight selected category
         holder.itemView.isSelected = category == selectedCategory
         holder.itemView.alpha = if (category == selectedCategory) 1.0f else 0.6f
 
@@ -302,11 +377,7 @@ class EmojiCategoryAdapter(
             if (selectedCategory != category) {
                 val oldSelectedIndex = categories.indexOf(selectedCategory)
                 selectedCategory = category
-
-                // Notify the callback BEFORE updating UI
                 onCategoryClick(category)
-
-                // Update UI - notify old and new selections
                 if (oldSelectedIndex != -1) {
                     notifyItemChanged(oldSelectedIndex)
                 }
@@ -321,8 +392,6 @@ class EmojiCategoryAdapter(
         if (selectedCategory != category) {
             val oldSelectedIndex = categories.indexOf(selectedCategory)
             selectedCategory = category
-
-            // Update UI - notify old and new selections
             if (oldSelectedIndex != -1) {
                 notifyItemChanged(oldSelectedIndex)
             }
@@ -333,3 +402,45 @@ class EmojiCategoryAdapter(
         }
     }
 }
+
+// Helper class for inserting stickers into EditText
+object StickerHelper {
+
+    fun insertStickerIntoEditText(editText: EditText, sticker: StickerItem, context: Context) {
+        val drawable = context.resources.getDrawable(sticker.resourceId, null)
+
+        // Scale the drawable to match text size
+        val textSize = editText.textSize.toInt()
+        val stickerSize = (textSize * 1.5).toInt() // 1.5x text size
+        drawable.setBounds(0, 0, stickerSize, stickerSize)
+
+        // Create ImageSpan with placeholder text (sticker filename)
+        val span = ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM)
+        val placeholder = "[${sticker.fileName}]"
+        val spannable = SpannableString(placeholder)
+        spannable.setSpan(span, 0, placeholder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        // Insert at cursor position
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+        editText.text.replace(Math.min(start, end), Math.max(start, end), spannable)
+    }
+
+    fun loadStickerFromAssets(context: Context, fileName: String): Drawable {
+        val inputStream = context.assets.open("stickers/$fileName")
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        return BitmapDrawable(context.resources, bitmap)
+    }
+}
+
+// Sticker list - YOU NEED TO ADD YOUR STICKERS HERE
+/*
+object StickerItemList {
+    val allStickers = mutableListOf(
+        // Example Tibetan stickers - replace with your actual drawable resources
+        StickerItem(R.drawable.butter_lamp, "tibetan_1.png", EmojiCategory.TIBETAN, listOf("tibetan", "བོད", "Butter"," lamp")),
+        StickerItem(R.drawable.mandala, "tibetan_2.png", EmojiCategory.TIBETAN, listOf("tibetan", "བོད", "Mandala")),
+        StickerItem(R.drawable.meditation_cushion, "tibetan_3.png", EmojiCategory.TIBETAN, listOf("tibetan", "བོད", "Meditation"," cushion")),
+        // Add more stickers here...
+    )
+}*/
