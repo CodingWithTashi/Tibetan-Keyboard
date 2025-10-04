@@ -70,6 +70,7 @@ class AIService {
                 println("Translation error: ${e.message}")
                 e.printStackTrace()
                 TranslationResult(
+                    error = e.message,
                     translatedText = text,
                     sourceLanguage = getLanguageName(sourceLang),
                     targetLanguage = getLanguageName(targetLang),

@@ -19,6 +19,7 @@ data class TranslationResult(
     val translatedText: String,
     val sourceLanguage: String,
     val targetLanguage: String,
+    val error: String? = null
 )
 
 // Translation API Request/Response data classes

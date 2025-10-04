@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.kharagedition.tibetankeyboard.BuildConfig
 import com.revenuecat.purchases.*
 import com.revenuecat.purchases.interfaces.*
 import com.revenuecat.purchases.models.StoreTransaction
@@ -205,7 +206,7 @@ class RevenueCatManager private constructor() {
      */
     private fun updatePremiumStatus(customerInfo: CustomerInfo) {
         val isPremium = customerInfo.entitlements[PREMIUM_ENTITLEMENT_ID]?.isActive == true
-        _isPremiumUser.value = isPremium
+        _isPremiumUser.value = BuildConfig.DEBUG || isPremium
 
         println("RevenueCat: Premium status - $isPremium")
 

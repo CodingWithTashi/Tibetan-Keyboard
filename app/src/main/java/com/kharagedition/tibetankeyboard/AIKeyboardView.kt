@@ -464,6 +464,9 @@ class AIKeyboardView @JvmOverloads constructor(
         aiReplaceBtn.text = context.getString(R.string.use_translation)
         aiInrBtn.visibility = View.VISIBLE
         aiInrBtn.text = context.getString(R.string.translate);
+        if(result.error!=null){
+            showError("Translation error: ${result.error}")
+        }
     }
 
     private fun showRephraseResult(result: RephraseResult) {
