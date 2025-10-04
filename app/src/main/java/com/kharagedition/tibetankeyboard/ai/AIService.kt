@@ -29,7 +29,7 @@ class AIService {
             try {
                 if (text.isEmpty()) return@withContext GrammarResult("", emptyList())
 
-                val response = RetrofitClient.geminiAPI.checkGrammar(GrammarCheckRequest(text = text))
+                val response = RetrofitClient.aiAPI.checkGrammar(GrammarCheckRequest(text = text,"claude","auto",500))
 
                 val corrections = response.correctedText.corrections.map {
                     "${it.incorrectWord} → ${it.suggestion.firstOrNull() ?: ""} (${it.reason})"

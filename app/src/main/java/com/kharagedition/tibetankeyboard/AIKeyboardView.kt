@@ -111,8 +111,8 @@ class AIKeyboardView @JvmOverloads constructor(
         }
 
         grammarBtn.setOnClickListener {
-            Toast.makeText(context, "Coming in next release....", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener;
+//            Toast.makeText(context, "Coming in next release....", Toast.LENGTH_SHORT).show()
+//            return@setOnClickListener;
             val currentText = getCurrentInputText()
             if (currentText.isEmpty()) {
                 Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
