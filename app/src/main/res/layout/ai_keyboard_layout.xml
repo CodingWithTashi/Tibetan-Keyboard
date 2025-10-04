@@ -128,13 +128,15 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingBottom="24dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginHorizontal="8dp"
-                android:paddingVertical="12dp">
+                android:paddingVertical="12dp"
+                >
 
                 <!-- Header -->
                 <LinearLayout
@@ -168,9 +170,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Translate"
-                        android:padding="5dp"
+                        android:padding="8dp"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
                         android:textAllCaps="false"
-                        android:visibility="gone"
+                        android:visibility="visible"
                         android:textColor="@color/white"
                         android:background="@drawable/ai_replace_button_background"/>
                     <ProgressBar
@@ -210,8 +214,10 @@
                         android:layout_height="25dp"
                         android:src="@drawable/ic_swap_horiz"
                         android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:visibility="gone"
+                        app:tint="#FF704C04"
                         android:tint="#FF704C04"
-                        android:visibility="gone" />
+                        />
 
                     <TextView
                         android:id="@+id/target_language_text"
@@ -231,16 +237,16 @@
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp"
+                    app:cardElevation="1dp"
                     app:cardBackgroundColor="#F5F5F5">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="12dp">
+                        android:padding="5dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -269,16 +275,16 @@
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="8dp"
                     app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp"
+                    app:cardElevation="1dp"
                     app:cardBackgroundColor="#E8F5E8">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="12dp">
+                        android:padding="8dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -309,14 +315,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp"
+                    app:cardElevation="1dp"
                     app:cardBackgroundColor="#FFF3E0">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="12dp">
+                        android:padding="5dp">
 
                         <TextView
                             android:layout_width="match_parent"
@@ -350,29 +356,31 @@
                     <Button
                         android:id="@+id/ai_cancel_btn"
                         android:layout_width="0dp"
-                        android:layout_height="48dp"
+                        android:layout_height="45dp"
+                        android:minHeight="0dp"
                         android:layout_weight="1"
                         android:text="Cancel"
                         android:textColor="#666666"
-                        android:textSize="14sp"
+                        android:textSize="12sp"
                         android:background="@drawable/ai_cancel_button_background"
                         android:layout_marginEnd="8dp"
                         android:textAllCaps="false"
-                        android:elevation="2dp" />
+                        android:elevation="1dp" />
 
                     <Button
                         android:id="@+id/ai_replace_btn"
                         android:layout_width="0dp"
-                        android:layout_height="48dp"
+                        android:layout_height="45dp"
+                        android:minHeight="0dp"
                         android:layout_weight="1"
                         android:text="Replace"
                         android:textColor="@android:color/white"
-                        android:textSize="14sp"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:textAllCaps="false"
                         android:background="@drawable/ai_replace_button_background"
                         android:layout_marginStart="8dp"
-                        android:elevation="2dp" />
+                        android:elevation="1dp" />
 
                 </LinearLayout>
 
