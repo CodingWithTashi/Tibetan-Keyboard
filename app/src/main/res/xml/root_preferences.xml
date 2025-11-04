@@ -13,6 +13,17 @@
             android:icon="@drawable/ic_baseline_image_24"
             app:title="@string/keyboard_background"
             app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="classic"
+            app:entries="@array/keyboard_style_entries"
+            app:entryValues="@array/keyboard_style_values"
+            app:key="keyboard_style"
+            android:icon="@drawable/ic_baseline_image_24"
+            app:title="@string/keyboard_style"
+            app:summary="@string/keyboard_style_summary"
+            app:useSimpleSummaryProvider="true" />
+
   <!--      <SeekBarPreference
             app:icon="@drawable/ic_baseline_font_download_24"
             app:min="2"
