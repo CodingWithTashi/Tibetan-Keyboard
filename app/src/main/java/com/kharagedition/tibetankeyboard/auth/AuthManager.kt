@@ -92,8 +92,8 @@ class AuthManager(private val context: Context) {
             return
         }
 
-        // Initialize RevenueCat with current user
-        revenueCatManager.initialize(auth, callback)
+        // Initialize RevenueCat with current user and Firebase UID
+        revenueCatManager.initialize(context, auth, callback)
     }
 
     /**

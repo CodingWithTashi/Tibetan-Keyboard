@@ -31,21 +31,9 @@ class TibetanKeyboardApp : Application() {
     }
 
     private fun setUpRevenueCat() {
+        // DO NOT initialize RevenueCat here without a user ID
+        // RevenueCat will be configured in RevenueCatManager when user is authenticated
+        // This ensures purchases are always tied to the Firebase user ID
         Purchases.logLevel = LogLevel.DEBUG
-        val apiKey = if (BuildConfig.DEBUG) {
-            "goog_HqifnUJxdgpKcyrUFhRfJfAYIap"
-        } else {
-            "goog_HqifnUJxdgpKcyrUFhRfJfAYIap"
-        }
-        Purchases.configure(
-            PurchasesConfiguration.Builder(this, apiKey)
-                //.appUserID(null)
-                .purchasesAreCompletedBy(REVENUECAT)
-                .build()
-
-        )
-        Purchases.sharedInstance.updatedCustomerInfoListener =
-            UpdatedCustomerInfoListener { customerInfo -> Log.d("TAG", "onCreate: Customer Info Updated: ${customerInfo.toString()}") }
-
     }
 }
