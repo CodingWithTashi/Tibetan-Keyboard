@@ -6,6 +6,8 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { checkGrammar } from "./services/grammarService";
+import advancedGrammarService from "./services/advancedGrammarService";
+import transliterationService from "./services/transliterationService";
 import {
   validateApiKey,
   checkUserLimits,
@@ -254,6 +256,382 @@ app.post(
     }
   }
 );
+
+// ============================================
+// NEW PREMIUM FEATURE ENDPOINTS
+// ============================================
+
+// Advanced Tibetan Grammar Analysis Endpoint
+app.post("/api/grammar/analyze", async (req, res) => {
+  try {
+    const { text, mode = "realtime", style = "formal", contextualInfo } = req.body;
+    const userId = req.headers["userid"] as string;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Text is required",
+      });
+    }
+
+    const userLevel = contextualInfo?.userLevel || "intermediate";
+    const documentType = contextualInfo?.documentType || "casual";
+
+    const result = await advancedGrammarService.analyzeTibetanGrammar(
+      text,
+      userLevel,
+      documentType
+    );
+
+    // Save to Firestore history
+    try {
+      const db = admin.firestore();
+      const userRef = db.collection("users").doc(userId);
+      const historyRef = userRef.collection("grammar_history").doc();
+
+      await historyRef.set({
+        text,
+        corrections: result.corrections,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        documentType,
+        savedByUser: false,
+        mode,
+      });
+    } catch (dbError) {
+      console.error("Error saving to Firestore:", dbError);
+      // Don't fail the request if Firestore fails
+    }
+
+    return res.json({
+      success: true,
+      data: result,
+      usage: {
+        charactersUsed: text.length,
+      },
+    });
+  } catch (error) {
+    console.error("Grammar analysis error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Grammar analysis failed",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
+// Tone Alternatives Endpoint
+app.post("/api/grammar/suggestions", async (req, res) => {
+  try {
+    const { text, correctionId, type } = req.body;
+
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: "Text is required",
+      });
+    }
+
+    let result: any = {
+      alternatives: [],
+      examples: [],
+      culturalNotes: "",
+    };
+
+    if (type === "alternatives") {
+      const tones: Array<"formal" | "casual" | "poetic" | "religious" | "modern"> = [
+        "formal",
+        "casual",
+        "poetic",
+      ];
+      for (const tone of tones) {
+        const alternatives = await advancedGrammarService.getToneAlternatives(text, tone);
+        result.alternatives.push({
+          tone,
+          suggestions: alternatives,
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Grammar suggestions error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to get suggestions",
+    });
+  }
+});
+
+// Transliteration Endpoints
+app.post("/api/transliterate/convert", async (req, res) => {
+  try {
+    const { text, sourceSystem = "wylie", targetSystem = "tibetan", context = "common" } =
+      req.body;
+    const userId = req.headers["userid"] as string;
+
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: "Text is required",
+      });
+    }
+
+    let result: any;
+
+    // Perform conversion based on source and target systems
+    if (sourceSystem === "wylie" && targetSystem === "tibetan") {
+      result = transliterationService.convertWylieToTibetan(text);
+    } else if (sourceSystem === "tibetan" && targetSystem === "wylie") {
+      result = transliterationService.convertTibetanToWylie(text);
+    } else if (targetSystem === "phonetic") {
+      result = transliterationService.convertToPhonetics(text);
+    } else {
+      result = {
+        result: text,
+        alternatives: [],
+        confidence: 0,
+      };
+    }
+
+    // Save to Firestore history
+    try {
+      const db = admin.firestore();
+      const userRef = db.collection("users").doc(userId);
+      const historyRef = userRef.collection("transliteration_history").doc();
+
+      await historyRef.set({
+        sourceText: text,
+        sourceSystem,
+        targetSystem,
+        result: result.result,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        savedByUser: false,
+      });
+    } catch (dbError) {
+      console.error("Error saving transliteration to Firestore:", dbError);
+    }
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Transliteration error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Transliteration failed",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
+// Transliteration Database Lookup
+app.post("/api/transliterate/database/lookup", async (req, res) => {
+  try {
+    const { query, type = "common", limit = 10 } = req.body;
+
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        error: "Query is required",
+      });
+    }
+
+    const results = transliterationService.searchNameDatabase(query);
+
+    return res.json({
+      success: true,
+      data: {
+        results: results.slice(0, limit),
+      },
+    });
+  } catch (error) {
+    console.error("Transliteration lookup error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Lookup failed",
+    });
+  }
+});
+
+// Enhanced Chat with Tutoring Support
+app.post("/api/chat/message", async (req, res) => {
+  try {
+    const {
+      sessionId,
+      message,
+      conversationMode = "general",
+      tutoringLevel = "intermediate",
+      documentContext,
+      includeExplanation = false,
+    } = req.body;
+    const userId = req.headers["userid"] as string;
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: "Message is required",
+      });
+    }
+
+    const currentSessionId = sessionId || userId;
+
+    // Create or update session with mode
+    const chat = await ChatSessionManager.getOrCreateSession(
+      currentSessionId,
+      conversationMode as any,
+      tutoringLevel as any,
+      documentContext
+    );
+
+    // Send message to Gemini
+    const tibetanResponse = await ChatSessionManager.sendMessage(
+      currentSessionId,
+      message,
+      conversationMode as any
+    );
+
+    // Save message to Firestore
+    try {
+      const db = admin.firestore();
+      const conversationRef = db
+        .collection("users")
+        .doc(userId)
+        .collection("conversations")
+        .doc(currentSessionId);
+
+      // Create or update conversation document
+      await conversationRef.set(
+        {
+          mode: conversationMode,
+          tutoringLevel: conversationMode === "tutoring" ? tutoringLevel : null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          messageCount: admin.firestore.FieldValue.increment(1),
+          preview: message.substring(0, 100),
+          lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Add message to subcollection
+      const messagesRef = conversationRef.collection("messages").doc();
+      await messagesRef.set({
+        sender: "user",
+        content: message,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        mode: conversationMode,
+      });
+
+      // Add response
+      const responseRef = conversationRef.collection("messages").doc();
+      await responseRef.set({
+        sender: "assistant",
+        content: tibetanResponse,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        mode: conversationMode,
+        confidence: 0.92,
+      });
+    } catch (dbError) {
+      console.error("Error saving chat to Firestore:", dbError);
+    }
+
+    const response: GeminiChatResponse = {
+      success: true,
+      data: {
+        response: tibetanResponse,
+        sessionId: currentSessionId,
+        messageId: `msg_${Date.now()}`,
+      },
+      usage: {
+        charactersUsed: message.length + tibetanResponse.length,
+      },
+    };
+
+    return res.json(response);
+  } catch (error) {
+    console.error("Enhanced chat error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Chat failed",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
+// Chat History Endpoint
+app.get("/api/chat/history", async (req, res) => {
+  try {
+    const userId = req.headers["userid"] as string;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const db = admin.firestore();
+    const conversationsRef = db.collection("users").doc(userId).collection("conversations");
+
+    let query: any = conversationsRef.orderBy("updatedAt", "desc").limit(limit);
+
+    if (offset > 0) {
+      query = query.offset(offset);
+    }
+
+    const snapshot = await query.get();
+    const conversations = snapshot.docs.map((doc) => ({
+      conversationId: doc.id,
+      ...doc.data(),
+    }));
+
+    return res.json({
+      success: true,
+      data: {
+        conversations,
+        totalCount: snapshot.size,
+      },
+    });
+  } catch (error) {
+    console.error("Chat history error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch history",
+    });
+  }
+});
+
+// Tutoring Mode Configuration
+app.post("/api/chat/tutoring/mode", async (req, res) => {
+  try {
+    const { sessionId, enabled, level = "beginner", topic = "grammar" } = req.body;
+    const userId = req.headers["userid"] as string;
+
+    if (enabled) {
+      ChatSessionManager.updateSessionMode(sessionId || userId, "tutoring", level as any);
+
+      const curriculum = ChatSessionManager.getTutoringCurriculum(level as any);
+
+      return res.json({
+        success: true,
+        data: {
+          curriculum,
+          systemPrompt: `Tutoring mode activated for ${level} level`,
+        },
+      });
+    } else {
+      ChatSessionManager.updateSessionMode(sessionId || userId, "general");
+      return res.json({
+        success: true,
+        message: "Tutoring mode disabled",
+      });
+    }
+  } catch (error) {
+    console.error("Tutoring mode error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to configure tutoring mode",
+    });
+  }
+});
 
 // Error handling middleware
 app.use(errorHandler);
