@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🎓 Tutoring Mode"
+            android:textColor="@color/brown_800"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_tutoring"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+    <!-- Level Selection -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Learning Level"
+        android:textColor="@color/brown_700"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <RadioGroup
+        android:id="@+id/level_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:enabled="false"
+        android:orientation="horizontal">
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/level_beginner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Beginner"
+            android:textColor="@color/brown_700"
+            android:textSize="12sp" />
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/level_intermediate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Intermediate"
+            android:textColor="@color/brown_700"
+            android:textSize="12sp" />
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/level_advanced"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Advanced"
+            android:textColor="@color/brown_700"
+            android:textSize="12sp" />
+
+    </RadioGroup>
+
+    <!-- Progress Section -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Progress"
+        android:textColor="@color/brown_700"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="8dp"
+        android:progress="25" />
+
+    <TextView
+        android:id="@+id/progress_percentage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="25% Complete"
+        android:textColor="@color/gray"
+        android:textSize="11sp" />
+
+    <!-- Current Lesson -->
+    <TextView
+        android:id="@+id/current_lesson"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Current: Alphabet Basics\nNext: Basic Verbs"
+        android:textColor="@color/brown_700"
+        android:textSize="12sp" />
+
+</LinearLayout>

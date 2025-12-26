@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <TextView
+        android:id="@+id/dialog_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Upload Document"
+        android:textColor="@color/brown_800"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- File Icon -->
+    <ImageView
+        android:id="@+id/file_icon"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="16dp"
+        android:contentDescription="File"
+        android:src="@drawable/ic_insert_drive_file"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dialog_title"
+        app:tint="@color/brown_700" />
+
+    <!-- File Selection Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_select_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Select File (PDF, TXT, DOC)"
+        android:textSize="14sp"
+        app:cornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/file_icon" />
+
+    <!-- Selected File Name -->
+    <TextView
+        android:id="@+id/selected_file_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="@color/success_green"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_select_file" />
+
+    <!-- Upload Progress -->
+    <ProgressBar
+        android:id="@+id/upload_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/selected_file_name" />
+
+    <!-- Upload Animation -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/upload_animation"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/upload_progress"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/document_uploading" />
+
+    <!-- Upload Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_upload_document"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:enabled="false"
+        android:text="Upload & Analyze"
+        android:textSize="14sp"
+        app:cornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/upload_animation" />
+
+    <!-- File Format Info -->
+    <TextView
+        android:id="@+id/file_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Supported: PDF, TXT, DOC • Max: 10MB"
+        android:textAlignment="center"
+        android:textColor="@color/gray"
+        android:textSize="11sp"
+        app:layout_constraintTop_toBottomOf="@+id/btn_upload_document" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
