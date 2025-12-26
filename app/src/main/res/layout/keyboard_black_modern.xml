@@ -5,12 +5,13 @@
     android:layout_alignParentBottom="true"
     tools:viewBindingIgnore="true"
     android:keyTextColor="@android:color/white"
-    android:keyBackground="@drawable/key_green_background_classic"
-    android:keyPreviewLayout="@layout/key_preview_green"
-    android:background="@color/keyboard_background_green_color"
-
+    android:keyBackground="@drawable/key_black_background_modern"
+    android:keyPreviewLayout="@layout/key_preview"
+    android:background="@color/keyboard_background_black_color"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="20dp">
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp">
 
 </com.kharagedition.tibetankeyboard.TibetanKeyboardView>
+

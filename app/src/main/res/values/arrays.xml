@@ -11,4 +11,15 @@
         <item>#FF000000</item>
         <item>#FF007500</item>
     </string-array>
+
+    <!-- Keyboard Style Preference -->
+    <string-array name="keyboard_style_entries">
+        <item>Classic</item>
+        <item>Modern (Google Style)</item>
+    </string-array>
+
+    <string-array name="keyboard_style_values">
+        <item>classic</item>
+        <item>modern</item>
+    </string-array>
 </resources>

@@ -101,15 +101,29 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     private fun setKeyBoardView() {
         val color = prefs.getString("colors", "#FF704C04")
+        val keyboardStyle = prefs.getString("keyboard_style", "classic")
+
         keyboardView = when (color) {
             "#FF704C04" -> {
-                layoutInflater.inflate(R.layout.keyboard_brown, null) as TibetanKeyboardView
+                if (keyboardStyle == "modern") {
+                    layoutInflater.inflate(R.layout.keyboard_brown_modern, null) as TibetanKeyboardView
+                } else {
+                    layoutInflater.inflate(R.layout.keyboard_brown, null) as TibetanKeyboardView
+                }
             }
             "#FF000000" -> {
-                layoutInflater.inflate(R.layout.keyboard_black, null) as TibetanKeyboardView
+                if (keyboardStyle == "modern") {
+                    layoutInflater.inflate(R.layout.keyboard_black_modern, null) as TibetanKeyboardView
+                } else {
+                    layoutInflater.inflate(R.layout.keyboard_black, null) as TibetanKeyboardView
+                }
             }
             else -> {
-                layoutInflater.inflate(R.layout.keyboard_green, null) as TibetanKeyboardView
+                if (keyboardStyle == "modern") {
+                    layoutInflater.inflate(R.layout.keyboard_green_modern, null) as TibetanKeyboardView
+                } else {
+                    layoutInflater.inflate(R.layout.keyboard_green, null) as TibetanKeyboardView
+                }
             }
         }
         keyboardView?.setBackgroundColor(Color.parseColor(color))
