@@ -28,6 +28,8 @@
     <!-- Messages Preferences -->
     <string name="sound">Sound on tap</string>
     <string name="keyboard_background">Keyboard Background</string>
+    <string name="keyboard_style">Keyboard Style</string>
+    <string name="keyboard_style_summary">Choose your preferred keyboard appearance</string>
 
     <!-- Sync Preferences -->
     <string name="vibrate">Vibrate on tap</string>

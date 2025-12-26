@@ -63,6 +63,7 @@
             android:layout_marginHorizontal="4dp"
             android:elevation="2dp" />
         <Button
+            android:visibility="gone"
             android:id="@+id/grammar_btn"
             android:layout_width="0dp"
             android:layout_height="40dp"

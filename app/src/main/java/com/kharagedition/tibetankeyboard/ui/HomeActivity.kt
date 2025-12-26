@@ -42,6 +42,26 @@ class HomeActivity : InputMethodActivity() {
 
     override fun onResume() {
         checkKeyboardIsEnabledOrNot()
+
+        // CRITICAL: Sync purchases when app resumes to acknowledge any pending subscriptions
+        // This prevents Google Play from auto-cancelling subscriptions after 3 days
+        if (authManager.isUserAuthenticated()) {
+            Log.d("HomeActivity", "onResume: Syncing purchases with Google Play...")
+            RevenueCatManager.getInstance().syncPurchases(object : RevenueCatManager.SubscriptionCallback {
+                override fun onSuccess(message: String) {
+                    Log.d("HomeActivity", "✅ Purchases synced in onResume")
+                }
+
+                override fun onError(error: String) {
+                    Log.w("HomeActivity", "⚠️ Sync failed in onResume: $error (This is OK if RevenueCat is still initializing)")
+                }
+
+                override fun onUserCancelled() {}
+            })
+        } else {
+            Log.w("HomeActivity", "onResume: User not authenticated, skipping purchase sync")
+        }
+
         premiumListener()
         super.onResume()
     }
@@ -58,6 +78,28 @@ class HomeActivity : InputMethodActivity() {
         homeBinding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(homeBinding.root)
         authManager = AuthManager(this)
+
+        // CRITICAL: Initialize user session and RevenueCat
+        // This is essential for purchase acknowledgment
+        if (authManager.isUserAuthenticated()) {
+            Log.d("HomeActivity", "User authenticated, initializing RevenueCat...")
+            authManager.initializeUserSession(object : RevenueCatManager.SubscriptionCallback {
+                override fun onSuccess(message: String) {
+                    Log.d("HomeActivity", "✅ RevenueCat initialized in HomeActivity: $message")
+                }
+
+                override fun onError(error: String) {
+                    Log.e("HomeActivity", "❌ RevenueCat initialization failed: $error")
+                }
+
+                override fun onUserCancelled() {}
+            })
+        } else {
+            Log.w("HomeActivity", "User NOT authenticated - RevenueCat will not initialize")
+            // Optionally redirect to login if required
+            // authManager.redirectToLogin()
+        }
+
         checkKeyboardIsEnabledOrNot()
         initClickListener()
         updateManager = UpdateNotificationManager(this)

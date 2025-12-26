@@ -35,6 +35,9 @@ import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.UserPreferences
 import com.kharagedition.tibetankeyboard.repo.UserRepository
 import com.kharagedition.tibetankeyboard.ui.ChatActivity
+import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.auth.AuthManager
+import android.util.Log
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -46,6 +49,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var userPreferences: UserPreferences
     private lateinit var textViewPrivacyPolicy: TextView
     private lateinit var userRepository: UserRepository
+    private lateinit var revenueCatManager: RevenueCatManager
 
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -68,10 +72,12 @@ class LoginActivity : AppCompatActivity() {
         auth = Firebase.auth
         userRepository = UserRepository()
         userPreferences = UserPreferences(this)
+        revenueCatManager = RevenueCatManager.getInstance()
 
         // Check if user is already signed in
         if (auth.currentUser != null && userPreferences.isUserLoggedIn()) {
-            navigateToChatActivity()
+            Log.d("LoginActivity", "User already logged in, initializing RevenueCat...")
+            initializeRevenueCatAndNavigate()
             return
         }
 
@@ -237,7 +243,25 @@ class LoginActivity : AppCompatActivity() {
                         )
                     )
 
-                    navigateToChatActivity()
+                    // CRITICAL: Initialize RevenueCat immediately after successful login
+                    // This ensures purchases can be acknowledged with Google Play
+                    Log.d("LoginActivity", "Initializing RevenueCat after successful login...")
+                    revenueCatManager.initialize(this@LoginActivity, auth, object : RevenueCatManager.SubscriptionCallback {
+                        override fun onSuccess(message: String) {
+                            Log.d("LoginActivity", "✅ RevenueCat initialized successfully: $message")
+                            navigateToChatActivity()
+                        }
+
+                        override fun onError(error: String) {
+                            Log.e("LoginActivity", "❌ RevenueCat initialization failed: $error")
+                            // Still navigate even if RevenueCat fails
+                            navigateToChatActivity()
+                        }
+
+                        override fun onUserCancelled() {
+                            // Not applicable here
+                        }
+                    })
                 } else {
                     // Even if Firestore fails, continue with login but show warning
                     Toast.makeText(
@@ -245,7 +269,7 @@ class LoginActivity : AppCompatActivity() {
                         "Welcome ${firebaseUser.displayName}! (Profile sync pending)",
                         Toast.LENGTH_SHORT
                     ).show()
-                    navigateToChatActivity()
+                    initializeRevenueCatAndNavigate()
                 }
             } catch (e: Exception) {
                 hideLoading()
@@ -255,9 +279,29 @@ class LoginActivity : AppCompatActivity() {
                     "Welcome ${firebaseUser.displayName}!",
                     Toast.LENGTH_SHORT
                 ).show()
-                navigateToChatActivity()
+                initializeRevenueCatAndNavigate()
             }
         }
+    }
+
+    /**
+     * Initialize RevenueCat after login and navigate to next screen
+     */
+    private fun initializeRevenueCatAndNavigate() {
+        Log.d("LoginActivity", "Initializing RevenueCat after login...")
+        revenueCatManager.initialize(this, auth, object : RevenueCatManager.SubscriptionCallback {
+            override fun onSuccess(message: String) {
+                Log.d("LoginActivity", "✅ RevenueCat initialized: $message")
+                navigateToChatActivity()
+            }
+
+            override fun onError(error: String) {
+                Log.e("LoginActivity", "❌ RevenueCat init failed: $error")
+                navigateToChatActivity()
+            }
+
+            override fun onUserCancelled() {}
+        })
     }
     private fun handleLoginError(exception: Exception?) {
         val errorMessage = when (exception) {

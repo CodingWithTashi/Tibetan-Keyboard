@@ -2,6 +2,7 @@ package com.kharagedition.tibetankeyboard.subscription
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
@@ -10,6 +11,7 @@ import com.kharagedition.tibetankeyboard.BuildConfig
 import com.revenuecat.purchases.*
 import com.revenuecat.purchases.interfaces.*
 import com.revenuecat.purchases.models.StoreTransaction
+import com.revenuecat.purchases.interfaces.SyncPurchasesCallback
 
 /**
  * Singleton class to manage RevenueCat subscription logic
@@ -21,6 +23,7 @@ class RevenueCatManager private constructor() {
         @Volatile
         private var INSTANCE: RevenueCatManager? = null
         private const val PREMIUM_ENTITLEMENT_ID = "pro"
+        private const val TAG = "RevenueCatManager"
 
         fun getInstance(): RevenueCatManager {
             return INSTANCE ?: synchronized(this) {
@@ -28,6 +31,8 @@ class RevenueCatManager private constructor() {
             }
         }
     }
+
+    private var isConfigured = false
 
     private val _isPremiumUser = MutableLiveData<Boolean>()
     val isPremiumUser: LiveData<Boolean> = _isPremiumUser
@@ -48,34 +53,117 @@ class RevenueCatManager private constructor() {
     }
 
     /**
-     * Initialize RevenueCat with Firebase user
+     * Initialize RevenueCat SDK with Firebase user ID
+     * This must be called BEFORE any purchase operations
      */
-    fun initialize(firebaseAuth: FirebaseAuth, callback: SubscriptionCallback? = null) {
+    fun initialize(context: Context, firebaseAuth: FirebaseAuth, callback: SubscriptionCallback? = null) {
         val currentUser = firebaseAuth.currentUser
         if (currentUser == null) {
+            Log.e(TAG, "Cannot initialize RevenueCat: User not authenticated")
             callback?.onError("User not authenticated")
             return
         }
 
+        val userId = currentUser.uid
+        Log.d(TAG, "Initializing RevenueCat with Firebase UID: $userId")
+
         _isLoading.value = true
 
-        Purchases.sharedInstance.logIn(
-            currentUser.uid,
-            object : LogInCallback {
-                override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
-                    println("RevenueCat: User logged in successfully. Created: $created")
-                    updatePremiumStatus(customerInfo)
-                    fetchOfferings(callback)
+        // Configure RevenueCat SDK with the Firebase user ID
+        if (!isConfigured) {
+            try {
+                val apiKey = if (BuildConfig.DEBUG) {
+                    "goog_HqifnUJxdgpKcyrUFhRfJfAYIap"
+                } else {
+                    "goog_HqifnUJxdgpKcyrUFhRfJfAYIap"
                 }
 
-                override fun onError(error: PurchasesError) {
-                    _isLoading.value = false
-                    val errorMsg = "Failed to initialize premium services: ${error.message}"
-                    _error.value = errorMsg
-                    callback?.onError(errorMsg)
-                }
+                Purchases.configure(
+                    PurchasesConfiguration.Builder(context, apiKey)
+                        .appUserID(userId)  // CRITICAL: Set Firebase UID as app user ID
+                        .purchasesAreCompletedBy(PurchasesAreCompletedBy.REVENUECAT)
+                        .build()
+                )
+
+                // Setup customer info update listener
+                Purchases.sharedInstance.updatedCustomerInfoListener =
+                    UpdatedCustomerInfoListener { customerInfo ->
+                        Log.d(TAG, "Customer Info Updated: ${customerInfo.originalAppUserId}")
+                        updatePremiumStatus(customerInfo)
+                    }
+
+                isConfigured = true
+                Log.d(TAG, "RevenueCat SDK configured successfully with user: $userId")
+
+                // CRITICAL: Sync any pending purchases to acknowledge them with Google Play
+                syncPurchasesWithGooglePlay()
+
+                // Fetch customer info and offerings
+                fetchCustomerInfoAndOfferings(callback)
+
+            } catch (e: Exception) {
+                _isLoading.value = false
+                val errorMsg = "Failed to configure RevenueCat: ${e.message}"
+                Log.e(TAG, errorMsg, e)
+                _error.value = errorMsg
+                callback?.onError(errorMsg)
             }
-        )
+        } else {
+            // Already configured, just refresh customer info
+            Log.d(TAG, "RevenueCat already configured, refreshing customer info")
+
+            // CRITICAL: Sync purchases to ensure Google Play acknowledgment
+            syncPurchasesWithGooglePlay()
+
+            fetchCustomerInfoAndOfferings(callback)
+        }
+    }
+
+    /**
+     * Sync purchases with Google Play to acknowledge them
+     * This is CRITICAL to prevent Google from auto-cancelling subscriptions after 3 days
+     */
+    private fun syncPurchasesWithGooglePlay() {
+        if (!isConfigured) {
+            Log.w(TAG, "Cannot sync purchases: RevenueCat not configured")
+            return
+        }
+
+        Log.d(TAG, "Syncing purchases with Google Play to acknowledge subscriptions...")
+        Purchases.sharedInstance.syncPurchases(object : SyncPurchasesCallback {
+            override fun onSuccess(customerInfo: CustomerInfo) {
+                Log.d(TAG, "✅ Purchases synced successfully with Google Play")
+                Log.d(TAG, "Active subscriptions after sync: ${customerInfo.activeSubscriptions.joinToString()}")
+                updatePremiumStatus(customerInfo)
+            }
+
+            override fun onError(error: PurchasesError) {
+                Log.e(TAG, "❌ Failed to sync purchases: ${error.message}")
+                Log.e(TAG, "Error code: ${error.code}")
+            }
+        })
+    }
+
+    /**
+     * Fetch customer info and offerings after initialization
+     */
+    private fun fetchCustomerInfoAndOfferings(callback: SubscriptionCallback?) {
+        Purchases.sharedInstance.getCustomerInfo(object : ReceiveCustomerInfoCallback {
+            override fun onReceived(customerInfo: CustomerInfo) {
+                Log.d(TAG, "Customer info received - App User ID: ${customerInfo.originalAppUserId}")
+                Log.d(TAG, "Active entitlements: ${customerInfo.activeSubscriptions}")
+                updatePremiumStatus(customerInfo)
+                fetchOfferings(callback)
+            }
+
+            override fun onError(error: PurchasesError) {
+                _isLoading.value = false
+                val errorMsg = "Failed to fetch customer info: ${error.message}"
+                Log.e(TAG, errorMsg)
+                _error.value = errorMsg
+                callback?.onError(errorMsg)
+            }
+        })
     }
 
     /**
@@ -118,14 +206,25 @@ class RevenueCatManager private constructor() {
 
     /**
      * Check current customer info and update premium status
+     * Note: RevenueCat must be initialized first
      */
     fun refreshCustomerInfo(callback: SubscriptionCallback? = null) {
+        if (!isConfigured) {
+            Log.w(TAG, "Cannot refresh customer info: RevenueCat not initialized")
+            _isPremiumUser.value = false
+            return
+        }
+
         _isLoading.value = true
+
+        // CRITICAL: First sync purchases to acknowledge any pending subscriptions
+        syncPurchasesWithGooglePlay()
 
         Purchases.sharedInstance.getCustomerInfo(
             object : ReceiveCustomerInfoCallback {
                 override fun onReceived(customerInfo: CustomerInfo) {
                     _isLoading.value = false
+                    Log.d(TAG, "Customer info refreshed - User ID: ${customerInfo.originalAppUserId}")
                     updatePremiumStatus(customerInfo)
                     callback?.onSuccess("Premium status updated")
                 }
@@ -133,6 +232,7 @@ class RevenueCatManager private constructor() {
                 override fun onError(error: PurchasesError) {
                     _isLoading.value = false
                     val errorMsg = "Failed to load premium status: ${error.message}"
+                    Log.e(TAG, errorMsg)
                     _error.value = errorMsg
                     callback?.onError(errorMsg)
                 }
@@ -141,14 +241,55 @@ class RevenueCatManager private constructor() {
     }
 
     /**
+     * Force sync purchases with Google Play
+     * Call this when app resumes or after a purchase to ensure acknowledgment
+     */
+    fun syncPurchases(callback: SubscriptionCallback? = null) {
+        if (!isConfigured) {
+            Log.w(TAG, "Cannot sync purchases: RevenueCat not initialized")
+            callback?.onError("RevenueCat not initialized")
+            return
+        }
+
+        Log.d(TAG, "🔄 Manually syncing purchases with Google Play...")
+        Purchases.sharedInstance.syncPurchases(object : SyncPurchasesCallback {
+            override fun onSuccess(customerInfo: CustomerInfo) {
+                Log.d(TAG, "✅ Manual sync successful!")
+                updatePremiumStatus(customerInfo)
+                callback?.onSuccess("Purchases synced successfully")
+            }
+
+            override fun onError(error: PurchasesError) {
+                Log.e(TAG, "❌ Manual sync failed: ${error.message}")
+                callback?.onError("Sync failed: ${error.message}")
+            }
+        })
+    }
+
+    /**
      * Purchase premium subscription
      */
     fun purchasePremium(activity: Activity, callback: SubscriptionCallback) {
+        if (!isConfigured) {
+            val errorMsg = "RevenueCat not initialized. Please login first."
+            Log.e(TAG, errorMsg)
+            callback.onError(errorMsg)
+            return
+        }
+
         val packageToPurchase = premiumPackage
         if (packageToPurchase == null) {
+            Log.e(TAG, "Premium package not available")
             callback.onError("Premium subscription not available")
             return
         }
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        Log.d(TAG, "==== Starting Purchase ====")
+        Log.d(TAG, "Firebase User ID: $userId")
+        Log.d(TAG, "Package: ${packageToPurchase.identifier}")
+        Log.d(TAG, "Product: ${packageToPurchase.product.id}")
+        Log.d(TAG, "========================")
 
         _isLoading.value = true
         val purchaseParams = PurchaseParams.Builder(activity, packageToPurchase).build()
@@ -158,18 +299,35 @@ class RevenueCatManager private constructor() {
             object : PurchaseCallback {
                 override fun onCompleted(storeTransaction: StoreTransaction, customerInfo: CustomerInfo) {
                     _isLoading.value = false
+                    Log.d(TAG, "==== Purchase Successful ====")
+                    Log.d(TAG, "Transaction ID: ${storeTransaction.orderId}")
+                    Log.d(TAG, "Product IDs: ${storeTransaction.productIds.joinToString()}")
+                    Log.d(TAG, "Customer ID: ${customerInfo.originalAppUserId}")
+                    Log.d(TAG, "===========================")
+
+                    // CRITICAL: Immediately sync purchases to acknowledge with Google Play
+                    // This prevents the 3-day auto-cancellation issue
+                    Log.d(TAG, "Syncing purchase immediately to acknowledge with Google Play...")
+                    syncPurchasesWithGooglePlay()
+
                     updatePremiumStatus(customerInfo)
                     callback.onSuccess("Premium subscription activated!")
                 }
 
                 override fun onError(error: PurchasesError, userCancelled: Boolean) {
                     _isLoading.value = false
+                    Log.e(TAG, "==== Purchase Error ====")
+                    Log.e(TAG, "User Cancelled: $userCancelled")
+                    Log.e(TAG, "Error Code: ${error.code}")
+                    Log.e(TAG, "Error Message: ${error.message}")
+                    Log.e(TAG, "=======================")
 
                     when {
                         userCancelled -> {
                             callback.onUserCancelled()
                         }
                         error.code == PurchasesErrorCode.ProductAlreadyPurchasedError -> {
+                            Log.d(TAG, "Product already purchased, refreshing customer info")
                             callback.onError("You already own this subscription")
                             // Refresh customer info to update UI
                             refreshCustomerInfo()
@@ -205,50 +363,76 @@ class RevenueCatManager private constructor() {
      * Update premium status based on customer info
      */
     private fun updatePremiumStatus(customerInfo: CustomerInfo) {
-        val isPremium = customerInfo.entitlements[PREMIUM_ENTITLEMENT_ID]?.isActive == true
-        _isPremiumUser.value = BuildConfig.DEBUG || isPremium
+        val proEntitlement = customerInfo.entitlements[PREMIUM_ENTITLEMENT_ID]
+        val isPremium = proEntitlement?.isActive == true
 
-        println("RevenueCat: Premium status - $isPremium")
+        // CRITICAL FIX: Do not use debug mode bypass in production
+        _isPremiumUser.value = isPremium
+
+        // Get subscription expiry date from entitlement
+        val expiryDate = proEntitlement?.expirationDate
+        val willRenew = proEntitlement?.willRenew ?: false
+        val periodType = proEntitlement?.periodType?.toString() ?: "unknown"
+
+        // Enhanced logging for debugging
+        Log.d(TAG, "==== Premium Status Update ====")
+        Log.d(TAG, "App User ID: ${customerInfo.originalAppUserId}")
+        Log.d(TAG, "Premium Status: $isPremium")
+        Log.d(TAG, "Expiry Date: $expiryDate")
+        Log.d(TAG, "Will Renew: $willRenew")
+        Log.d(TAG, "Period Type: $periodType")
+        Log.d(TAG, "Active Subscriptions: ${customerInfo.activeSubscriptions.joinToString()}")
+        Log.d(TAG, "All Entitlements: ${customerInfo.entitlements.all.keys.joinToString()}")
+        Log.d(TAG, "Pro Entitlement Active: ${proEntitlement?.isActive}")
+        Log.d(TAG, "Request Date: ${customerInfo.requestDate}")
+        Log.d(TAG, "============================")
 
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         val db = FirebaseFirestore.getInstance()
-        if(userId==null) return
+        if(userId==null) {
+            Log.w(TAG, "Cannot update Firestore: User ID is null")
+            return
+        }
 
         if (isPremium) {
+            // CRITICAL FIX: Use actual expiration date from entitlement, not request date
             val premiumDetails = hashMapOf(
                 "isPremium" to true,
                 "subscribed" to true,
                 "isSubscribed" to true,
                 "subscriptionType" to "premium",
-                "activeSubscription" to customerInfo.activeSubscriptions.toList(),
-                "premiumExpiryDate" to customerInfo.requestDate,
-                "activeSubscriptions" to customerInfo.activeSubscriptions.toList()
+                "activeSubscriptions" to customerInfo.activeSubscriptions.toList(),
+                "premiumExpiryDate" to (expiryDate ?: customerInfo.requestDate), // Use actual expiry or fallback to request date
+                "willRenew" to willRenew,
+                "periodType" to periodType,
+                "revenueCatUserId" to customerInfo.originalAppUserId,
+                "lastUpdated" to customerInfo.requestDate,
+                "originalPurchaseDate" to proEntitlement.originalPurchaseDate
             )
             val userRef = db.collection("users").document(userId)
 
-
             userRef.update(premiumDetails)
                 .addOnSuccessListener {
-                    println("Firestore: User premium details updated successfully.")
+                    Log.d(TAG, "Firestore: User premium details updated successfully for user: $userId")
+                    Log.d(TAG, "Firestore: Subscription expires at: $expiryDate")
                 }
                 .addOnFailureListener { e ->
-                    println("Firestore: Failed to update premium details - ${e.message}")
+                    Log.e(TAG, "Firestore: Failed to update premium details - ${e.message}", e)
                 }
-
-            println("RevenueCat: Active subscriptions count - ${customerInfo.activeSubscriptions.size}")
         } else {
             val userRef = db.collection("users").document(userId)
 
-            userRef.update(mapOf<String, Boolean>(
+            userRef.update(mapOf<String, Any>(
                 "isPremium" to false,
                 "subscribed" to false,
                 "isSubscribed" to false,
+                "lastUpdated" to customerInfo.requestDate
             ))
                 .addOnSuccessListener {
-                    println("Firestore: User premium status set to false.")
+                    Log.d(TAG, "Firestore: User premium status set to false for user: $userId")
                 }
                 .addOnFailureListener { e ->
-                    println("Firestore: Failed to set premium status - ${e.message}")
+                    Log.e(TAG, "Firestore: Failed to set premium status - ${e.message}", e)
                 }
         }
     }
