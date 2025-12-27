@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.DialogFragment
 import com.airbnb.lottie.LottieAnimationView
 import com.google.android.material.button.MaterialButton
@@ -43,7 +44,7 @@ class DocumentUploadDialog(
     private val uploadScope = CoroutineScope(Dispatchers.Main)
 
     private val filePickerRequest = registerForActivityResult(
-        androidx.activity.result.contracts.ActivityResultContracts.OpenDocument()
+        ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
             selectedFileUri = it
