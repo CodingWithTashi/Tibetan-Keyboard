@@ -44,7 +44,7 @@ class DocumentUploadDialog(
 
     private val filePickerRequest = registerForActivityResult(
         androidx.activity.result.contracts.ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
+    ) { uri ->
         uri?.let {
             selectedFileUri = it
             updateFileDisplay(it)
