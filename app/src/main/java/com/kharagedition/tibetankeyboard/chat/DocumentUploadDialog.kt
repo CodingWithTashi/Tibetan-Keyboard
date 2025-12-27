@@ -1,6 +1,5 @@
 package com.kharagedition.tibetankeyboard.chat
 
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -15,6 +14,7 @@ import com.google.android.material.button.MaterialButton
 import com.kharagedition.tibetankeyboard.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class DocumentUpload(
@@ -44,7 +44,7 @@ class DocumentUploadDialog(
 
     private val filePickerRequest = registerForActivityResult(
         androidx.activity.result.contracts.ActivityResultContracts.OpenDocument()
-    ) { uri ->
+    ) { uri: Uri? ->
         uri?.let {
             selectedFileUri = it
             updateFileDisplay(it)
@@ -103,14 +103,14 @@ class DocumentUploadDialog(
                 val fileName = getFileName(uri)
 
                 // Simulate upload delay
-                kotlinx.coroutines.delay(2000)
+                delay(2000)
 
                 val document = DocumentUpload(
                     documentId = "doc_${System.currentTimeMillis()}",
                     fileName = fileName,
                     fileSize = getFileSize(uri),
                     uploadedAt = System.currentTimeMillis(),
-                    language = "tibetan",
+                    language = "tibetan", // Document language identifier
                     wordCount = 0, // TODO: Calculate from content
                     summary = "" // TODO: Generate with AI
                 )
