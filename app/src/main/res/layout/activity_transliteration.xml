@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/transliteration_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/transliteration_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:elevation="@dimen/elevation_small"
+        app:title="@string/transliteration" />
+
+    <!-- Main Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/padding_normal">
+
+            <!-- Source System Selection -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/source_system"
+                android:textColor="@color/brown_800"
+                android:textSize="@dimen/text_size_body_medium"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/spacing_8" />
+
+            <Spinner
+                android:id="@+id/source_system_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_size"
+                android:layout_marginBottom="@dimen/spacing_16"
+                android:background="@drawable/rounded_bg"
+                android:padding="@dimen/spacing_8" />
+
+            <!-- Source Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_16"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="@dimen/corner_normal"
+                app:boxCornerRadiusBottomStart="@dimen/corner_normal"
+                app:boxCornerRadiusTopEnd="@dimen/corner_normal"
+                app:boxCornerRadiusTopStart="@dimen/corner_normal">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/source_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/input_field_height"
+                    android:hint="@string/enter_tibetan_text"
+                    android:inputType="text"
+                    android:textColor="@color/brown_800"
+                    android:textColorHint="@color/gray" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Target System Selection -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/target_system"
+                android:textColor="@color/brown_800"
+                android:textSize="@dimen/text_size_body_medium"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/spacing_8" />
+
+            <Spinner
+                android:id="@+id/target_system_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_size"
+                android:layout_marginBottom="@dimen/spacing_16"
+                android:background="@drawable/rounded_bg"
+                android:padding="@dimen/spacing_8" />
+
+            <!-- Target Output -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_16"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="@dimen/corner_normal"
+                app:boxCornerRadiusBottomStart="@dimen/corner_normal"
+                app:boxCornerRadiusTopEnd="@dimen/corner_normal"
+                app:boxCornerRadiusTopStart="@dimen/corner_normal">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/target_output"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/input_field_height"
+                    android:hint="@string/transliteration_result"
+                    android:inputType="text"
+                    android:readOnly="true"
+                    android:textColor="@color/brown_800"
+                    android:textColorHint="@color/gray" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Loading Animation -->
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/transliteration_loading"
+                android:layout_width="@dimen/icon_size_xlarge"
+                android:layout_height="@dimen/icon_size_xlarge"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:layout_marginBottom="@dimen/spacing_16"
+                android:visibility="gone"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/loading_animation" />
+
+            <!-- Result Status -->
+            <TextView
+                android:id="@+id/result_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textColor="@color/success_green"
+                android:textSize="@dimen/text_size_body_small"
+                android:visibility="gone"
+                android:layout_marginBottom="@dimen/spacing_16" />
+
+            <!-- Convert Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_convert"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/convert"
+                android:textSize="@dimen/text_size_body_medium"
+                android:layout_marginTop="@dimen/spacing_24"
+                app:cornerRadius="@dimen/corner_normal" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
