@@ -3,6 +3,7 @@ package com.kharagedition.tibetankeyboard.ui
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -12,7 +13,6 @@ import androidx.core.widget.addTextChangedListener
 import com.airbnb.lottie.LottieAnimationView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.spinner.MaterialSpinner
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kharagedition.tibetankeyboard.R
@@ -37,8 +37,8 @@ class TransliterationActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var sourceInput: TextInputEditText
     private lateinit var targetOutput: TextInputEditText
-    private lateinit var sourceSystemSpinner: MaterialSpinner
-    private lateinit var targetSystemSpinner: MaterialSpinner
+    private lateinit var sourceSystemSpinner: Spinner
+    private lateinit var targetSystemSpinner: Spinner
     private lateinit var btnConvert: MaterialButton
     private lateinit var loadingAnimation: LottieAnimationView
     private lateinit var resultStatus: TextView
