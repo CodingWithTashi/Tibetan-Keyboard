@@ -103,11 +103,19 @@ class PremiumFeatureManager(private val context: Context) {
             .setMessage(message)
             .setIcon(android.R.drawable.ic_dialog_info)
             .setPositiveButton("Upgrade") { _, _ ->
-                revenueCatManager.purchasePremium(activity) { success ->
-                    if (success) {
+                revenueCatManager.purchasePremium(activity, object : com.kharagedition.tibetankeyboard.subscription.RevenueCatManager.SubscriptionCallback {
+                    override fun onSuccess(message: String) {
                         onPurchase?.invoke()
                     }
-                }
+
+                    override fun onError(error: String) {
+                        // Handle error silently
+                    }
+
+                    override fun onUserCancelled() {
+                        // User cancelled the purchase
+                    }
+                })
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
