@@ -3,6 +3,9 @@ package com.kharagedition.tibetankeyboard.ai
 import android.app.Activity
 import android.content.Context
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Manages premium feature access and usage limits
@@ -43,7 +46,7 @@ class PremiumFeatureManager(private val context: Context) {
     fun incrementFeatureUsage(feature: PremiumFeature) {
         if (!isPremiumFeatureAvailable(feature)) {
             val sharedPref = context.getSharedPreferences("premium_usage", Context.MODE_PRIVATE)
-            val today = java.time.LocalDate.now().toString()
+            val today = getTodayDateString()
             val key = "${feature.featureKey}_$today"
             val current = sharedPref.getInt(key, 0)
             sharedPref.edit().putInt(key, current + 1).apply()
@@ -65,7 +68,7 @@ class PremiumFeatureManager(private val context: Context) {
      */
     private fun getRemainingFreeUsage(feature: PremiumFeature): Int {
         val sharedPref = context.getSharedPreferences("premium_usage", Context.MODE_PRIVATE)
-        val today = java.time.LocalDate.now().toString()
+        val today = getTodayDateString()
         val key = "${feature.featureKey}_$today"
         val used = sharedPref.getInt(key, 0)
         return maxOf(0, feature.dailyLimit - used)
@@ -100,8 +103,11 @@ class PremiumFeatureManager(private val context: Context) {
             .setMessage(message)
             .setIcon(android.R.drawable.ic_dialog_info)
             .setPositiveButton("Upgrade") { _, _ ->
-                revenueCatManager.purchasePremium()
-                onPurchase?.invoke()
+                revenueCatManager.purchasePremium(activity) { success ->
+                    if (success) {
+                        onPurchase?.invoke()
+                    }
+                }
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
@@ -109,6 +115,14 @@ class PremiumFeatureManager(private val context: Context) {
             .setCancelable(true)
 
         builder.show()
+    }
+
+    /**
+     * Get today's date as a string (API level 23 compatible)
+     */
+    private fun getTodayDateString(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return dateFormat.format(Date())
     }
 
     companion object {
