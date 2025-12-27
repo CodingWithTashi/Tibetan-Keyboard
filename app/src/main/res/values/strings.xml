@@ -75,4 +75,108 @@
     <string name="use_translation">Use Translation</string>
     <string name="use_rephrase">Use Rephrase</string>
     <string name="apply_corrections">Apply Corrections</string>
+
+    <!-- Grammar Activity -->
+    <string name="grammar_analyzer">Grammar Analyzer</string>
+    <string name="grammar_analyzer_hint">Enter Tibetan text to analyze</string>
+    <string name="analyze_grammar">Analyze Grammar</string>
+    <string name="grammar_original">Original:</string>
+    <string name="grammar_correction">Correction:</string>
+    <string name="grammar_reason">Reason:</string>
+    <string name="confident_label">Confident</string>
+    <string name="analyze_your_tibetan">Analyze your Tibetan text for grammar, spelling, and style</string>
+
+    <!-- Transliteration Activity -->
+    <string name="transliteration">Transliteration</string>
+    <string name="wylie">Wylie</string>
+    <string name="tibetan">Tibetan</string>
+    <string name="phonetic">Phonetic</string>
+    <string name="dts">DTS</string>
+    <string name="convert">Convert</string>
+
+    <!-- Chat History -->
+    <string name="conversation_history">Conversation History</string>
+    <string name="new_chat">New Chat</string>
+    <string name="search_conversations">Search conversations&#8230;</string>
+    <string name="conversation_title">Conversation Title</string>
+    <string name="conversation_preview">Last message preview&#8230;</string>
+    <string name="conversation_time">Jan 01, 10:30</string>
+    <string name="message_count_label">messages</string>
+    <string name="tutoring_mode">🎓 Tutoring</string>
+    <string name="translation_mode">🔄 Translation</string>
+    <string name="chat_mode">💬 Chat</string>
+    <string name="more_options">More Options</string>
+    <string name="favorite">Favorite</string>
+
+    <!-- Document Upload -->
+    <string name="upload_document">Upload Document</string>
+    <string name="select_file">Select File (PDF, TXT, DOC)</string>
+    <string name="upload_and_analyze">Upload &amp; Analyze</string>
+    <string name="file_formats">Supported: PDF, TXT, DOC • Max: 10MB</string>
+    <string name="upload_success">Document uploaded successfully</string>
+    <string name="upload_failed">Upload failed. Please try again.</string>
+    <string name="file_size_format">%s %s</string>
+
+    <!-- Chat Export -->
+    <string name="export_conversation">Export Conversation</string>
+    <string name="choose_export_format">Choose export format</string>
+    <string name="format_pdf">PDF Document (formatted)</string>
+    <string name="format_txt">Plain Text</string>
+    <string name="format_markdown">Markdown (with formatting)</string>
+    <string name="include_metadata">Include metadata (dates, mode, etc.)</string>
+    <string name="export_now">Export Now</string>
+    <string name="cancel">Cancel</string>
+    <string name="exporting">Exporting&#8230;</string>
+
+    <!-- Tutoring Mode -->
+    <string name="tutoring_mode_label">🎓 Tutoring Mode</string>
+    <string name="learning_level">Learning Level</string>
+    <string name="level_beginner">Beginner</string>
+    <string name="level_intermediate">Intermediate</string>
+    <string name="level_advanced">Advanced</string>
+    <string name="progress">Progress</string>
+    <string name="current_lesson">Current: Alphabet Basics\nNext: Basic Verbs</string>
+
+    <!-- Premium Features -->
+    <string name="premium_feature">Premium Feature</string>
+    <string name="premium_required">This feature is available only for Premium users.\n\nUpgrade now to unlock all features!\n1. AI Chat\n2. Google Translate\n3. Ad-free Experience\n4. Priority Support</string>
+    <string name="upgrade">Upgrade</string>
+    <string name="maybe_later">Maybe Later</string>
+    <string name="daily_limit_exceeded">Daily limit exceeded.\n\nUpgrade to Premium for unlimited access!</string>
+    <string name="remaining_uses">You have %d uses remaining today.\n\nUpgrade to Premium for unlimited access!</string>
+
+    <!-- Errors &amp; Messages -->
+    <string name="network_error">Network error. Please check your connection.</string>
+    <string name="error_analyzing_grammar">Error analyzing grammar: %s</string>
+    <string name="error_getting_suggestions">Error getting suggestions: %s</string>
+    <string name="transliteration_failed">Transliteration failed</string>
+    <string name="error_message_required">Message is required</string>
+    <string name="text_required">Text is required</string>
+    <string name="message_too_long_or_short">Message too long or short</string>
+    <string name="analysis_complete">Analysis complete</string>
+    <string name="please_enter_text">Please enter text to analyze</string>
+
+    <!-- Button Labels -->
+    <string name="send_button">Send</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
+
+    <!-- Common Labels -->
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+    <string name="success">Success</string>
+    <string name="warning">Warning</string>
+    <string name="information">Information</string>
+
+    <!-- Confidence Indicators -->
+    <string name="confidence_format">%d%% confident</string>
+
+    <!-- Time Formats -->
+    <string name="time_format">MMM dd, HH:mm</string>
+
 </resources>

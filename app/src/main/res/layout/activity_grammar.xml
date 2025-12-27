@@ -12,11 +12,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
-        android:elevation="4dp"
+        android:elevation="@dimen/elevation_medium"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Grammar Analyzer" />
+        app:title="@string/grammar_analyzer" />
 
     <!-- Scrollable Content -->
     <ScrollView
@@ -28,14 +28,14 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:padding="@dimen/padding_normal">
 
             <!-- Input Section -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/grammar_input_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter Tibetan text to analyze"
+                android:hint="@string/grammar_analyzer_hint"
                 app:boxBackgroundMode="outline"
                 app:hintTextColor="@color/brown_700"
                 app:layout_constraintTop_toTopOf="parent">
@@ -50,7 +50,7 @@
                     android:maxLines="10"
                     android:textColor="@color/brown_800"
                     android:textColorHint="@color/brown_500"
-                    android:textSize="16sp" />
+                    android:textSize="@dimen/text_size_body_large" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -59,9 +59,9 @@
                 android:id="@+id/grammar_empty_state"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
-                android:layout_marginTop="32dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                android:layout_marginTop="@dimen/margin_large"
+                app:cardCornerRadius="@dimen/corner_large"
+                app:cardElevation="@dimen/elevation_small"
                 app:layout_constraintTop_toBottomOf="@+id/grammar_input_layout">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -73,10 +73,10 @@
                         android:id="@+id/empty_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Analyze your Tibetan text for grammar, spelling, and style"
+                        android:text="@string/analyze_your_tibetan"
                         android:textAlignment="center"
                         android:textColor="@color/brown_700"
-                        android:textSize="16sp"
+                        android:textSize="@dimen/text_size_body_large"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
@@ -91,9 +91,9 @@
                 android:id="@+id/grammar_corrections_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/margin_normal"
                 android:clipToPadding="false"
-                android:paddingBottom="16dp"
+                android:paddingBottom="@dimen/padding_normal"
                 app:layout_constraintTop_toBottomOf="@+id/grammar_input_layout" />
 
             <!-- Loading Animation -->
@@ -101,7 +101,7 @@
                 android:id="@+id/grammar_loading"
                 android:layout_width="200dp"
                 android:layout_height="100dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="@dimen/margin_large"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -119,10 +119,10 @@
         android:id="@+id/btn_analyze_grammar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="Analyze Grammar"
-        android:textSize="16sp"
-        app:cornerRadius="24dp"
+        android:layout_margin="@dimen/margin_normal"
+        android:text="@string/analyze_grammar"
+        android:textSize="@dimen/text_size_body_large"
+        app:cornerRadius="@dimen/corner_xlarge"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

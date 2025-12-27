@@ -3,15 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_margin="@dimen/spacing_8"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="@dimen/corner_normal"
+    app:cardElevation="@dimen/elevation_small">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:padding="@dimen/spacing_12">
 
         <!-- Title -->
         <TextView
@@ -21,7 +21,7 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@color/brown_800"
-            android:textSize="14sp"
+            android:textSize="@dimen/text_size_title_small"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/btn_favorite"
             app:layout_constraintStart_toStartOf="parent"
@@ -30,10 +30,10 @@
         <!-- Favorite Button -->
         <ImageButton
             android:id="@+id/btn_favorite"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="@dimen/icon_size_medium"
+            android:layout_height="@dimen/icon_size_medium"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Favorite"
+            android:contentDescription="@string/favorite"
             android:src="@drawable/ic_star_outline"
             app:layout_constraintEnd_toStartOf="@+id/btn_conversation_more"
             app:layout_constraintTop_toTopOf="parent" />
@@ -41,10 +41,10 @@
         <!-- More Button -->
         <ImageButton
             android:id="@+id/btn_conversation_more"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="@dimen/icon_size_medium"
+            android:layout_height="@dimen/icon_size_medium"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="More"
+            android:contentDescription="@string/more_options"
             android:src="@drawable/baseline_more_vert_24"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -54,9 +54,9 @@
             android:id="@+id/mode_chip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Chat"
-            android:textSize="10sp"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:text="@string/chat_mode"
+            android:textSize="@dimen/text_size_caption"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/conversation_title" />
 
@@ -65,13 +65,13 @@
             android:id="@+id/conversation_preview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginStart="@dimen/spacing_8"
+            android:layout_marginEnd="@dimen/spacing_8"
+            android:layout_marginTop="@dimen/spacing_4"
             android:maxLines="2"
             android:ellipsize="end"
             android:textColor="@color/brown_700"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_size_body_small"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/mode_chip" />
@@ -81,9 +81,9 @@
             android:id="@+id/conversation_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/spacing_8"
             android:textColor="@color/gray"
-            android:textSize="11sp"
+            android:textSize="@dimen/text_size_caption"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/conversation_preview" />
 
@@ -91,10 +91,10 @@
             android:id="@+id/message_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginStart="@dimen/spacing_8"
+            android:layout_marginTop="@dimen/spacing_8"
             android:textColor="@color/gray"
-            android:textSize="11sp"
+            android:textSize="@dimen/text_size_caption"
             app:layout_constraintStart_toEndOf="@+id/conversation_time"
             app:layout_constraintTop_toBottomOf="@+id/conversation_preview" />
 

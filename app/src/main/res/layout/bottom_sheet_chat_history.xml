@@ -10,16 +10,16 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:padding="@dimen/padding_normal"
         android:background="?attr/colorPrimary">
 
         <TextView
             android:id="@+id/header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Conversation History"
+            android:text="@string/conversation_history"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="@dimen/text_size_headline_small"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -28,8 +28,8 @@
             android:id="@+id/btn_new_chat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="New Chat"
-            android:textSize="12sp"
+            android:text="@string/new_chat"
+            android:textSize="@dimen/text_size_body_small"
             app:cornerRadius="20dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -40,10 +40,10 @@
     <SearchView
         android:id="@+id/chat_history_search"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="12dp"
+        android:layout_height="@dimen/input_field_height"
+        android:layout_margin="@dimen/spacing_12"
         android:background="@drawable/rounded_bg"
-        android:queryHint="Search conversations..." />
+        android:queryHint="@string/search_conversations" />
 
     <!-- Conversations List -->
     <androidx.recyclerview.widget.RecyclerView
@@ -51,9 +51,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="12dp"
+        android:paddingStart="@dimen/spacing_12"
+        android:paddingEnd="@dimen/spacing_12"
+        android:paddingBottom="@dimen/spacing_12"
         android:clipToPadding="false" />
 
 </LinearLayout>

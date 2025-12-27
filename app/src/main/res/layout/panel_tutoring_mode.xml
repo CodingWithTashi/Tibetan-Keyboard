@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:background="@color/white"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="@dimen/padding_normal">
 
     <!-- Header -->
     <LinearLayout
@@ -18,9 +18,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="🎓 Tutoring Mode"
+            android:text="@string/tutoring_mode_label"
             android:textColor="@color/brown_800"
-            android:textSize="16sp"
+            android:textSize="@dimen/text_size_body_large"
             android:textStyle="bold" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -34,17 +34,17 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Learning Level"
+        android:layout_marginTop="@dimen/spacing_12"
+        android:text="@string/learning_level"
         android:textColor="@color/brown_700"
-        android:textSize="12sp"
+        android:textSize="@dimen/text_size_body_small"
         android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/level_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/spacing_8"
         android:enabled="false"
         android:orientation="horizontal">
 
@@ -53,27 +53,27 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Beginner"
+            android:text="@string/level_beginner"
             android:textColor="@color/brown_700"
-            android:textSize="12sp" />
+            android:textSize="@dimen/text_size_body_small" />
 
         <com.google.android.material.radiobutton.MaterialRadioButton
             android:id="@+id/level_intermediate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Intermediate"
+            android:text="@string/level_intermediate"
             android:textColor="@color/brown_700"
-            android:textSize="12sp" />
+            android:textSize="@dimen/text_size_body_small" />
 
         <com.google.android.material.radiobutton.MaterialRadioButton
             android:id="@+id/level_advanced"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Advanced"
+            android:text="@string/level_advanced"
             android:textColor="@color/brown_700"
-            android:textSize="12sp" />
+            android:textSize="@dimen/text_size_body_small" />
 
     </RadioGroup>
 
@@ -81,37 +81,37 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Progress"
+        android:layout_marginTop="@dimen/spacing_16"
+        android:text="@string/progress"
         android:textColor="@color/brown_700"
-        android:textSize="12sp"
+        android:textSize="@dimen/text_size_body_small"
         android:textStyle="bold" />
 
     <ProgressBar
         android:id="@+id/progress_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="@dimen/progress_bar_height"
+        android:layout_marginTop="@dimen/spacing_8"
         android:progress="25" />
 
     <TextView
         android:id="@+id/progress_percentage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="@dimen/spacing_4"
         android:text="25% Complete"
         android:textColor="@color/gray"
-        android:textSize="11sp" />
+        android:textSize="@dimen/text_size_caption" />
 
     <!-- Current Lesson -->
     <TextView
         android:id="@+id/current_lesson"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Current: Alphabet Basics\nNext: Basic Verbs"
+        android:layout_marginTop="@dimen/spacing_8"
+        android:text="@string/current_lesson"
         android:textColor="@color/brown_700"
-        android:textSize="12sp" />
+        android:textSize="@dimen/text_size_body_small" />
 
 </LinearLayout>
