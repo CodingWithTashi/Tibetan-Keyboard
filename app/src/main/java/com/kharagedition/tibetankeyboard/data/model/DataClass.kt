@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.model
+package com.kharagedition.tibetankeyboard.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

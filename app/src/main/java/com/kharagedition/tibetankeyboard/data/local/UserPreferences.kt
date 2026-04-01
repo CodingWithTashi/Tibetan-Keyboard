@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.data.local
 
 import android.content.Context
 import android.content.SharedPreferences

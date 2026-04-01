@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.application
+package com.kharagedition.tibetankeyboard.app
 
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager

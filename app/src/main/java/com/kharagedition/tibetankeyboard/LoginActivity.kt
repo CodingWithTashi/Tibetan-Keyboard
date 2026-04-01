@@ -32,7 +32,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.UserPreferences
+import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.repo.UserRepository
 import com.kharagedition.tibetankeyboard.ui.ChatActivity
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager

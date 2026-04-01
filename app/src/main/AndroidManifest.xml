@@ -11,7 +11,7 @@
 
 
     <application
-        android:name=".TibetanKeyboardApp"
+        android:name=".app.TibetanKeyboardApp"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,7 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TibetanKeyboard">
         <service
-            android:name=".MyFirebaseMessagingService"
+            android:name=".service.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -40,7 +40,7 @@
             android:parentActivityName=".ui.HomeActivity" />
 
         <service
-            android:name=".TibetanKeyboard"
+            android:name=".service.TibetanKeyboard"
             android:exported="true"
             android:label="Tibetan Keyboard"
             android:permission="android.permission.BIND_INPUT_METHOD">

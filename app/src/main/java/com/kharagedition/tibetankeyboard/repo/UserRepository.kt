@@ -8,9 +8,9 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import com.google.firebase.messaging.FirebaseMessaging
-import com.kharagedition.tibetankeyboard.util.DeviceInfo
-import com.kharagedition.tibetankeyboard.util.SubscriptionType
-import com.kharagedition.tibetankeyboard.util.User
+import com.kharagedition.tibetankeyboard.data.model.DeviceInfo
+import com.kharagedition.tibetankeyboard.data.model.SubscriptionType
+import com.kharagedition.tibetankeyboard.data.model.User
 
 class UserRepository {
     private val db = FirebaseFirestore.getInstance()

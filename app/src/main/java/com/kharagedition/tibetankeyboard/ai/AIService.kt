@@ -1,10 +1,11 @@
 package com.kharagedition.tibetankeyboard.ai
 
-import com.kharagedition.tibetankeyboard.model.GrammarCheckRequest
-import com.kharagedition.tibetankeyboard.model.GrammarResult
-import com.kharagedition.tibetankeyboard.model.RephraseResult
-import com.kharagedition.tibetankeyboard.model.TranslationRequest
-import com.kharagedition.tibetankeyboard.model.TranslationResult
+import com.kharagedition.tibetankeyboard.data.model.GrammarCheckRequest
+import com.kharagedition.tibetankeyboard.data.model.GrammarResult
+import com.kharagedition.tibetankeyboard.data.model.RephraseResult
+import com.kharagedition.tibetankeyboard.data.model.TranslationRequest
+import com.kharagedition.tibetankeyboard.data.model.TranslationResult
+import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

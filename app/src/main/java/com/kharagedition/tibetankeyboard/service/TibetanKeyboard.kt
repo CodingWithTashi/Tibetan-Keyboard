@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.service
 
 import android.content.ComponentName
 import android.content.Context
@@ -27,6 +27,14 @@ import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
+import com.kharagedition.tibetankeyboard.TibetanKeyboardView
+import com.kharagedition.tibetankeyboard.AIKeyboardView
+import com.kharagedition.tibetankeyboard.EmojiKeyboardView
+import com.kharagedition.tibetankeyboard.AIKeyboardCodes
+import com.kharagedition.tibetankeyboard.EmojiItemList
+import com.kharagedition.tibetankeyboard.StickerItem
+import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.FontsOverride
 
 
 class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboardInterface {

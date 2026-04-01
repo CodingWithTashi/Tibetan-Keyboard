@@ -1,9 +1,9 @@
-package com.kharagedition.tibetankeyboard.ai
+package com.kharagedition.tibetankeyboard.data.remote
 
-import com.kharagedition.tibetankeyboard.model.GeminiChatRequest
-import com.kharagedition.tibetankeyboard.model.GeminiChatResponse
-import com.kharagedition.tibetankeyboard.model.GrammarCheckRequest
-import com.kharagedition.tibetankeyboard.model.GrammarCheckResponse
+import com.kharagedition.tibetankeyboard.data.model.GeminiChatRequest
+import com.kharagedition.tibetankeyboard.data.model.GeminiChatResponse
+import com.kharagedition.tibetankeyboard.data.model.GrammarCheckRequest
+import com.kharagedition.tibetankeyboard.data.model.GrammarCheckResponse
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.Headers

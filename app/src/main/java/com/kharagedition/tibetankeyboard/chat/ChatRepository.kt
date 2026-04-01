@@ -1,7 +1,7 @@
 package com.kharagedition.tibetankeyboard.chat
 
-import com.kharagedition.tibetankeyboard.ai.RetrofitClient
-import com.kharagedition.tibetankeyboard.model.GeminiChatRequest
+import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
+import com.kharagedition.tibetankeyboard.data.model.GeminiChatRequest
 
 class ChatRepository() {
     private var currentSessionId: String? = null

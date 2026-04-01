@@ -14,9 +14,9 @@ import androidx.lifecycle.LifecycleOwner
 import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ai.AIService
 import com.kharagedition.tibetankeyboard.auth.AuthManager
-import com.kharagedition.tibetankeyboard.model.GrammarResult
-import com.kharagedition.tibetankeyboard.model.RephraseResult
-import com.kharagedition.tibetankeyboard.model.TranslationResult
+import com.kharagedition.tibetankeyboard.data.model.GrammarResult
+import com.kharagedition.tibetankeyboard.data.model.RephraseResult
+import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
 import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
 import kotlinx.coroutines.*

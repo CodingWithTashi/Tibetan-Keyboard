@@ -13,6 +13,7 @@ import com.kharagedition.tibetankeyboard.R
 import java.text.SimpleDateFormat
 import java.util.Locale
 import android.content.ClipboardManager
+import com.kharagedition.tibetankeyboard.data.model.ChatMessage
 class ChatAdapter(isPremium: Boolean) : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCallback()) {
 
     companion object {

@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.util
+package com.kharagedition.tibetankeyboard.data.model
 
 data class User(
     val uid: String = "",
