@@ -2,7 +2,7 @@ package com.kharagedition.tibetankeyboard.util
 
 import android.app.Application
 import android.content.Context
-import androidx.core.util.LruCache
+import android.util.LruCache
 import java.util.concurrent.TimeUnit
 
 /**

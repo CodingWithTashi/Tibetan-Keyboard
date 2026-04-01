@@ -97,7 +97,6 @@
     <string name="phonetic">Phonetic</string>
     <string name="dts">DTS</string>
     <string name="convert">Convert</string>
-    <string name="transliteration_failed">Transliteration failed</string>
 
     <!-- Chat History -->
     <string name="conversation_history">Conversation History</string>

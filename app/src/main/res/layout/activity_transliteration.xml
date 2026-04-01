@@ -102,7 +102,7 @@
                     android:layout_height="@dimen/input_field_height"
                     android:hint="@string/transliteration_result"
                     android:inputType="text"
-                    android:readOnly="true"
+                    android:enabled="false"
                     android:textColor="@color/brown_800"
                     android:textColorHint="@color/gray" />
             </com.google.android.material.textfield.TextInputLayout>
