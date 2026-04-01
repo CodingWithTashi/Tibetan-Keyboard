@@ -31,7 +31,7 @@ import com.kharagedition.tibetankeyboard.util.CommonUtils
 import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.UpdateNotificationManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
-import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 
 
 class HomeActivity : InputMethodActivity() {

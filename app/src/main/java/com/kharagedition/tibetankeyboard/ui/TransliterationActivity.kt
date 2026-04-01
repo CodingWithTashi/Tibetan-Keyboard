@@ -16,8 +16,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.ai.AIRepository
-import com.kharagedition.tibetankeyboard.ai.PremiumFeatureManager
+import com.kharagedition.tibetankeyboard.data.repository.AIRepository
+import com.kharagedition.tibetankeyboard.data.repository.PremiumFeatureManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.util.showToast
 import kotlinx.coroutines.CoroutineScope

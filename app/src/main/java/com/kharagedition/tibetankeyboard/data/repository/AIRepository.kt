@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ai
+package com.kharagedition.tibetankeyboard.data.repository
 
 import android.app.Application
 import android.content.Context
@@ -10,6 +10,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 import org.json.JSONObject
+import com.kharagedition.tibetankeyboard.ai.GrammarAnalysisResult
+import com.kharagedition.tibetankeyboard.ai.GrammarCorrection
+import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
 
 /**
  * Repository for AI feature API calls

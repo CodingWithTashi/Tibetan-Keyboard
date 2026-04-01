@@ -10,7 +10,7 @@ import androidx.preference.PreferenceFragmentCompat
 import com.google.android.gms.ads.*
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.databinding.SettingsActivityBinding
-import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.util.showConfirmationDialog
 import com.kharagedition.tibetankeyboard.util.showToast
 

@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import com.kharagedition.tibetankeyboard.data.repository.AIRepository
 import java.io.IOException
 
 data class GrammarCorrection(

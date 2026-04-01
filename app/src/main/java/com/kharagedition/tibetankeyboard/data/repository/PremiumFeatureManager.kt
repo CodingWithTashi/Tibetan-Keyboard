@@ -1,8 +1,8 @@
-package com.kharagedition.tibetankeyboard.ai
+package com.kharagedition.tibetankeyboard.data.repository
 
 import android.app.Activity
 import android.content.Context
-import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -103,7 +103,7 @@ class PremiumFeatureManager(private val context: Context) {
             .setMessage(message)
             .setIcon(android.R.drawable.ic_dialog_info)
             .setPositiveButton("Upgrade") { _, _ ->
-                revenueCatManager.purchasePremium(activity, object : com.kharagedition.tibetankeyboard.subscription.RevenueCatManager.SubscriptionCallback {
+                revenueCatManager.purchasePremium(activity, object : com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager.SubscriptionCallback {
                     override fun onSuccess(message: String) {
                         onPurchase?.invoke()
                     }

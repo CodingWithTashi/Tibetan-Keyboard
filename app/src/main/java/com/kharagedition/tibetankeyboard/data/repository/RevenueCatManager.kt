@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.subscription
+package com.kharagedition.tibetankeyboard.data.repository
 
 import android.app.Activity
 import android.content.Context

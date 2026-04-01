@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.chat
+package com.kharagedition.tibetankeyboard.data.repository
 
 import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
 import com.kharagedition.tibetankeyboard.data.model.GeminiChatRequest

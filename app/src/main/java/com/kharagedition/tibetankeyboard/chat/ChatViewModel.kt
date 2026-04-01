@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kharagedition.tibetankeyboard.data.model.ChatMessage
+import com.kharagedition.tibetankeyboard.data.repository.ChatRepository
 import kotlinx.coroutines.launch
 class ChatViewModel : ViewModel() {
 

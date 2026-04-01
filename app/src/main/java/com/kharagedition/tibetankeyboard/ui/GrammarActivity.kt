@@ -19,7 +19,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.ai.AIGrammarViewModel
 import com.kharagedition.tibetankeyboard.ai.GrammarCorrectionAdapter
-import com.kharagedition.tibetankeyboard.ai.PremiumFeatureManager
+import com.kharagedition.tibetankeyboard.data.repository.PremiumFeatureManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.util.showToast
 import androidx.recyclerview.widget.RecyclerView

@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ai
+package com.kharagedition.tibetankeyboard.data.repository
 
 import com.kharagedition.tibetankeyboard.data.model.GrammarCheckRequest
 import com.kharagedition.tibetankeyboard.data.model.GrammarResult

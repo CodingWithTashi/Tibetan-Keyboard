@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.imageview.ShapeableImageView
 import com.kharagedition.tibetankeyboard.util.showLongToast
 import com.kharagedition.tibetankeyboard.util.showToast
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 
 /**
  * UI component to handle subscription-related UI operations

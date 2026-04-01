@@ -28,7 +28,7 @@ import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.chat.ChatAdapter
 import com.kharagedition.tibetankeyboard.chat.ChatViewModel
 import com.kharagedition.tibetankeyboard.subscription.IsPremiumListener
-import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
 import com.kharagedition.tibetankeyboard.util.*
 

@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.repo
+package com.kharagedition.tibetankeyboard.data.repository
 
 // UserRepository.kt - Repository for user data operations
 import com.google.firebase.firestore.FirebaseFirestore
