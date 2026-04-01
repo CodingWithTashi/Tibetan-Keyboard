@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/spacing_8"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="@dimen/corner_normal"
+    app:cardElevation="@dimen/elevation_small">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_12">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/conversation_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/brown_800"
+            android:textSize="@dimen/text_size_title_small"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/btn_favorite"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Favorite Button -->
+        <ImageButton
+            android:id="@+id/btn_favorite"
+            android:layout_width="@dimen/icon_size_medium"
+            android:layout_height="@dimen/icon_size_medium"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/favorite"
+            android:src="@drawable/ic_star_outline"
+            app:layout_constraintEnd_toStartOf="@+id/btn_conversation_more"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- More Button -->
+        <ImageButton
+            android:id="@+id/btn_conversation_more"
+            android:layout_width="@dimen/icon_size_medium"
+            android:layout_height="@dimen/icon_size_medium"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/more_options"
+            android:src="@drawable/baseline_more_vert_24"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Mode Chip -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/mode_chip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:text="@string/chat_mode"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/conversation_title" />
+
+        <!-- Preview Text -->
+        <TextView
+            android:id="@+id/conversation_preview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_8"
+            android:layout_marginEnd="@dimen/spacing_8"
+            android:layout_marginTop="@dimen/spacing_4"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/brown_700"
+            android:textSize="@dimen/text_size_body_small"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/mode_chip" />
+
+        <!-- Time & Message Count -->
+        <TextView
+            android:id="@+id/conversation_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:textColor="@color/gray"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/conversation_preview" />
+
+        <TextView
+            android:id="@+id/message_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_8"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:textColor="@color/gray"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toEndOf="@+id/conversation_time"
+            app:layout_constraintTop_toBottomOf="@+id/conversation_preview" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

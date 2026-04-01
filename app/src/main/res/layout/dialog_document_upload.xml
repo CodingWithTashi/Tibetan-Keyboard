@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:padding="@dimen/padding_large">
+
+    <!-- Header -->
+    <TextView
+        android:id="@+id/dialog_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/upload_document"
+        android:textColor="@color/brown_800"
+        android:textSize="@dimen/text_size_headline_small"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- File Icon -->
+    <ImageView
+        android:id="@+id/file_icon"
+        android:layout_width="@dimen/icon_size_xlarge"
+        android:layout_height="@dimen/icon_size_xlarge"
+        android:layout_marginTop="@dimen/spacing_16"
+        android:contentDescription="@string/upload_document"
+        android:src="@drawable/ic_insert_drive_file"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dialog_title"
+        app:tint="@color/brown_700" />
+
+    <!-- File Selection Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_select_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_16"
+        android:text="@string/select_file"
+        android:textSize="@dimen/text_size_body_medium"
+        app:cornerRadius="@dimen/corner_normal"
+        app:layout_constraintTop_toBottomOf="@+id/file_icon" />
+
+    <!-- Selected File Name -->
+    <TextView
+        android:id="@+id/selected_file_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_12"
+        android:textColor="@color/success_green"
+        android:textSize="@dimen/text_size_body_small"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_select_file" />
+
+    <!-- Upload Progress -->
+    <ProgressBar
+        android:id="@+id/upload_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/progress_bar_height"
+        android:layout_marginTop="@dimen/spacing_16"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/selected_file_name" />
+
+    <!-- Upload Animation -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/upload_animation"
+        android:layout_width="@dimen/icon_size_xlarge"
+        android:layout_height="@dimen/icon_size_xlarge"
+        android:layout_marginTop="@dimen/spacing_16"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/upload_progress"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/document_uploading" />
+
+    <!-- Upload Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_upload_document"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_24"
+        android:enabled="false"
+        android:text="@string/upload_and_analyze"
+        android:textSize="@dimen/text_size_body_medium"
+        app:cornerRadius="@dimen/corner_normal"
+        app:layout_constraintTop_toBottomOf="@+id/upload_animation" />
+
+    <!-- File Format Info -->
+    <TextView
+        android:id="@+id/file_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_12"
+        android:text="@string/file_formats"
+        android:textAlignment="center"
+        android:textColor="@color/gray"
+        android:textSize="@dimen/text_size_caption"
+        app:layout_constraintTop_toBottomOf="@+id/btn_upload_document" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
