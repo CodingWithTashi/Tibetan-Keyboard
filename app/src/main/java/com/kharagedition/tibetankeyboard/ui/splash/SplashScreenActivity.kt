@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ui
+package com.kharagedition.tibetankeyboard.ui.splash
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.gms.ads.MobileAds
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.databinding.ActivitySplashScreenBinding
+import com.kharagedition.tibetankeyboard.ui.home.HomeActivity
 
 class SplashScreenActivity : AppCompatActivity() {
     lateinit var activitySplashScreenBinding : ActivitySplashScreenBinding

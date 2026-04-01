@@ -1,7 +1,8 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.ui.settings
 
 import android.os.Bundle
 import android.view.MenuItem
+import com.kharagedition.tibetankeyboard.R
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.appcompat.app.AppCompatActivity

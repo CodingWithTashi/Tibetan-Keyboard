@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.ui.login
 
 import android.content.Intent
 import android.graphics.Color

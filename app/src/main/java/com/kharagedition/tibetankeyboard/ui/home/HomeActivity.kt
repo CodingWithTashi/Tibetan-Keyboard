@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ui
+package com.kharagedition.tibetankeyboard.ui.home
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -22,7 +22,7 @@ import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.app.InputMethodActivity
 import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.SettingsActivity
+import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
 import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
 import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
 import com.kharagedition.tibetankeyboard.util.AppConstant

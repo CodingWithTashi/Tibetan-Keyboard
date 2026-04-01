@@ -8,7 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.kharagedition.tibetankeyboard.LoginActivity
+import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 
