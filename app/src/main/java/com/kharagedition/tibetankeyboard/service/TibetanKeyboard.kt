@@ -24,15 +24,15 @@ import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
-import com.kharagedition.tibetankeyboard.ui.KeyboardType
+import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
-import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
-import com.kharagedition.tibetankeyboard.TibetanKeyboardView
-import com.kharagedition.tibetankeyboard.AIKeyboardView
-import com.kharagedition.tibetankeyboard.EmojiKeyboardView
-import com.kharagedition.tibetankeyboard.AIKeyboardCodes
-import com.kharagedition.tibetankeyboard.EmojiItemList
-import com.kharagedition.tibetankeyboard.StickerItem
+import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
+import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
+import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardView
+import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiKeyboardView
+import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardCodes
+import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiItemList
+import com.kharagedition.tibetankeyboard.ui.keyboard.StickerItem
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.FontsOverride
 

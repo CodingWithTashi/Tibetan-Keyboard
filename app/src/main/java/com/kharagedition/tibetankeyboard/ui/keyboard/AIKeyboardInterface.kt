@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ai
+package com.kharagedition.tibetankeyboard.ui.keyboard
 
 interface AIKeyboardInterface {
     fun getCurrentText(): String

@@ -1,4 +1,6 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.ui.keyboard
+
+import com.kharagedition.tibetankeyboard.R
 
 import android.view.LayoutInflater
 import android.view.View

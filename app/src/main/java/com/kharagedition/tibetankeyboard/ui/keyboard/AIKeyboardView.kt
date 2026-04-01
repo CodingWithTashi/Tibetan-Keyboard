@@ -1,4 +1,6 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.ui.keyboard
+
+import com.kharagedition.tibetankeyboard.R
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
@@ -11,7 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.lifecycle.LifecycleOwner
-import com.kharagedition.tibetankeyboard.ai.AIKeyboardInterface
+import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.data.repository.AIService
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.model.GrammarResult

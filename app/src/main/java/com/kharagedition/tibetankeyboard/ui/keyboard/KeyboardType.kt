@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ui
+package com.kharagedition.tibetankeyboard.ui.keyboard
 
 /**
  * Created by kharag on 28,July,2021

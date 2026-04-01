@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard
+package com.kharagedition.tibetankeyboard.ui.keyboard
 
 class EmojiItemList {
 
