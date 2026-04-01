@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.subscription
+package com.kharagedition.tibetankeyboard.ui.subscription
 
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity

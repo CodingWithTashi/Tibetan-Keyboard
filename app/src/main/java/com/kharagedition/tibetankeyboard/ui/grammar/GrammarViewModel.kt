@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ai
+package com.kharagedition.tibetankeyboard.ui.grammar
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

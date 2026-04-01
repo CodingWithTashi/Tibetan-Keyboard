@@ -10,8 +10,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 import org.json.JSONObject
-import com.kharagedition.tibetankeyboard.ai.GrammarAnalysisResult
-import com.kharagedition.tibetankeyboard.ai.GrammarCorrection
+import com.kharagedition.tibetankeyboard.ui.grammar.GrammarAnalysisResult
+import com.kharagedition.tibetankeyboard.ui.grammar.GrammarCorrection
 import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
 
 /**

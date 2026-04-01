@@ -34,7 +34,7 @@ import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.UserRepository
-import com.kharagedition.tibetankeyboard.ui.ChatActivity
+import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import android.util.Log

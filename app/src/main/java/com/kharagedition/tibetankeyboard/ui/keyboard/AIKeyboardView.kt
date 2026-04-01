@@ -20,7 +20,7 @@ import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
-import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
+import com.kharagedition.tibetankeyboard.ui.subscription.SubscriptionUIComponent
 import kotlinx.coroutines.*
 
 class AIKeyboardView @JvmOverloads constructor(

@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.chat
+package com.kharagedition.tibetankeyboard.ui.chat
 
 import android.os.Bundle
 import android.view.LayoutInflater

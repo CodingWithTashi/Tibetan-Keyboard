@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ui
+package com.kharagedition.tibetankeyboard.ui.transliteration
 
 import android.os.Bundle
 import android.view.View

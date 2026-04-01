@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ui
+package com.kharagedition.tibetankeyboard.ui.grammar
 
 import android.os.Bundle
 import android.view.View
@@ -17,8 +17,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.ai.AIGrammarViewModel
-import com.kharagedition.tibetankeyboard.ai.GrammarCorrectionAdapter
+import com.kharagedition.tibetankeyboard.ui.grammar.AIGrammarViewModel
+import com.kharagedition.tibetankeyboard.ui.grammar.GrammarCorrectionAdapter
 import com.kharagedition.tibetankeyboard.data.repository.PremiumFeatureManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.util.showToast

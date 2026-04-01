@@ -32,6 +32,7 @@ import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.UpdateNotificationManager
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 
 
 class HomeActivity : InputMethodActivity() {

@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.ui
+package com.kharagedition.tibetankeyboard.ui.chat
 
 import android.os.Bundle
 import android.view.Menu
@@ -25,11 +25,11 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.auth.AuthManager
-import com.kharagedition.tibetankeyboard.chat.ChatAdapter
-import com.kharagedition.tibetankeyboard.chat.ChatViewModel
-import com.kharagedition.tibetankeyboard.subscription.IsPremiumListener
+import com.kharagedition.tibetankeyboard.ui.chat.ChatAdapter
+import com.kharagedition.tibetankeyboard.ui.chat.ChatViewModel
+import com.kharagedition.tibetankeyboard.ui.subscription.IsPremiumListener
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
-import com.kharagedition.tibetankeyboard.subscription.SubscriptionUIComponent
+import com.kharagedition.tibetankeyboard.ui.subscription.SubscriptionUIComponent
 import com.kharagedition.tibetankeyboard.util.*
 
 class ChatActivity : AppCompatActivity(), RevenueCatManager.SubscriptionCallback,

@@ -207,7 +207,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 keyboardView?.keyboard = Keyboard(this, R.xml.symbol_en)
             }
             KeyboardType.GEMINI -> {
-                var chatactivity = "com.kharagedition.tibetankeyboard.ui.ChatActivity"
+                var chatactivity = "com.kharagedition.tibetankeyboard.ui.chat.ChatActivity"
                 var intent = packageManager.getLaunchIntentForPackage("com.kharagedition.tibetankeyboard")
                 if (intent != null) {
                     intent.component = ComponentName("com.kharagedition.tibetankeyboard", chatactivity)

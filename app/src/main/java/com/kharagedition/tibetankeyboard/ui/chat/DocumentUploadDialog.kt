@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.chat
+package com.kharagedition.tibetankeyboard.ui.chat
 
 import android.net.Uri
 import android.os.Bundle

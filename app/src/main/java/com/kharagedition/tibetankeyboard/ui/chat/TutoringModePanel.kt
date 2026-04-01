@@ -1,4 +1,4 @@
-package com.kharagedition.tibetankeyboard.chat
+package com.kharagedition.tibetankeyboard.ui.chat
 
 import android.content.Context
 import android.util.AttributeSet
