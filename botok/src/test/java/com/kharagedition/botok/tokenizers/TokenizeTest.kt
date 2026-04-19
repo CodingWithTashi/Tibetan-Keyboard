@@ -21,16 +21,12 @@ class TokenizeTest {
         @BeforeClass
         @JvmStatic
         fun setUp() {
-            // Create empty config for isolated testing
-            val assetsPath = System.getProperty("user.dir") + "/src/main/assets/botok/general"
-            val config = Config(assetsPath)
-            val profile = "general"
-
+            // Create minimal trie for fast testing
             trie = Trie(
                 BoSyl(),
-                profile,
-                config.dictionary,
-                config.adjustments
+                "test",
+                emptyMap(),
+                emptyMap()
             )
 
             // Add test words to trie

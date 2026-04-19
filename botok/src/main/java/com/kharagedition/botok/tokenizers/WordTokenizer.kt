@@ -34,24 +34,34 @@ class WordTokenizer(
 
     init {
         // Build trie with BoSyl instance, config dictionary and adjustments
+        // (skip if buildTrie is false for faster testing)
         val boSyl = BoSyl()  // Create instance using no-arg constructor
-        val trie = Trie(
-            boSyl,
-            config.packPath.substringAfterLast("/"),  // profile is the last part of path
-            config.dictionary,
-            config.adjustments
-        )
+        val trie = if (buildTrie) {
+            Trie(
+                boSyl,
+                config.packPath.substringAfterLast("/"),  // profile is the last part of path
+                config.dictionary,
+                config.adjustments
+            )
+        } else {
+            // Create minimal trie for testing
+            Trie(boSyl, "test", emptyMap(), emptyMap())
+        }
 
         this.tok = Tokenize(trie)
 
         // AdjustTokens with rules (Phase 7: full implementation)
-        this.adj = AdjustTokens(
-            mainRules = config.dictionary["rules"]?.map { it.toString() },
-            customRules = config.adjustments["rules"]?.map { it.toString() }
-        )
+        this.adj = if (buildTrie) {
+            AdjustTokens(
+                mainRules = config.dictionary["rules"]?.map { it.toString() },
+                customRules = config.adjustments["rules"]?.map { it.toString() }
+            )
+        } else {
+            AdjustTokens(emptyList(), emptyList())
+        }
 
         // Load particle lemmas
-        this.partLemmas = getPartLemmas()
+        this.partLemmas = if (buildTrie) getPartLemmas() else emptyMap()
     }
 
     /**

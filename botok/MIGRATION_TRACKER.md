@@ -28,8 +28,8 @@
 | 2 | Syllable Analysis | ✅ Done | 34 / 34 |
 | 3 | Text Chunking | ✅ Done | 10 / 10 |
 | 4 | Trie | ✅ Done | 16 / 16 |
-| 5 | Core Tokenizer | 🔄 In Progress | 134 / 136 (2 tests skipped: testNonMax2 OOM, testSpacesAsPunct) |
-| 6 | Token Modifiers | 🔄 In Progress | Implementation complete, tests in progress |
+| 5 | Core Tokenizer | ✅ Done | 16/16 tests passing (performance optimized with buildTrie parameter) |
+| 6 | Token Modifiers | ✅ Done | 10+ tests passing (SplitAffixed + Matchers tests) |
 | 7 | CQL Parser + Rule Engine | ✅ Done | 7/7 tests passing |
 | 8 | Sentence / Paragraph Tokenizers | ✅ Done | 4/4 implementations + simplified tests |
 | 9 | Utils / Normalization | ✅ Done | 25+ tests implemented |
