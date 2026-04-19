@@ -30,7 +30,7 @@
 | 4 | Trie | ✅ Done | 16 / 16 |
 | 5 | Core Tokenizer | ✅ Done | 16/16 tests passing (performance optimized with buildTrie parameter) |
 | 6 | Token Modifiers | ✅ Done | 10+ tests passing (SplitAffixed + Matchers tests) |
-| 7 | CQL Parser + Rule Engine | ✅ Done | 7/7 tests passing |
+| 7 | CQL Parser + Rule Engine | ✅ Done | 22/22 tests passing (CqlParserTest + MatchersTest + MergingMatcherTest + SplittingMatcherTest + ReplacingMatcherTest) |
 | 8 | Sentence / Paragraph Tokenizers | ✅ Done | 4/4 implementations + simplified tests |
 | 9 | Utils / Normalization | ✅ Done | 25+ tests implemented |
 | 10 | Public API + Text class | ✅ Done | 20+ tests implemented |
