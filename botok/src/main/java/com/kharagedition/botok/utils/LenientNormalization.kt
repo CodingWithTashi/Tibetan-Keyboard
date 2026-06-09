@@ -15,8 +15,8 @@ object LenientNormalization {
         "འ" to setOf("ཁ", "ག", "ཆ", "ཇ", "ཐ", "ད", "ཕ", "བ", "ཚ", "ཛ"),
     )
 
-    // Regex for removing usual suffixes
-    private val REMOVE_AFFIXES_RE = Regex("([\u0f40-\u0fbc])(?:འིའོ|འིའམ|འིའང|འོའམ|འོའང|འིས|འི|འོ|འམ|འང|འས|འད|འར)$")
+    // Regex for removing usual suffixes — mirrors Python's pattern exactly (includes plain ིས|ི|ོ|ས|ར|མ|ང)
+    private val REMOVE_AFFIXES_RE = Regex("([\u0f40-\u0fbc])(?:འིའོ|འིའམ|འིའང|འོའམ|འོའང|འིས|འི|འོ|འམ|འང|འས|འད|འར|ིས|ི|ོ|ས|ར|མ|ང)$")
 
     // Regex for da drag (removing 'ད' after certain consonants)
     private val DA_DRAG_RE = Regex("([^གམ][ནལར])ད$")
@@ -95,8 +95,8 @@ object LenientNormalization {
     fun normalizeOldTibetan(text: String): String {
         var result = text
 
-        // Rule 1: ([ཀ-ྼ])སྟེ -> $1ས་
-        result = OLD_TIB_P1.replace(result, "$1ས་")
+        // Rule 1: ([ཀ-ྼ])སྟེ -> $1ས་ཏེ  (merged སྟེ splits into ས་ + ཏེ)
+        result = OLD_TIB_P1.replace(result, "$1ས་ཏེ")
 
         // Rule 2: ([ཀ-ྼ][ནལར])ྟ([ེོ]) -> $1་ཏ$2
         result = OLD_TIB_P2.replace(result, "$1་ཏ$2")

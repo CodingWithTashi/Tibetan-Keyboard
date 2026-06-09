@@ -97,10 +97,16 @@ class Tokenize(val trie: Trie) {
                 } else {
                     // CHUNK IS NON-SYLLABLE
                     if (maxMatch.isNotEmpty()) {
-                        // We have a match, but hit a non-syllable chunk (space, etc.)
-                        // Create token for the match and ensure the non-syllable is processed next
-                        foundMaxMatch = true
-                        // Don't increment cIdx - we want to process this non-syllable chunk next
+                        // Non-syllable terminates the match — emit the matched token now.
+                        // We cannot rely on the foundMaxMatch block below because that block
+                        // is only reached from the syllable branch (curSyl != null).
+                        addFoundWordOrNonWord(
+                            cIdx + maxMatch.last().size - 1,
+                            matchData,
+                            maxMatch.last(),
+                            tokens
+                        )
+                        cIdx = walker  // walker points at the non-syllable; process it next
                         break
                     } else if (syls.isNotEmpty()) {
                         // Check for any syllables left, which are to be turned into independent tokens
@@ -203,21 +209,24 @@ class Tokenize(val trie: Trie) {
             tokens.add(chunksToToken(nonMaxSyls, data, ttype))
             newCIdx = nonMaxIdx
         } else {
-            // Add first syl in syls as non-word
+            // Add first syl in syls as NO_POS (partial trie match, not a complete word)
             tokens.add(chunksToToken(listOf(syls[0]), emptyMap(), ttype = "NO_POS"))
 
-            // Decrement chunk-idx for a new attempt to find a match
-            // Python: if syls and syls[1:]: c_idx -= len(syls[1:]) - 1
-            if (syls.size > 1) {
+            if (syls.size == 1) {
+                // Single syllable: advance past it so the outer loop doesn't spin
+                newCIdx = syls[0] + 1
+            } else {
+                // Multiple syllables tried, none formed a complete word.
+                // Backtrack: emit syls[0] and retry from syls[1].
+                // Python: if syls and syls[1:]: c_idx -= len(syls[1:]) - 1
                 newCIdx -= syls.size - 2
-            }
 
-            // Python: if has_decremented or (chunk is non-syllable) or len(syls) > 1
-            val currentChunkIsNonSyllable = (newCIdx < (preProcessed?.chunks?.size ?: 0) &&
-                preProcessed?.chunks?.get(newCIdx)?.first == null)
+                val currentChunkIsNonSyllable = (newCIdx < (preProcessed?.chunks?.size ?: 0) &&
+                    preProcessed?.chunks?.get(newCIdx)?.first == null)
 
-            if (hasDecremented || currentChunkIsNonSyllable || syls.size > 1) {
-                newCIdx -= 1
+                if (hasDecremented || currentChunkIsNonSyllable) {
+                    newCIdx -= 1
+                }
             }
         }
 

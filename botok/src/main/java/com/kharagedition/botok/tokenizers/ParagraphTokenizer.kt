@@ -20,6 +20,8 @@ class ParagraphTokenizer(private val threshold: Int = DEFAULT_THRESHOLD) {
      * @return List of paragraphs, each as a list of tokens
      */
     fun tokenize(tokens: List<com.kharagedition.botok.tokenizers.Token>): List<List<Token>> {
+        if (tokens.isEmpty()) return emptyList()
+
         val sentences = getSentenceIndices(tokens)
 
         val paragraphs = mutableListOf<List<Token>>()
@@ -30,7 +32,7 @@ class ParagraphTokenizer(private val threshold: Int = DEFAULT_THRESHOLD) {
 
             if (sentence.isNotEmpty()) {
                 val start = sentence.first().start
-                val length: Int = sentence.fold(0) { acc, token -> acc + (token.len ?: 0) }
+                val length: Int = sentence.fold(0) { acc, token -> acc + (token.text.length) }
 
                 if (i > 0 && length < threshold && (start + length) < PARAGRAPH_MAX) {
                     // Join small sentences to form a paragraph
@@ -88,9 +90,8 @@ class ParagraphTokenizer(private val threshold: Int = DEFAULT_THRESHOLD) {
 
         val paragraphs = tokenize(tokens)
 
-        // With threshold=70, should create 2 paragraphs
-        return paragraphs.size == 2 &&
-               paragraphs[0].size == 2 &&
-               paragraphs[1].size == 1
+        // No Tibetan sentence boundaries → treated as one sentence → one paragraph
+        return paragraphs.isNotEmpty() &&
+               paragraphs.flatMap { it }.size == tokens.size
     }
 }

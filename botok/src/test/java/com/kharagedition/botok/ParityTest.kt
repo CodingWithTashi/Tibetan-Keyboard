@@ -62,7 +62,8 @@ class ParityTest {
         assertEquals("Single consonant stack", listOf("ཀ"), result1)
 
         val result2 = StandardTibetan.splitIntoStacks("བཀྲ")
-        assertEquals("Complex stack", listOf("བཀྲ"), result2)
+        // བ (prefix, U+0F56) starts a new stack; ཀ (U+0F40) is a base consonant → not in keepInStack range → new stack
+        assertEquals("Complex stack", listOf("བ", "ཀྲ"), result2)
 
         // Sanskrit stacks would split into multiple
         val sanskritSyllable = "ཨཱཪྱ"
@@ -160,7 +161,7 @@ class ParityTest {
     @Test
     fun testBotokSplitIntoStacks() {
         val result = Botok.splitIntoStacks("བཀྲ")
-        assertEquals("Split stack", listOf("བཀྲ"), result)
+        assertEquals("Split stack", listOf("བ", "ཀྲ"), result)
     }
 
     @Test

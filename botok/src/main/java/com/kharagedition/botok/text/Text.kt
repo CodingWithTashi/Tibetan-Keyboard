@@ -1,5 +1,6 @@
 package com.kharagedition.botok.text
 
+import com.kharagedition.botok.chunks.Chunks
 import java.io.File
 
 /**
@@ -65,19 +66,21 @@ class Text(private val input: Any) {
         }
 
         /**
-         * Tokenize words as raw text
+         * Tokenize words — splits on spaces for lightweight pipeline use.
+         * For full trie-based Tibetan tokenization use Botok.tokenizeWords().
          */
         private fun wordTok(text: String): List<String> {
-            // Simple implementation - return words separated by spaces
             return text.split(Regex("\\s+")).filter { it.isNotEmpty() }
         }
 
         /**
-         * Tokenize chunks
+         * Tokenize into typed chunks using the Chunks pipeline.
          */
         private fun chunkTok(text: String): List<String> {
-            // Simple implementation - split by spaces
-            return text.split(Regex("\\s+")).filter { it.isNotEmpty() }
+            val chunks = Chunks(text)
+            return chunks.makeChunks().map { (marker, start, length) ->
+                text.substring(start, minOf(start + length, text.length))
+            }
         }
 
         /**

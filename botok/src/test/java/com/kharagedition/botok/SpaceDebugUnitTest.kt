@@ -5,11 +5,13 @@ import com.kharagedition.botok.config.Config
 import com.kharagedition.botok.textunits.BoSyl
 import com.kharagedition.botok.tries.Trie
 import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Test
 
 /**
  * Debug test for spacesAsPunct issue
  */
+@Ignore("Debug test: builds full trie from real assets — too slow for unit tests")
 class SpaceDebugUnitTest {
 
     companion object {

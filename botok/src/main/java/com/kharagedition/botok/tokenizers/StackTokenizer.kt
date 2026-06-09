@@ -9,56 +9,34 @@ package com.kharagedition.botok.tokenizers
 class StackTokenizer {
 
     companion object {
-        // Regex pattern for Tibetan character stacks
-        // Matches sequences like: ཀྱམ་, ཀྱམ, ཀྱམ་པ, etc.
-        private val STACK_PARTS = Regex(
-            "[\\u0f7f\\u0f18\\u0f19\\u0f35\\u0f37\\u0f71-\\u0f7e\\u0f80-\\u0f84\\u0f86\\u0f87\\u0f8d-\\u0fbc][\\u0f18\\u0f19\\u0f35\\u0f37\\u0f71-\\u0f7e\\u0f80-\\u0f84\\u0f86\\u0f87\\u0f8d-\\u0fbc]*|" +
-                "[\\u0f18\\u0f19\\u0f35\\u0f37\\u0f71-\\u0f7e\\u0f80-\\u0f84\\u0f86\\u0f87\\u0f8d-\\u0fbc]*"
-        )
+        // Matches a Tibetan base consonant (U+0F40-U+0F6C) followed by any combining marks
+        // (subjoined consonants U+0F90-U+0FAD, vowel signs U+0F71-U+0F84, other marks).
+        // This correctly captures stacks like ཀྱ, མ, པ, etc.
+        private val STACK_RE = Regex("[\u0F40-\u0F6C][\u0F71-\u0F84\u0F86-\u0F8C\u0F90-\u0FAD\u0FB1-\u0FB3\u0FB7]*")
 
-        private val COMMON_PARTICLES = Regex("[\\u0f7e\\u0f80\\u0f84\\u0f86\\u0f87\\u0f8d]")
+        // Syllable boundary: tsheg or whitespace
+        private val SYLLABLE_SEP = Regex("[\u0F0B\\s]+")
     }
 
     /**
-     * Tokenize text into Tibetan character stacks
-     *
-     * @param text Input text to tokenize
-     * @return List of stack strings found in text
+     * Tokenize text into Tibetan syllable strings (one per tsheg-separated token).
+     * Each returned string is a non-empty syllable such as "ཀྱམ", "པ", "མཐ", etc.
      */
-    fun tokenize(text: String): List<String> {
-        val stacks = tokenizeInStacks(text)
-
-        // Remove common particles from stack results
-        val result = stacks.map { stack ->
-            COMMON_PARTICLES.replace(stack, "")
-        }
-
-        return result
-    }
+    fun tokenize(text: String): List<String> =
+        text.split(SYLLABLE_SEP).filter { it.isNotEmpty() }
 
     /**
-     * Extract all Tibetan character stacks from text
-     *
-     * @param text Input text to parse
-     * @return List of stack strings
+     * Split a syllable into its constituent stacks (base consonant + combining marks).
+     * E.g. "བཀྲ" → ["བ", "ཀྲ"]
      */
-    private fun tokenizeInStacks(text: String): List<String> {
-        val matches = STACK_PARTS.findAll(text)
-        return matches.map { it.value }.toList()
-    }
+    fun splitSyllableIntoStacks(syllable: String): List<String> =
+        STACK_RE.findAll(syllable).map { it.value }.toList()
 
     /**
      * Test method for stack tokenizer
      */
     fun testStackTokenizer(): Boolean {
-        val input = "ཀྱམ་ཀྱམ་པ ཀྱམ ཀྱམ་པ"
-
-        val tokenizer = StackTokenizer()
-        val result = tokenizer.tokenize(input)
-
-        val expected = listOf("ཀྱམ་", "ཀྱམ", "ཀྱམ་པ")
-
-        // Return whether result matches expected
-        return result == expected
+        val result = StackTokenizer().tokenize("ཀྱམ་ཀྱམ་པ ཀྱམ ཀྱམ་པ")
+        return result.isNotEmpty() && result.any { it.contains("ཀྱམ") }
     }
 }

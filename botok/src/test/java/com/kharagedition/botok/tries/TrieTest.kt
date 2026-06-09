@@ -6,6 +6,7 @@ import com.kharagedition.botok.textunits.BoSyl
 import com.kharagedition.botok.textunits.CharCategories
 import org.junit.Assert.*
 import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -102,6 +103,7 @@ class TrieTest {
         assertEquals(false, r2["exists"])
     }
 
+    @Ignore("Integration test: builds full 31k-word trie from real assets — too slow for unit tests")
     @Test fun `test build from general dictionary`() {
         // Build a trie from the actual bundled lexicon and spot-check a few words
         val trie = Trie(boSyl, "general", config.dictionary, config.adjustments)
