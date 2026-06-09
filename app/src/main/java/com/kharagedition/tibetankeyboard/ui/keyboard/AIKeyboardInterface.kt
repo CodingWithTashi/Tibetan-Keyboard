@@ -6,4 +6,5 @@ interface AIKeyboardInterface {
     fun onTranslateReplace(originalText: String, translatedText: String)
     fun onRephraseReplace(originalText: String, rephrasedText: String)
     fun onAICancel()
+    fun onSuggestionSelected(word: String)
 }

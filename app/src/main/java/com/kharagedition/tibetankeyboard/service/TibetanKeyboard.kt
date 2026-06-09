@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
+import android.view.inputmethod.InputConnection
 import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
@@ -48,6 +49,12 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     private var emojiKeyboardView: EmojiKeyboardView? = null
     private var isEmojiMode = false
 
+    // Tracks how many Unicode code points the user has typed since the last word boundary.
+    // Used to know exactly what to delete when a suggestion is selected.
+    // Resets on: shad (།), space, newline, or suggestion commit.
+    // Tshek (་) is NOT a boundary — it is part of the Tibetan word.
+    private var currentWordLength = 0
+
     enum class KeyboardMode {
         NORMAL,
         AI_GRAMMAR,
@@ -55,6 +62,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        currentWordLength = 0
         setInputView(onCreateInputView())
         super.onStartInputView(info, restarting)
     }
@@ -153,7 +161,11 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             playClick(i)
 
         when (i) {
-            Keyboard.KEYCODE_DELETE -> inputConnection.deleteSurroundingText(1, 0)
+            Keyboard.KEYCODE_DELETE -> {
+                inputConnection.deleteSurroundingText(1, 0)
+                if (currentWordLength > 0) currentWordLength--
+                aiKeyboardView?.updateSuggestions(currentPrefix(inputConnection))
+            }
             Keyboard.KEYCODE_SHIFT -> {
                 isCaps = !isCaps
                 keyboard!!.isShifted = isCaps
@@ -221,7 +233,15 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             else -> {
                 var code = i.toChar()
                 if (Character.isLetter(code) && isCaps) code = Character.toUpperCase(code)
+                // Shad (།) and space are sentence/word boundaries — reset the word tracker.
+                // Tshek (་) is a syllable separator WITHIN a word, so it increments the counter.
+                if (code == '།' || code == '༎' || code == ' ' || code == '\n') {
+                    currentWordLength = 0
+                } else {
+                    currentWordLength++
+                }
                 inputConnection.commitText(code.toString(), 1)
+                aiKeyboardView?.updateSuggestions(currentPrefix(inputConnection))
             }
         }
     }
@@ -395,6 +415,25 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     override fun onAICancel() {
         currentMode = KeyboardMode.NORMAL
         aiKeyboardView?.showNormalKeyboard()
+    }
+
+    override fun onSuggestionSelected(word: String) {
+        val ic = currentInputConnection ?: return
+        Log.d("TibetanKeyboard", "onSuggestionSelected: '$word', deleting $currentWordLength chars")
+        if (currentWordLength > 0) ic.deleteSurroundingText(currentWordLength, 0)
+        ic.commitText(word, 1)
+        currentWordLength = 0
+        aiKeyboardView?.updateSuggestions("")
+    }
+
+    // Returns the Unicode code points the user has typed since the last word boundary,
+    // verified against actual text before the cursor.
+    private fun currentPrefix(ic: InputConnection): String {
+        if (currentWordLength == 0) return ""
+        val textBefore = ic.getTextBeforeCursor(currentWordLength + 5, 0)?.toString() ?: ""
+        val prefix = textBefore.takeLast(currentWordLength)
+        Log.d("TibetanKeyboard", "prefix='$prefix' (wordLen=$currentWordLength)")
+        return prefix
     }
 
     private fun vibratePhone() {

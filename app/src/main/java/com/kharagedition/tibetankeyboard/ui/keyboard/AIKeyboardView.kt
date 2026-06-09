@@ -22,6 +22,7 @@ import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.subscription.SubscriptionUIComponent
 import kotlinx.coroutines.*
+import com.kharagedition.botok.autocomplete.SuggestionEngine
 
 class AIKeyboardView @JvmOverloads constructor(
     context: Context,
@@ -53,18 +54,21 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private var aiKeyboardInterface: AIKeyboardInterface? = null
     private var themeColor: String = "#FF704C04"
+    private lateinit var suggestionStrip: SuggestionStripView
+    private var suggestionEngine: SuggestionEngine? = null
     private var isOptionsExpanded = false
     private var currentOriginalText = ""
     private var currentSuggestedText = ""
     private var currentSourceLang = "en" // English
     private var currentTargetLang = "bo" // Tibetan
     private val aiService = AIService()
-    private var isPremiumUser = false;
+    private var isPremiumUser = false
+
     init {
         orientation = VERTICAL
         setupView()
-        RevenueCatManager.getInstance().isPremiumUser.observeForever{ isPremium ->
-            isPremiumUser = isPremium;
+        RevenueCatManager.getInstance().isPremiumUser.observeForever { isPremium ->
+            isPremiumUser = isPremium
         }
     }
 
@@ -75,6 +79,7 @@ class AIKeyboardView @JvmOverloads constructor(
         initializeViews()
         setupClickListeners()
         updateLanguageLabels()
+        loadSuggestionEngine()
     }
 
     private fun initializeViews() {
@@ -98,6 +103,10 @@ class AIKeyboardView @JvmOverloads constructor(
         translateSwapBtn = findViewById(R.id.translate_swap_btn)
         sourceLanguageText = findViewById(R.id.source_language_text)
         targetLanguageText = findViewById(R.id.target_language_text)
+        suggestionStrip = findViewById(R.id.suggestion_strip)
+        suggestionStrip.onSuggestionClick = { word ->
+            aiKeyboardInterface?.onSuggestionSelected(word)
+        }
     }
 
     private fun setupClickListeners() {
@@ -217,6 +226,7 @@ class AIKeyboardView @JvmOverloads constructor(
         val colorInt = Color.parseColor(themeColor)
         val lighterColor = adjustColorBrightness(colorInt, 0.2f)
         aiToolbar.setBackgroundColor(colorInt)
+        suggestionStrip.setThemeColor(colorInt)
         grammarBtn.setBackgroundColor(lighterColor)
         translateBtn.setBackgroundColor(lighterColor)
         rephraseBtn.setBackgroundColor(lighterColor)
@@ -495,6 +505,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun showAIInterface() {
         normalKeyboardContainer.visibility = View.GONE
+        suggestionStrip.visibility = View.GONE
         aiInterfaceContainer.visibility = View.VISIBLE
         aiInterfaceContainer.translationY = aiInterfaceContainer.height.toFloat()
         aiInterfaceContainer.animate().translationY(0f).setDuration(300).start()
@@ -514,5 +525,66 @@ class AIKeyboardView @JvmOverloads constructor(
                 }
                 .start()
         }
+    }
+
+    fun updateSuggestions(prefix: String) {
+        val engine = suggestionEngine
+        if (engine == null) {
+            Log.d(TAG, "updateSuggestions: engine not loaded yet, prefix='$prefix'")
+            return
+        }
+        if (!engine.isReady) {
+            Log.d(TAG, "updateSuggestions: engine not ready yet, prefix='$prefix'")
+            return
+        }
+        val suggestions = if (prefix.isNotEmpty()) engine.getSuggestions(prefix, 4) else emptyList()
+        Log.d(TAG, "updateSuggestions: prefix='$prefix' → ${suggestions.size} results: $suggestions")
+        if (suggestions.isEmpty()) {
+            suggestionStrip.visibility = View.GONE
+        } else {
+            suggestionStrip.setSuggestions(suggestions)
+            suggestionStrip.visibility = View.VISIBLE
+        }
+    }
+
+    private fun loadSuggestionEngine() {
+        val cached = sharedEngine
+        if (cached != null && cached.isReady) {
+            Log.d(TAG, "loadSuggestionEngine: using cached engine")
+            suggestionEngine = cached
+            return
+        }
+        Log.d(TAG, "loadSuggestionEngine: starting background load")
+        CoroutineScope(Dispatchers.IO).launch {
+            val engine = SuggestionEngine()
+            val tsvPaths = listOf(
+                "botok/general/dictionary/words/tsikchen.tsv",
+                "botok/general/dictionary/words/uncompound_lexicon.tsv",
+                "botok/general/dictionary/words_non_inflected/particles.tsv"
+            )
+            for (path in tsvPaths) {
+                try {
+                    context.assets.open(path).bufferedReader(Charsets.UTF_8).useLines { lines ->
+                        engine.addLines(lines)
+                    }
+                    Log.d(TAG, "loadSuggestionEngine: loaded $path")
+                } catch (e: Exception) {
+                    Log.w(TAG, "loadSuggestionEngine: skipping $path — ${e.message}")
+                }
+            }
+            engine.ready()
+            Log.d(TAG, "loadSuggestionEngine: ready, wordCount=${engine.wordCount}")
+            withContext(Dispatchers.Main) {
+                sharedEngine = engine
+                suggestionEngine = engine
+                Log.d(TAG, "loadSuggestionEngine: engine assigned on main thread")
+            }
+        }
+    }
+
+    companion object {
+        private const val TAG = "AIKeyboardView"
+        @Volatile
+        private var sharedEngine: SuggestionEngine? = null
     }
 }

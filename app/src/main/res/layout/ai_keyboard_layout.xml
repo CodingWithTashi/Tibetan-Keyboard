@@ -94,6 +94,13 @@
 
     </LinearLayout>
 
+    <!-- Suggestion Strip (shown when autocomplete candidates are available) -->
+    <com.kharagedition.tibetankeyboard.ui.keyboard.SuggestionStripView
+        android:id="@+id/suggestion_strip"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:visibility="gone" />
+
     <!-- Main Keyboard Container - This will switch between normal keyboard and emoji keyboard -->
     <FrameLayout
         android:layout_width="match_parent"
