@@ -528,6 +528,10 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     fun updateSuggestions(prefix: String) {
+        if (!isPremiumUser) {
+            suggestionStrip.visibility = View.GONE
+            return
+        }
         val engine = suggestionEngine
         if (engine == null) {
             Log.d(TAG, "updateSuggestions: engine not loaded yet, prefix='$prefix'")
