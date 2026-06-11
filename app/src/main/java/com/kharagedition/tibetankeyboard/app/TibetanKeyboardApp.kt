@@ -3,6 +3,7 @@ package com.kharagedition.tibetankeyboard.app
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -16,6 +17,9 @@ import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 class TibetanKeyboardApp : Application() {
     lateinit var prefs: SharedPreferences
     override fun onCreate() {
+        // The app is a single premium dark-warm design; force light mode globally so no
+        // activity needs to set it individually.
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
         // setup RevenueCat
         setUpRevenueCat()

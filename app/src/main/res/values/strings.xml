@@ -183,4 +183,68 @@
     <!-- Time Formats -->
     <string name="time_format">MMM dd, HH:mm</string>
 
+    <!-- Auth / dialogs -->
+    <string name="sign_out_confirm">Are you sure you want to sign out?</string>
+    <string name="signed_out">Signed out successfully</string>
+    <string name="purchases_restored">Purchases restored</string>
+
+    <!-- Chat -->
+    <string name="message_invalid">Message too long or short</string>
+    <string name="copied">Copied</string>
+    <string name="clear_chat_confirm">Are you sure you want to clear all messages?</string>
+    <string name="clear">Clear</string>
+    <string name="chat_cleared">Chat cleared</string>
+
+    <!-- Compose UI chrome -->
+    <string name="bo_app_name">བོད་ཡིག་མཐེབ་གཞོང་</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_menu">Menu</string>
+    <string name="cd_send">Send</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="action_themes">Themes</string>
+    <string name="action_about">About</string>
+    <string name="go_pro">Go Pro</string>
+    <string name="go_pro_subtitle">No ads · AI · word suggestions</string>
+    <string name="how_to_set_up">How to set up</string>
+    <string name="try_keyboard_here">Try your keyboard here</string>
+    <string name="setup_enable_keyboard">Enable Tibetan Keyboard</string>
+    <string name="setup_choose_input">Choose input method</string>
+    <string name="setup_progress">%1$d of 2</string>
+    <string name="design_and_ui">Design &amp; UI</string>
+    <string name="sound_and_control">Sound &amp; Control</string>
+    <string name="title_notification">Notification</string>
+    <string name="title_account">Account</string>
+    <string name="keyboard_background_title">Keyboard Background</string>
+    <string name="keyboard_layout_title">Keyboard Layout</string>
+    <string name="vibrate_on_tap">Vibrate on tap</string>
+    <string name="sound_on_tap">Sound on tap</string>
+    <string name="event_notifications">Event notifications</string>
+    <string name="subscription">Subscription</string>
+    <string name="premium_plan">Premium plan</string>
+    <string name="free_plan">Free plan</string>
+    <string name="logout">Logout</string>
+    <string name="done">Done</string>
+    <string name="ai_assistant">AI Assistant</string>
+    <string name="online_tibetan">Online · Tibetan</string>
+    <string name="clear_chat_action">Clear chat</string>
+    <string name="copy">Copy</string>
+    <string name="premium_title">Tibetan Keyboard Pro</string>
+    <string name="unlock_everything">Unlock everything</string>
+    <string name="monthly">Monthly</string>
+    <string name="cancel_anytime">Cancel anytime</string>
+    <string name="start_subscription">Start subscription</string>
+    <string name="restore_purchase">Restore purchase</string>
+    <string name="terms_privacy">Terms · Privacy</string>
+    <string name="about_this_app">About this app</string>
+    <string name="more_from_kharag">MORE FROM KHARAGEDITION</string>
+    <string name="github">GitHub</string>
+    <string name="contact">Contact</string>
+    <string name="get">Get</string>
+    <string name="welcome">Welcome</string>
+    <string name="by_signing_in">By signing in, you agree to our</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="and_word"> and </string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="version_label">Version %1$s</string>
+
 </resources>

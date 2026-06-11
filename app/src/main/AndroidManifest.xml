@@ -38,6 +38,14 @@
             android:exported="true"
             android:label="@string/title_activity_settings"
             android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.subscription.PremiumActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.about.AboutActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.home.HomeActivity" />
 
         <service
             android:name=".service.TibetanKeyboard"

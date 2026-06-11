@@ -1,111 +1,81 @@
 package com.kharagedition.tibetankeyboard.ui.settings
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
-import com.kharagedition.tibetankeyboard.R
-import android.view.View.GONE
-import android.view.View.VISIBLE
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.preference.PreferenceFragmentCompat
-import com.google.android.gms.ads.*
-import com.kharagedition.tibetankeyboard.auth.AuthManager
-import com.kharagedition.tibetankeyboard.databinding.SettingsActivityBinding
-import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
+import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.util.showConfirmationDialog
 import com.kharagedition.tibetankeyboard.util.showToast
 
+/** Settings screen — pure framework glue (banner ad View, navigation, confirm dialog). */
 class SettingsActivity : AppCompatActivity() {
-    lateinit var settingBinding: SettingsActivityBinding
-    var isPremiumUser = false;
-    private lateinit var authManager: AuthManager
 
-    override fun onStart() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        super.onStart()
+    private val viewModel: SettingsViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            TibetanKeyboardTheme {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                SettingsScreen(state = state, actions = settingsActions(), adSlot = { BannerAd() })
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        setPremiumListener()
-    }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        settingBinding = SettingsActivityBinding.inflate(layoutInflater)
-        setContentView(settingBinding.root)
-
-        if (savedInstanceState == null) {
-            supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.settings, SettingsFragment())
-                .commit()
-        }
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        authManager = AuthManager(this)
-        if (!authManager.isUserAuthenticated()) {
-            settingBinding.logoutBtn.visibility = GONE
-        }else{
-            settingBinding.logoutBtn.visibility = VISIBLE
-        }
-        initListener()
-        val adRequest = AdRequest.Builder().build()
-        loadBannerAds(adRequest)
+        viewModel.refreshPremium()
+        viewModel.reload()
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    private fun initListener() {
-        settingBinding.settingsToolbar.setNavigationOnClickListener{
-            onBackPressed()
-        }
-        settingBinding.logoutBtn.setOnClickListener {
+    private fun settingsActions() = SettingsActions(
+        onBack = { finish() },
+        onColorChange = viewModel::setColor,
+        onStyleChange = viewModel::setStyle,
+        onVibrate = viewModel::setVibrate,
+        onSound = viewModel::setSound,
+        onNotification = viewModel::setNotification,
+        onUpgrade = { startActivity(Intent(this, PremiumActivity::class.java)) },
+        onLogout = {
             showConfirmationDialog(
-                title = "Sign Out",
-                message = "Are you sure you want to sign out?",
-                positiveText = "Sign Out",
-                onPositive = { signOut() }
+                title = getString(R.string.sign_out),
+                message = getString(R.string.sign_out_confirm),
+                positiveText = getString(R.string.sign_out),
+                onPositive = { signOut() },
             )
-        }
-        setPremiumListener();
-    }
+        },
+    )
 
     private fun signOut() {
-        authManager.signOut {
-            authManager.redirectToLogin()
-            showToast("Signed out successfully")
+        viewModel.signOut {
+            viewModel.redirectToLogin()
+            showToast(getString(R.string.signed_out))
         }
     }
 
-    private fun setPremiumListener() {
-        RevenueCatManager.getInstance().refreshCustomerInfo()
-        RevenueCatManager.getInstance().isPremiumUser.observeForever{ isPremium ->
-            isPremiumUser = isPremium;
-            if(authManager.isUserAuthenticated() && isPremiumUser) {
-                settingBinding.premiumIcon.visibility = VISIBLE
-                settingBinding.bannerAd.visibility = GONE
-            }else{
-                settingBinding.premiumIcon.visibility = GONE
-                settingBinding.bannerAd.visibility = VISIBLE
+    @Composable
+    private fun BannerAd() {
+        AndroidView(factory = { ctx ->
+            AdView(ctx).apply {
+                setAdSize(AdSize.BANNER)
+                adUnitId = BANNER_AD_UNIT
+                loadAd(AdRequest.Builder().build())
             }
-        }
+        })
     }
 
-    private fun loadBannerAds(adRequest: AdRequest) {
-
-        settingBinding.bannerAd.loadAd(adRequest)
-    }
-
-    class SettingsFragment : PreferenceFragmentCompat() {
-        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-            setPreferencesFromResource(R.xml.root_preferences, rootKey)
-        }
+    companion object {
+        private const val BANNER_AD_UNIT = "ca-app-pub-8284901143739274/3790581011"
     }
 }

@@ -25,6 +25,11 @@ class SuggestionStripView @JvmOverloads constructor(
     var onSuggestionClick: ((String) -> Unit)? = null
     private var themeColor = Color.parseColor("#FF704C04")
 
+    private companion object {
+        val GOLD = Color.parseColor("#FFF2C264")
+        val CREAM = Color.parseColor("#FFEBDCC0")
+    }
+
     init {
         orientation = HORIZONTAL
         setBackgroundColor(themeColor)
@@ -39,26 +44,28 @@ class SuggestionStripView @JvmOverloads constructor(
         removeAllViews()
         suggestions.forEachIndexed { index, word ->
             if (index > 0) addView(makeDivider())
-            addView(makeChip(word))
+            addView(makeChip(word, index == 0))
         }
     }
 
-    private fun makeChip(word: String): TextView = TextView(context).apply {
+    private fun makeChip(word: String, isTop: Boolean): TextView = TextView(context).apply {
         text = word
-        textSize = 15f
-        setTextColor(Color.WHITE)
+        textSize = if (isTop) 16f else 15f
+        // Top suggestion is highlighted gold; the rest are warm cream.
+        setTextColor(if (isTop) GOLD else CREAM)
+        typeface = if (isTop) android.graphics.Typeface.DEFAULT_BOLD else android.graphics.Typeface.DEFAULT
         gravity = Gravity.CENTER
         setSingleLine(true)
         // weight=1 so all chips share width equally
         layoutParams = LayoutParams(0, LayoutParams.MATCH_PARENT, 1f)
-        background = ripple(Color.argb(60, 255, 255, 255))
+        background = ripple(Color.argb(40, 247, 216, 153))
         isClickable = true
         isFocusable = true
         setOnClickListener { onSuggestionClick?.invoke(word) }
     }
 
     private fun makeDivider(): View = View(context).apply {
-        setBackgroundColor(Color.argb(60, 255, 255, 255))
+        setBackgroundColor(Color.argb(28, 252, 245, 232))
         layoutParams = LayoutParams(dp(1), dp(18)).apply {
             gravity = Gravity.CENTER_VERTICAL
         }

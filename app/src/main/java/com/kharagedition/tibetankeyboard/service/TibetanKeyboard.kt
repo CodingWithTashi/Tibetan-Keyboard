@@ -107,17 +107,22 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     private fun setKeyBoardLanguage() {
-        val isUme = prefs.getBoolean("isUme", false)
-        if(isUme){
-            FontsOverride.setDefaultFont(this, "DEFAULT", "fonts/qomolangma-tsutong.ttf");
-        }else{
-            FontsOverride.setDefaultFont(this, "DEFAULT", null);
-        }
+        // Uchen only — never the cursive Ume/Tsutong face. Use the system Tibetan
+        // font (renders Uchen) so Latin UI text stays clean too.
+        FontsOverride.setDefaultFont(this, "DEFAULT", null)
     }
 
     private fun setKeyBoardView() {
         val color = prefs.getString("colors", "#FF704C04")
         val keyboardStyle = prefs.getString("keyboard_style", "classic")
+
+        if (keyboardStyle == "borderless") {
+            // Borderless is colour-agnostic: one transparent-key layout, surface tint
+            // applied below. Glyphs only, no key boxes.
+            keyboardView = layoutInflater.inflate(R.layout.keyboard_borderless, null) as TibetanKeyboardView
+            keyboardView?.setBackgroundColor(darkenColor(Color.parseColor(color ?: "#FF704C04"), 0.42f))
+            return
+        }
 
         keyboardView = when (color) {
             "#FF704C04" -> {
@@ -142,7 +147,15 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 }
             }
         }
-        keyboardView?.setBackgroundColor(Color.parseColor(color))
+        // Match the dark espresso surface used by the AI toolbar (see AIKeyboardView.applyTheme).
+        keyboardView?.setBackgroundColor(darkenColor(Color.parseColor(color), 0.42f))
+    }
+
+    private fun darkenColor(color: Int, factor: Float): Int {
+        val r = (Color.red(color) * factor).toInt().coerceIn(0, 255)
+        val g = (Color.green(color) * factor).toInt().coerceIn(0, 255)
+        val b = (Color.blue(color) * factor).toInt().coerceIn(0, 255)
+        return Color.rgb(r, g, b)
     }
 
     override fun onPress(i: Int) {}

@@ -1,29 +1,20 @@
 package com.kharagedition.tibetankeyboard.ui.login
 
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.TextPaint
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
-import android.view.View
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -36,7 +27,7 @@ import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.UserRepository
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
-import com.kharagedition.tibetankeyboard.auth.AuthManager
+import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import android.util.Log
 import kotlinx.coroutines.launch
 
@@ -44,12 +35,11 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
-    private lateinit var buttonGoogleSignIn: MaterialButton
-    private lateinit var progressIndicator: CircularProgressIndicator
     private lateinit var userPreferences: UserPreferences
-    private lateinit var textViewPrivacyPolicy: TextView
     private lateinit var userRepository: UserRepository
     private lateinit var revenueCatManager: RevenueCatManager
+
+    private val viewModel: LoginViewModel by viewModels()
 
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -66,7 +56,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
 
         // Initialize Firebase Auth
         auth = Firebase.auth
@@ -81,59 +70,21 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        //setupEdgeToEdge()
-        initializeViews()
-        setupPrivacyTextView()
         configureGoogleSignIn()
-        setupClickListeners()
-    }
 
-    private fun setupPrivacyTextView() {
-        val fullText = "By signing in, you agree to our Terms of Service and Privacy Policy"
-        val spannableString = SpannableString(fullText)
-
-        // Find the positions of the links
-        val termsStart = fullText.indexOf("Terms of Service")
-        val termsEnd = termsStart + "Terms of Service".length
-        val privacyStart = fullText.indexOf("Privacy Policy")
-        val privacyEnd = privacyStart + "Privacy Policy".length
-        val termsClickableSpan = object : ClickableSpan() {
-            override fun onClick(widget: View) {
-                openTermsOfService()
-            }
-
-            override fun updateDrawState(ds: TextPaint) {
-                super.updateDrawState(ds)
-                ds.color = ContextCompat.getColor(this@LoginActivity, R.color.brown_700)
-                ds.isUnderlineText = true
+        setContent {
+            TibetanKeyboardTheme {
+                val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+                LoginScreen(
+                    isLoading = isLoading,
+                    onGoogleSignIn = { signInWithGoogle() },
+                    onTerms = { openTermsOfService() },
+                    onPrivacy = { openPrivacyPolicy() },
+                )
             }
         }
-
-        val privacyClickableSpan = object : ClickableSpan() {
-            override fun onClick(widget: View) {
-                openPrivacyPolicy()
-            }
-
-            override fun updateDrawState(ds: TextPaint) {
-                super.updateDrawState(ds)
-                ds.color = ContextCompat.getColor(this@LoginActivity, R.color.brown_700)
-                ds.isUnderlineText = true
-            }
-        }
-
-        // Apply the spans
-        spannableString.setSpan(termsClickableSpan, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(privacyClickableSpan, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-        // Set the text and make it clickable
-        textViewPrivacyPolicy.text = spannableString
-        textViewPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
-
-        // Optional: Remove the default link color highlighting
-        textViewPrivacyPolicy.highlightColor = Color.TRANSPARENT
-
-
     }
+
     private fun openTermsOfService() {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kharagedition.github.io/term-and-condition/tibetan-keyboard.html"))
         startActivity(intent)
@@ -144,20 +95,6 @@ class LoginActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun setupEdgeToEdge() {
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_container)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-    }
-
-    private fun initializeViews() {
-        buttonGoogleSignIn = findViewById(R.id.buttonGoogleSignIn)
-        progressIndicator = findViewById(R.id.progressIndicator)
-        textViewPrivacyPolicy = findViewById(R.id.textViewPrivacy)
-    }
-
     private fun configureGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
@@ -166,12 +103,6 @@ class LoginActivity : AppCompatActivity() {
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
-    }
-
-    private fun setupClickListeners() {
-        buttonGoogleSignIn.setOnClickListener {
-            signInWithGoogle()
-        }
     }
 
     private fun signInWithGoogle() {
@@ -325,17 +256,9 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun showLoading() {
-        buttonGoogleSignIn.text = ""
-        buttonGoogleSignIn.isEnabled = false
-        progressIndicator.visibility = android.view.View.VISIBLE
-    }
+    private fun showLoading() = viewModel.setLoading(true)
 
-    private fun hideLoading() {
-        buttonGoogleSignIn.text = getString(R.string.sign_in_with_google)
-        buttonGoogleSignIn.isEnabled = true
-        progressIndicator.visibility = android.view.View.GONE
-    }
+    private fun hideLoading() = viewModel.setLoading(false)
 
     private fun navigateToChatActivity() {
         val intent = Intent(this, ChatActivity::class.java)

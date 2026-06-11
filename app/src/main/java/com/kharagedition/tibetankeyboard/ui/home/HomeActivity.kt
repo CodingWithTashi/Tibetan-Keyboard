@@ -9,356 +9,218 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.bumptech.glide.Glide
-import com.google.android.gms.ads.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.firebase.messaging.FirebaseMessaging
-import com.kharagedition.tibetankeyboard.app.InputMethodActivity
-import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
-import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
-import com.kharagedition.tibetankeyboard.databinding.ActivityHomeBinding
-import com.kharagedition.tibetankeyboard.util.AppConstant
-import com.kharagedition.tibetankeyboard.util.BottomSheetDialog
-import com.kharagedition.tibetankeyboard.util.CommonUtils
 import com.kharagedition.tibetankeyboard.BuildConfig
+import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.UpdateNotificationManager
-import com.kharagedition.tibetankeyboard.auth.AuthManager
-import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
+import com.kharagedition.tibetankeyboard.ads.TemplateView
+import com.kharagedition.tibetankeyboard.app.InputMethodActivity
+import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
+import com.kharagedition.tibetankeyboard.ui.about.AboutActivity
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
+import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
+import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
+import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
+import com.kharagedition.tibetankeyboard.util.AppConstant
+import com.kharagedition.tibetankeyboard.util.CommonUtils
+import kotlinx.coroutines.launch
 
-
+/**
+ * Home screen. Holds only framework glue — InputMethodManager queries, native-ad Views,
+ * notifications/FCM and navigation. All UI state lives in [HomeViewModel].
+ */
 class HomeActivity : InputMethodActivity() {
-    private lateinit var homeBinding: ActivityHomeBinding
-    private var isPremiumUser:Boolean = false;
-    private lateinit var authManager: AuthManager
+
+    private val viewModel: HomeViewModel by viewModels()
+    private var nativeAd by mutableStateOf<NativeAd?>(null)
     private lateinit var updateManager: UpdateNotificationManager
 
-    override fun onResume() {
-        checkKeyboardIsEnabledOrNot()
-
-        // CRITICAL: Sync purchases when app resumes to acknowledge any pending subscriptions
-        // This prevents Google Play from auto-cancelling subscriptions after 3 days
-        if (authManager.isUserAuthenticated()) {
-            Log.d("HomeActivity", "onResume: Syncing purchases with Google Play...")
-            RevenueCatManager.getInstance().syncPurchases(object : RevenueCatManager.SubscriptionCallback {
-                override fun onSuccess(message: String) {
-                    Log.d("HomeActivity", "✅ Purchases synced in onResume")
-                }
-
-                override fun onError(error: String) {
-                    Log.w("HomeActivity", "⚠️ Sync failed in onResume: $error (This is OK if RevenueCat is still initializing)")
-                }
-
-                override fun onUserCancelled() {}
-            })
-        } else {
-            Log.w("HomeActivity", "onResume: User not authenticated, skipping purchase sync")
-        }
-
-        premiumListener()
-        super.onResume()
-    }
-
-    override fun onInputMethodPicked() {
-        checkInputMethodEnableOrNot()
-    }
-    override fun onStart() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        super.onStart()
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        homeBinding = ActivityHomeBinding.inflate(layoutInflater)
-        setContentView(homeBinding.root)
-        authManager = AuthManager(this)
+        updateManager = UpdateNotificationManager(this)
 
-        // CRITICAL: Initialize user session and RevenueCat
-        // This is essential for purchase acknowledgment
-        if (authManager.isUserAuthenticated()) {
-            Log.d("HomeActivity", "User authenticated, initializing RevenueCat...")
-            authManager.initializeUserSession(object : RevenueCatManager.SubscriptionCallback {
-                override fun onSuccess(message: String) {
-                    Log.d("HomeActivity", "✅ RevenueCat initialized in HomeActivity: $message")
-                }
-
-                override fun onError(error: String) {
-                    Log.e("HomeActivity", "❌ RevenueCat initialization failed: $error")
-                }
-
-                override fun onUserCancelled() {}
-            })
-        } else {
-            Log.w("HomeActivity", "User NOT authenticated - RevenueCat will not initialize")
-            // Optionally redirect to login if required
-            // authManager.redirectToLogin()
+        if (viewModel.isUserAuthenticated()) {
+            viewModel.initializeUserSession(subscriptionCallback(
+                onSuccess = { Log.d(TAG, "✅ RevenueCat initialized: $it") },
+                onError = { Log.e(TAG, "❌ RevenueCat init failed: $it") },
+            ))
         }
 
-        checkKeyboardIsEnabledOrNot()
-        initClickListener()
-        updateManager = UpdateNotificationManager(this)
+        setContent {
+            TibetanKeyboardTheme {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                val ad = nativeAd
+                HomeScreen(
+                    state = state,
+                    actions = homeActions(),
+                    adSlot = if (ad != null) {
+                        { NativeAdCard(ad) }
+                    } else null,
+                )
+            }
+        }
+
+        observeAdGating()
+        refreshSetupState()
         requestNotificationPermission()
-
-        // subscribe to all-users topic
         subscribeToAllUsersTopic()
-        // Initialize Firebase and get FCM token
         initializeFirebase()
-
-
         updateManager.checkForUpdates()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshSetupState()
+        // CRITICAL: sync purchases on resume to acknowledge pending subscriptions
+        // (prevents Google Play auto-cancelling after 3 days).
+        if (viewModel.isUserAuthenticated()) {
+            viewModel.syncPurchases(subscriptionCallback(
+                onError = { Log.w(TAG, "⚠️ Sync failed in onResume: $it") },
+            ))
+        }
+        viewModel.refreshPremium()
+    }
+
+    override fun onInputMethodPicked() = refreshSetupState()
+
+    private fun homeActions() = HomeActions(
+        onEnableKeyboard = {
+            startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            })
+        },
+        onPickInputMethod = { pickInput() },
+        onChat = { startActivity(Intent(this, ChatActivity::class.java)) },
+        onThemes = { startActivity(Intent(this, SettingsActivity::class.java)) },
+        onSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
+        onShare = { shareApp() },
+        onRate = { openView(CommonUtils.PLAY_STORE_URL) },
+        onAbout = { startActivity(Intent(this, AboutActivity::class.java)) },
+        onUpgrade = { startActivity(Intent(this, PremiumActivity::class.java)) },
+    )
+
+    /** Loads/destroys the native ad as premium status changes (ad Views can't live in the VM). */
+    private fun observeAdGating() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    if (state.isPremium) {
+                        nativeAd?.destroy()
+                        nativeAd = null
+                    } else if (nativeAd == null) {
+                        loadNativeAd()
+                    }
+                }
+            }
+        }
+    }
+
+    /** Reads keyboard-enabled / default-IME status and forwards it to the ViewModel. */
+    private fun refreshSetupState() {
+        val im = applicationContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        val enabled = im.enabledInputMethodList.toString().contains(PACKAGE)
+        val isDefault = Settings.Secure.getString(
+            contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD
+        )?.contains(PACKAGE) == true
+        viewModel.refreshSetup(enabled, enabled && isDefault)
+    }
+
+    @SuppressLint("NewApi")
+    private fun loadNativeAd() {
+        val adUnitId = if (BuildConfig.DEBUG) AppConstant.TEST_APP_ID else AppConstant.PRODUCTION_ADS_NATIVE
+        AdLoader.Builder(this, adUnitId)
+            .forNativeAd { ad: NativeAd ->
+                if (isDestroyed) { ad.destroy(); return@forNativeAd }
+                nativeAd?.destroy()
+                nativeAd = ad
+            }
+            .withAdListener(object : AdListener() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.e(TAG, "onAdFailedToLoad: ${adError.message}")
+                }
+            })
+            .withNativeAdOptions(NativeAdOptions.Builder().build())
+            .build()
+            .loadAd(AdRequest.Builder().build())
+    }
+
+    @Composable
+    private fun NativeAdCard(ad: NativeAd) {
+        AndroidView(
+            factory = { ctx ->
+                (android.view.LayoutInflater.from(ctx).inflate(R.layout.home_native_ad, null) as TemplateView)
+                    .apply { setStyles(NativeTemplateStyle.Builder().build()) }
+            },
+            update = { it.setNativeAd(ad) },
+        )
+    }
+
+    private fun shareApp() {
+        try {
+            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name))
+                putExtra(Intent.EXTRA_TEXT, "\nCheck out this Keyboard Application.\n\n${CommonUtils.PLAY_STORE_URL}")
+            }, "choose one"))
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun openView(url: String) = startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+        }
     }
 
     private fun subscribeToAllUsersTopic() {
         FirebaseMessaging.getInstance().subscribeToTopic("test-users")
             .addOnCompleteListener { task ->
-                var msg = "Subscribed to all-users topic"
-                if (!task.isSuccessful) {
-                    msg = "Failed to subscribe to all-users topic"
-                }
-                Log.d("FCM", msg)
+                Log.d("FCM", if (task.isSuccessful) "Subscribed to all-users topic" else "Failed to subscribe")
             }
     }
 
     private fun initializeFirebase() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
-                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                Log.w("FCM", "Fetching FCM token failed", task.exception)
                 return@addOnCompleteListener
             }
-
-            val token = task.result
-            Log.d("FCM", "FCM Registration Token: $token")
-
-            // Send token to your server
-        }
-    }
-    private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    101
-                )
-            }
+            Log.d("FCM", "FCM Registration Token: ${task.result}")
         }
     }
 
-    @SuppressLint("NewApi")
-    private fun initNativeAds() {
-        val adUnitId = if (BuildConfig.DEBUG) {
-            AppConstant.TEST_APP_ID
-        } else {
-            AppConstant.PRODUCTION_ADS_NATIVE
-        }
-        val adLoader = AdLoader.Builder(this, adUnitId)
-            .forNativeAd { ad: NativeAd ->
-                if (isDestroyed) {
-                    ad.destroy()
-                    return@forNativeAd
-                }
-                val styles =
-                    NativeTemplateStyle.Builder().build()
-
-                homeBinding.template.setStyles(styles)
-                homeBinding.template.setNativeAd(ad)
-                homeBinding.nativeAdsLayout.visibility = VISIBLE
-            }
-            .withAdListener(object : AdListener() {
-                override fun onAdFailedToLoad(adError: LoadAdError) {
-                    Log.e("TAG", "onAdFailedToLoad: " + adError.message)
-                }
-            })
-            .withNativeAdOptions(
-                NativeAdOptions.Builder()
-                    // Methods in the NativeAdOptions.Builder class can be
-                    // used here to specify individual options settings.
-                    .build()
-            )
-            .build()
-        adLoader.loadAd(AdRequest.Builder().build())
+    override fun onDestroy() {
+        nativeAd?.destroy()
+        super.onDestroy()
     }
 
-/*
-    private fun initNativeAds() {
-        //---> initializing Google Ad SDK
-        MobileAds.initialize(this) {
-            val adLoader: AdLoader =
-                AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
-                    .forNativeAd(NativeAd.OnNativeAdLoadedListener { nativeAd ->
-                        Log.d("TAG", "Native Ad Loaded")
-                        if (isDestroyed) {
-                            nativeAd.destroy()
-                            Log.d("TAG", "Native Ad Destroyed")
-                            return@OnNativeAdLoadedListener
-                        }
-                        val styles = NativeTemplateStyle.Builder().build()
-                        homeBinding.templete.setStyles(styles)
-                        homeBinding.templete.visibility = VISIBLE
-                        homeBinding.templete.setNativeAd(nativeAd)
-                    })
-                    .withAdListener(object : AdListener() {
-                        override fun onAdFailedToLoad(adError: LoadAdError?) {
-                            // Handle the failure by logging, altering the UI, and so on.
-                            Log.d("TAG", "Native Ad Failed To Load" + adError?.message)
-                            homeBinding.templete.visibility = GONE
-                        }
-                    })
-                    .withNativeAdOptions(
-                        NativeAdOptions.Builder()
-                            .build()
-                    )
-                    .build()
-
-            adLoader.loadAd(AdRequest.Builder().build())
-        }
-
+    companion object {
+        private const val TAG = "HomeActivity"
+        private const val PACKAGE = "com.kharagedition.tibetankeyboard"
     }
-*/
-
-    private fun initClickListener() {
-        homeBinding.enableKeyboardBtn.setOnClickListener {
-            val enableIntent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
-            enableIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            this.startActivity(enableIntent)
-        }
-        homeBinding.inputMethodBtn.setOnClickListener {
-            pickInput()
-        }
-        homeBinding.chatCard.setOnClickListener {
-            startActivity(Intent(this, ChatActivity::class.java))
-        }
-        homeBinding.manageSubscriptionCard.setOnClickListener() {
-            openView(CommonUtils.PLAY_STORE_SUBSCRIPTION_URL)
-        }
-        homeBinding.sharedCard.setOnClickListener {
-            try {
-                val shareIntent = Intent(Intent.ACTION_SEND)
-                shareIntent.type = "text/plain"
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name))
-                var shareMessage = "\nCheck out this Keyboard Application.\n\n"
-                shareMessage =
-                        """
-                        $shareMessage ${CommonUtils.PLAY_STORE_URL}
-                        """.trimIndent()
-                shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage)
-                startActivity(Intent.createChooser(shareIntent, "choose one"))
-            } catch (e: Exception) {
-                //e.toString()
-            }
-        }
-        homeBinding.rateCard.setOnClickListener {
-            openView(CommonUtils.PLAY_STORE_URL)
-
-        }
-        homeBinding.moreCard.setOnClickListener {
-            val sheet = BottomSheetDialog(
-                showAd = !isPremiumUser
-            )
-            sheet.show(this.supportFragmentManager, "ModalBottomSheet")
-        }
-        homeBinding.settingCard.setOnClickListener{
-            startActivity(Intent(this,SettingsActivity::class.java))
-        }
-        homeBinding.exitCard.setOnClickListener {
-            finish()
-        }
-        homeBinding.settingCard.setOnClickListener{
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
-
-        premiumListener()
-    }
-
-    private fun premiumListener() {
-        RevenueCatManager.getInstance().refreshCustomerInfo()
-        RevenueCatManager.getInstance().isPremiumUser.observe(this) { isPremium ->
-            isPremiumUser = isPremium;
-            if (authManager.isUserAuthenticated() && isPremium) {
-                homeBinding.nativeAdsLayout.visibility = GONE
-                homeBinding.bottomBtnLayout.visibility = GONE // For now
-         /*       homeBinding.chatIcon.setColorFilter(getColor(R.color.premium_yellow))
-                homeBinding.shareIcon.setColorFilter(getColor(R.color.premium_yellow))
-                homeBinding.rateIcon.setColorFilter(getColor(R.color.premium_yellow))
-                homeBinding.moreIcon.setColorFilter(getColor(R.color.premium_yellow))
-                homeBinding.settingIcon.setColorFilter(getColor(R.color.premium_yellow))
-                homeBinding.exitIcon.setColorFilter(getColor(R.color.premium_yellow))
-                homeBinding.bagIcon.setColorFilter(getColor(R.color.premium_yellow))
-           */
-            } else {
-                homeBinding.bottomBtnLayout.visibility = GONE
-                homeBinding.nativeAdsLayout.visibility = VISIBLE
-              /*  homeBinding.chatIcon.setColorFilter(getColor(R.color.white))
-                homeBinding.shareIcon.setColorFilter(getColor(R.color.white))
-                homeBinding.rateIcon.setColorFilter(getColor(R.color.white))
-                homeBinding.moreIcon.setColorFilter(getColor(R.color.white))
-                homeBinding.settingIcon.setColorFilter(getColor(R.color.white))
-                homeBinding.exitIcon.setColorFilter(getColor(R.color.white))
-                homeBinding.bagIcon.setColorFilter(getColor(R.color.white))*/
-                initNativeAds()
-            }
-        }
-    }
-
-    private fun openView(playStoreUrl: String) {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(playStoreUrl)))
-    }
-    private fun checkKeyboardIsEnabledOrNot() {
-        val im = applicationContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        val list = im.enabledInputMethodList.toString()
-        if(list.contains("com.kharagedition.tibetankeyboard")){
-            homeBinding.messgaeLbl.text = getString(R.string.one_step_left)
-            homeBinding.enableKeyboardBtn.isEnabled = false
-            homeBinding.inputMethodBtn.isEnabled = true
-            //check input method
-            checkInputMethodEnableOrNot()
-
-        }else{
-            homeBinding.messgaeLbl.text = getString(R.string.two_step_left)
-            homeBinding.enableKeyboardBtn.isEnabled = true
-            homeBinding.inputMethodBtn.isEnabled = false
-            homeBinding.gifCard.visibility = VISIBLE
-            Glide.with(this)
-                    .load(R.drawable.keyboard)
-                    .into(homeBinding.gitImage)
-        }
-        //homeBinding.enableKeyboardBtn.isEnabled = !list.contains("com.kharagedition.tibetankeyboard")
-    }
-
-    private fun checkInputMethodEnableOrNot() {
-        val string = Settings.Secure.getString(
-            contentResolver,
-            Settings.Secure.DEFAULT_INPUT_METHOD
-        )
-        if(string.contains("com.kharagedition.tibetankeyboard")){
-            homeBinding.messgaeLbl.text = getString(R.string.setup_done)
-            homeBinding.testField.visibility = VISIBLE
-            //homeBinding.inputMethodBtn.isEnabled = false;
-            homeBinding.gifCard.visibility = GONE
-
-        }else{
-            homeBinding.testField.visibility = GONE
-            homeBinding.gifCard.visibility = VISIBLE
-            Glide.with(this)
-                    .load(R.drawable.input)
-                    .into(homeBinding.gitImage)
-            homeBinding.messgaeLbl.text = getString(R.string.one_step_left)
-            homeBinding.inputMethodBtn.isEnabled = true
-
-        }
-        //homeBinding.inputMethodBtn.isEnabled = !string.contains("com.kharagedition.tibetankeyboard")
-    }
-
-
 }

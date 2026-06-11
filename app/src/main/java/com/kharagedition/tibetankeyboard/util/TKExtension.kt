@@ -6,7 +6,6 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
@@ -60,7 +59,7 @@ fun Context.showConfirmationDialog(
     onPositive: () -> Unit,
     onNegative: (() -> Unit)? = null
 ) {
-    AlertDialog.Builder(this, R.style.CustomAlertDialog)
+    com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.CustomAlertDialog)
         .setTitle(title)
         .setMessage(message)
         .setPositiveButton(positiveText) { _, _ -> onPositive() }

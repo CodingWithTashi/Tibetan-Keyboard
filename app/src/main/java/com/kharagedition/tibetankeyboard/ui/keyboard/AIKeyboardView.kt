@@ -20,7 +20,6 @@ import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
-import com.kharagedition.tibetankeyboard.ui.subscription.SubscriptionUIComponent
 import kotlinx.coroutines.*
 import com.kharagedition.botok.autocomplete.SuggestionEngine
 
@@ -223,19 +222,28 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun applyTheme() {
-        val colorInt = Color.parseColor(themeColor)
-        val lighterColor = adjustColorBrightness(colorInt, 0.2f)
-        aiToolbar.setBackgroundColor(colorInt)
-        suggestionStrip.setThemeColor(colorInt)
+        // Darken the chosen theme colour into a deep espresso surface so the keyboard
+        // matches the premium dark-warm design and the brown key caps pop above it.
+        val surface = darken(Color.parseColor(themeColor), 0.42f)
+        val lighterColor = adjustColorBrightness(surface, 0.45f)
+        aiToolbar.setBackgroundColor(surface)
+        suggestionStrip.setThemeColor(surface)
         grammarBtn.setBackgroundColor(lighterColor)
         translateBtn.setBackgroundColor(lighterColor)
         rephraseBtn.setBackgroundColor(lighterColor)
         //aiReplaceBtn.setBackgroundColor(lighterColor)
-        val textColor = if (isColorDark(colorInt)) Color.WHITE else Color.BLACK
+        val textColor = if (isColorDark(surface)) Color.WHITE else Color.BLACK
         grammarBtn.setTextColor(textColor)
         translateBtn.setTextColor(textColor)
         rephraseBtn.setTextColor(textColor)
         aiReplaceBtn.setTextColor(textColor)
+    }
+
+    private fun darken(color: Int, factor: Float): Int {
+        val red = (Color.red(color) * factor).toInt().coerceIn(0, 255)
+        val green = (Color.green(color) * factor).toInt().coerceIn(0, 255)
+        val blue = (Color.blue(color) * factor).toInt().coerceIn(0, 255)
+        return Color.rgb(red, green, blue)
     }
 
     private fun adjustColorBrightness(color: Int, factor: Float): Int {

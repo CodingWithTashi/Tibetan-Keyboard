@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Flat modern key: subtle rounded cap, no drop shadow, faint border. -->
+<!-- Borderless key press feedback: soft gold-tinted rounded highlight, no border. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
             <corners android:radius="10dp" />
-            <solid android:color="#FF3C2B0E" />
-            <stroke android:width="0.6dp" android:color="#1FFCF5E8" />
+            <solid android:color="#33F2C264" />
         </shape>
     </item>
 </layer-list>
