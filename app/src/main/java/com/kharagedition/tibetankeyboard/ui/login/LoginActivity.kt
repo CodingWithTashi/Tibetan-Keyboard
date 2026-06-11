@@ -26,9 +26,12 @@ import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.UserRepository
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
+import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -128,7 +131,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun handleSuccessfulLogin(firebaseUser: FirebaseUser, isNewUser: Boolean) {
-        // Save user login state locally
+        // Persist login state — this alone is enough to treat the user as signed in.
         userPreferences.saveUserLoginState(
             isLoggedIn = true,
             userId = firebaseUser.uid,
@@ -137,82 +140,51 @@ class LoginActivity : AppCompatActivity() {
             userPhotoUrl = firebaseUser.photoUrl?.toString() ?: ""
         )
 
-        // Create or update user in Firestore
-        lifecycleScope.launch {
-            try {
-                showLoading()
+        // Kick off RevenueCat init in the background (idempotent). Destination screens read the
+        // premium entitlement from its LiveData, so the redirect must NOT wait on this callback —
+        // previously a callback that never fired left users stuck on the login screen until they
+        // force-restarted the app.
+        revenueCatManager.initialize(applicationContext, auth, null)
 
-                val result = userRepository.createOrUpdateUser(
-                    uid = firebaseUser.uid,
-                    displayName = firebaseUser.displayName ?: "User",
-                    email = firebaseUser.email ?: "",
-                    photoUrl = firebaseUser.photoUrl?.toString() ?: "",
-                    context = this@LoginActivity,
+        // Best-effort Firestore profile sync + analytics, off the redirect path. Uses a standalone
+        // scope so finishing LoginActivity below doesn't cancel these writes.
+        val uid = firebaseUser.uid
+        val name = firebaseUser.displayName ?: "User"
+        val email = firebaseUser.email ?: ""
+        val photo = firebaseUser.photoUrl?.toString() ?: ""
+        val hasName = firebaseUser.displayName != null
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching {
+                userRepository.createOrUpdateUser(
+                    uid = uid,
+                    displayName = name,
+                    email = email,
+                    photoUrl = photo,
+                    context = applicationContext,
                     isNewUser = isNewUser
                 )
-
-                hideLoading()
-
-                if (result.isSuccess) {
-                    val user = result.getOrNull()
-                    val welcomeMessage = if (isNewUser) {
-                        "Welcome to our app, ${firebaseUser.displayName}!"
-                    } else {
-                        "Welcome back, ${firebaseUser.displayName}!"
-                    }
-
-                    Toast.makeText(this@LoginActivity, welcomeMessage, Toast.LENGTH_SHORT).show()
-
-                    // Track successful login
-                    userRepository.trackUserEvent(
-                        firebaseUser.uid,
-                        if (isNewUser) "user_registration_completed" else "user_login_success",
-                        mapOf(
-                            "login_method" to "google",
-                            "user_email" to (firebaseUser.email ?: ""),
-                            "has_display_name" to (firebaseUser.displayName != null)
-                        )
+            }.onFailure { Log.w("LoginActivity", "createOrUpdateUser failed (non-blocking)", it) }
+            runCatching {
+                userRepository.trackUserEvent(
+                    uid,
+                    if (isNewUser) "user_registration_completed" else "user_login_success",
+                    mapOf(
+                        "login_method" to "google",
+                        "user_email" to email,
+                        "has_display_name" to hasName
                     )
-
-                    // CRITICAL: Initialize RevenueCat immediately after successful login
-                    // This ensures purchases can be acknowledged with Google Play
-                    Log.d("LoginActivity", "Initializing RevenueCat after successful login...")
-                    revenueCatManager.initialize(this@LoginActivity, auth, object : RevenueCatManager.SubscriptionCallback {
-                        override fun onSuccess(message: String) {
-                            Log.d("LoginActivity", "✅ RevenueCat initialized successfully: $message")
-                            navigateToChatActivity()
-                        }
-
-                        override fun onError(error: String) {
-                            Log.e("LoginActivity", "❌ RevenueCat initialization failed: $error")
-                            // Still navigate even if RevenueCat fails
-                            navigateToChatActivity()
-                        }
-
-                        override fun onUserCancelled() {
-                            // Not applicable here
-                        }
-                    })
-                } else {
-                    // Even if Firestore fails, continue with login but show warning
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Welcome ${firebaseUser.displayName}! (Profile sync pending)",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    initializeRevenueCatAndNavigate()
-                }
-            } catch (e: Exception) {
-                hideLoading()
-                // Don't block login for data collection failures
-                Toast.makeText(
-                    this@LoginActivity,
-                    "Welcome ${firebaseUser.displayName}!",
-                    Toast.LENGTH_SHORT
-                ).show()
-                initializeRevenueCatAndNavigate()
+                )
             }
         }
+
+        // Redirect immediately — never gated on the network calls above.
+        hideLoading()
+        Toast.makeText(
+            this,
+            if (isNewUser) "Welcome, $name!" else "Welcome back, $name!",
+            Toast.LENGTH_SHORT
+        ).show()
+        navigateToChatActivity()
     }
 
     /**
@@ -261,10 +233,18 @@ class LoginActivity : AppCompatActivity() {
     private fun hideLoading() = viewModel.setLoading(false)
 
     private fun navigateToChatActivity() {
-        val intent = Intent(this, ChatActivity::class.java)
-        //intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
+        // When the login was launched from a PRO upsell (e.g. the keyboard's PRO strip),
+        // forward to the premium paywall after a successful sign-in instead of the chat.
+        val openPremium = intent?.getBooleanExtra(EXTRA_OPEN_PREMIUM_AFTER_LOGIN, false) == true
+        val next = if (openPremium) Intent(this, PremiumActivity::class.java)
+                   else Intent(this, ChatActivity::class.java)
+        startActivity(next)
         finish()
+    }
+
+    companion object {
+        /** Set true to route to the premium paywall after a successful login. */
+        const val EXTRA_OPEN_PREMIUM_AFTER_LOGIN = "open_premium_after_login"
     }
 
     public override fun onStart() {

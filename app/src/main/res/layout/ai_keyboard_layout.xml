@@ -6,91 +6,90 @@
     android:orientation="vertical"
     android:background="#FF704C04">
 
-    <!-- AI Toolbar -->
+    <!-- PRO features strip — gold upsell pill + premium action icons.
+         Replaces the old "AI Assistant" toolbar. Visibility/dim of children is
+         driven by premium state in AIKeyboardView.applyPremiumState(). -->
     <LinearLayout
         android:id="@+id/ai_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="52dp"
         android:orientation="horizontal"
         android:background="#FF704C04"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="10dp"
         android:gravity="center_vertical"
         android:elevation="4dp">
 
+        <!-- Gold upsell pill (free users only) -->
+        <LinearLayout
+            android:id="@+id/pro_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:background="@drawable/pro_pill_background"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:src="@drawable/ic_star_filled"
+                android:layout_marginEnd="5dp"
+                android:tint="#3A2606" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pro_badge"
+                android:textColor="#3A2606"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:letterSpacing="0.06" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <!-- AI Chat -->
         <ImageView
-            android:id="@+id/ai_options_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_ai_options"
-            android:padding="6dp"
+            android:id="@+id/pro_chat_btn"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:padding="9dp"
+            android:src="@drawable/baseline_chat_24"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/cd_ai_chat"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            app:tint="@android:color/white" />
+            android:tint="@color/tk_gold" />
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="AI Assistant"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginStart="12dp" />
+        <!-- Autocomplete (free users only) -->
+        <ImageView
+            android:id="@+id/pro_auto_btn"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:padding="9dp"
+            android:layout_marginStart="2dp"
+            android:src="@drawable/ic_pro_autocomplete"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/cd_autocomplete"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:tint="@color/tk_gold" />
 
-    </LinearLayout>
-
-    <!-- AI Options Container (Initially Hidden) -->
-    <LinearLayout
-        android:id="@+id/ai_options_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="4dp"
-        android:gravity="center"
-        android:background="#E6664404"
-        android:visibility="gone">
-
-        <Button
-            android:id="@+id/translate_btn"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:text="Translate"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:background="@drawable/ai_button_background"
-            android:layout_marginHorizontal="4dp"
-            android:elevation="2dp" />
-        <Button
-            android:visibility="gone"
-            android:id="@+id/grammar_btn"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:text="Grammar (Beta)"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:background="@color/light_gray"
-            android:layout_marginEnd="4dp"
-            android:elevation="2dp" />
-
-
-        <Button
-            android:enabled="false"
-            android:id="@+id/rephrase_btn"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:text="Rephrase"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:background="@color/light_gray"
-            android:layout_marginStart="4dp"
-            android:elevation="2dp"
-            android:visibility="gone"/>
+        <!-- Translate -->
+        <ImageView
+            android:id="@+id/pro_translate_btn"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:padding="9dp"
+            android:layout_marginStart="2dp"
+            android:src="@drawable/ic_pro_translate"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/translate"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:tint="@color/tk_gold" />
 
     </LinearLayout>
 

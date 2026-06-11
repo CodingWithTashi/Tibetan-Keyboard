@@ -70,6 +70,9 @@
     <string name="default_web_client_id">116616062750-5kt7phap4d1o0vcusigk3ttg3dlcijfd.apps.googleusercontent.com</string>
     <string name="fix">Fix</string>
     <string name="translate">Translate</string>
+    <string name="pro_badge">PRO</string>
+    <string name="cd_ai_chat">AI Chat</string>
+    <string name="cd_autocomplete">Autocomplete</string>
     <string name="rephrase">Rephrase</string>
     <string name="retry">Retry</string>
     <string name="use_translation">Use Translation</string>

@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
+import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 
@@ -69,10 +70,12 @@ class AuthManager(private val context: Context) {
     /**
      * Redirect to login activity
      */
-    fun redirectToLogin() {
-
-
+    fun redirectToLogin(openPremiumAfter: Boolean = false) {
         val intent = Intent(context, LoginActivity::class.java)
+
+        if (openPremiumAfter) {
+            intent.putExtra(LoginActivity.EXTRA_OPEN_PREMIUM_AFTER_LOGIN, true)
+        }
 
         if (context !is Activity) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -81,6 +84,20 @@ class AuthManager(private val context: Context) {
         context.startActivity(intent)
 
         (context as? Activity)?.finish()
+    }
+
+    /**
+     * Open the premium paywall directly (used for already-signed-in free users tapping a
+     * PRO feature). Safe to call from a non-Activity context such as the IME service.
+     */
+    fun openPremium() {
+        val intent = Intent(context, PremiumActivity::class.java)
+
+        if (context !is Activity) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        context.startActivity(intent)
     }
 
     /**

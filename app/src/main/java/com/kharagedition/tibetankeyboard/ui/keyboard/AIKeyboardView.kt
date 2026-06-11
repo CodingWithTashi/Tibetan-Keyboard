@@ -6,6 +6,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
@@ -23,6 +24,7 @@ import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import kotlinx.coroutines.*
 import com.kharagedition.botok.autocomplete.SuggestionEngine
 
@@ -33,11 +35,10 @@ class AIKeyboardView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     private lateinit var aiToolbar: LinearLayout
-    private lateinit var aiOptionsIcon: ImageView
-    private lateinit var aiOptionsContainer: LinearLayout
-    private lateinit var grammarBtn: Button
-    private lateinit var translateBtn: Button
-    private lateinit var rephraseBtn: Button
+    private lateinit var proPill: View
+    private lateinit var proChatBtn: ImageView
+    private lateinit var proAutoBtn: ImageView
+    private lateinit var proTranslateBtn: ImageView
     private lateinit var normalKeyboardContainer: FrameLayout
     private lateinit var aiInterfaceContainer: LinearLayout
     private lateinit var authManager: AuthManager
@@ -58,7 +59,6 @@ class AIKeyboardView @JvmOverloads constructor(
     private var themeColor: String = "#FF704C04"
     private lateinit var suggestionStrip: SuggestionStripView
     private var suggestionEngine: SuggestionEngine? = null
-    private var isOptionsExpanded = false
     private var currentOriginalText = ""
     private var currentSuggestedText = ""
     private var currentSourceLang = "en" // English
@@ -71,6 +71,7 @@ class AIKeyboardView @JvmOverloads constructor(
         setupView()
         RevenueCatManager.getInstance().isPremiumUser.observeForever { isPremium ->
             isPremiumUser = isPremium
+            applyPremiumState()
         }
     }
 
@@ -83,6 +84,43 @@ class AIKeyboardView @JvmOverloads constructor(
         updateLanguageLabels()
         loadSuggestionEngine()
         applyBottomInsetPadding()
+        applyPremiumState()
+    }
+
+    /**
+     * Show/hide and dim the PRO strip controls based on entitlement.
+     *  - Free users: gold "PRO" pill + all three feature icons visible but dimmed (locked);
+     *    tapping any of them routes to the unlock flow.
+     *  - PRO users: the upsell pill and the Autocomplete icon are hidden (autocomplete just
+     *    works while typing); Chat + Translate are full-opacity and functional.
+     */
+    private fun applyPremiumState() {
+        val pro = isPremiumUser
+        proPill.visibility = if (pro) View.GONE else View.VISIBLE
+        proAutoBtn.visibility = if (pro) View.GONE else View.VISIBLE
+        val activeAlpha = 1f
+        val lockedAlpha = 0.5f
+        proChatBtn.alpha = if (pro) activeAlpha else lockedAlpha
+        proTranslateBtn.alpha = if (pro) activeAlpha else lockedAlpha
+        proAutoBtn.alpha = lockedAlpha
+    }
+
+    /**
+     * Free users tapping a PRO control: send to login first if signed out (login then
+     * forwards to the paywall), otherwise straight to the premium paywall.
+     */
+    private fun routeToUnlock() {
+        if (!authManager.isUserAuthenticated()) {
+            authManager.redirectToLogin(openPremiumAfter = true)
+        } else {
+            authManager.openPremium()
+        }
+    }
+
+    private fun openChat() {
+        val intent = Intent(context, ChatActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
     }
 
     /**
@@ -124,11 +162,10 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun initializeViews() {
         aiToolbar = findViewById(R.id.ai_toolbar)
-        aiOptionsIcon = findViewById(R.id.ai_options_icon)
-        aiOptionsContainer = findViewById(R.id.ai_options_container)
-        grammarBtn = findViewById(R.id.grammar_btn)
-        translateBtn = findViewById(R.id.translate_btn)
-        rephraseBtn = findViewById(R.id.rephrase_btn)
+        proPill = findViewById(R.id.pro_pill)
+        proChatBtn = findViewById(R.id.pro_chat_btn)
+        proAutoBtn = findViewById(R.id.pro_auto_btn)
+        proTranslateBtn = findViewById(R.id.pro_translate_btn)
         normalKeyboardContainer = findViewById(R.id.normal_keyboard_container)
         aiInterfaceContainer = findViewById(R.id.ai_interface_container)
         aiBackBtn = findViewById(R.id.ai_back_btn)
@@ -150,48 +187,32 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun setupClickListeners() {
-        aiOptionsIcon.setOnClickListener {
+        // Gold upsell pill — free users only (hidden for PRO).
+        proPill.setOnClickListener { routeToUnlock() }
 
-            // Check authentication first
-            if (!authManager.isUserAuthenticated() || !isPremiumUser) {
-                authManager.redirectToLogin()
-            }else{
-                toggleAIOptions()
-            }
-
+        // AI Chat — PRO opens the chat screen; free routes to unlock.
+        proChatBtn.setOnClickListener {
+            if (isPremiumUser) openChat() else routeToUnlock()
         }
 
-        grammarBtn.setOnClickListener {
-//            Toast.makeText(context, "Coming in next release....", Toast.LENGTH_SHORT).show()
-//            return@setOnClickListener;
+        // Autocomplete — shown to free users only as an upsell.
+        proAutoBtn.setOnClickListener { routeToUnlock() }
+
+        // Translate — PRO opens the translate panel; free routes to unlock.
+        proTranslateBtn.setOnClickListener {
+            if (!isPremiumUser) {
+                routeToUnlock()
+                return@setOnClickListener
+            }
             val currentText = getCurrentInputText()
             if (currentText.isEmpty()) {
                 Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            handleGrammarClick(currentText)
+            handleTranslateClick(currentText)
             showAIInterface()
         }
 
-        translateBtn.setOnClickListener {
-            val currentText = getCurrentInputText()
-            if(currentText.isEmpty()) {
-                Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-           handleTranslateClick(currentText)
-            showAIInterface()
-        }
-
-        rephraseBtn.setOnClickListener {
-            val currentText = getCurrentInputText()
-            if(currentText.isEmpty()) {
-                Toast.makeText(context, "Input text is empty", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-          handleRephraseClick(currentText)
-            showAIInterface()
-        }
         aiInrBtn.setOnClickListener() {
             val currentText = getCurrentInputText()
             if(currentText.isEmpty()) {
@@ -231,21 +252,15 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun handleRephraseClick(currentText: String) {
-
         showRephraseInterface(currentText)
-        hideAIOptions()
     }
 
     private fun handleTranslateClick(currentText: String) {
-
         showTranslateInterface(currentText)
-        hideAIOptions()
     }
 
     private fun handleGrammarClick(currentText: String) {
-
         showGrammarInterface(currentText)
-        hideAIOptions()
     }
 
     private fun getCurrentInputText(): String {
@@ -266,20 +281,12 @@ class AIKeyboardView @JvmOverloads constructor(
         // Darken the chosen theme colour into a deep espresso surface so the keyboard
         // matches the premium dark-warm design and the brown key caps pop above it.
         val surface = darken(Color.parseColor(themeColor), 0.42f)
-        val lighterColor = adjustColorBrightness(surface, 0.45f)
         // Tint the root too so the bottom inset padding (the gap above the system IME bar)
         // matches the keyboard surface rather than showing the lighter root brown.
         setBackgroundColor(surface)
         aiToolbar.setBackgroundColor(surface)
         suggestionStrip.setThemeColor(surface)
-        grammarBtn.setBackgroundColor(lighterColor)
-        translateBtn.setBackgroundColor(lighterColor)
-        rephraseBtn.setBackgroundColor(lighterColor)
-        //aiReplaceBtn.setBackgroundColor(lighterColor)
         val textColor = if (isColorDark(surface)) Color.WHITE else Color.BLACK
-        grammarBtn.setTextColor(textColor)
-        translateBtn.setTextColor(textColor)
-        rephraseBtn.setTextColor(textColor)
         aiReplaceBtn.setTextColor(textColor)
     }
 
@@ -290,86 +297,9 @@ class AIKeyboardView @JvmOverloads constructor(
         return Color.rgb(red, green, blue)
     }
 
-    private fun adjustColorBrightness(color: Int, factor: Float): Int {
-        val red = ((Color.red(color) * (1 + factor)).coerceAtMost(255f)).toInt()
-        val green = ((Color.green(color) * (1 + factor)).coerceAtMost(255f)).toInt()
-        val blue = ((Color.blue(color) * (1 + factor)).coerceAtMost(255f)).toInt()
-        return Color.rgb(red, green, blue)
-    }
-
     private fun isColorDark(color: Int): Boolean {
         val darkness = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
         return darkness >= 0.5
-    }
-
-    private fun toggleAIOptions() {
-        if (isOptionsExpanded) hideAIOptions() else showAIOptions()
-    }
-
-    private fun showAIOptions() {
-        isOptionsExpanded = true
-        val rotateAnimator = ObjectAnimator.ofFloat(aiOptionsIcon, "rotation", 0f, 180f)
-        rotateAnimator.duration = 30
-
-        aiOptionsContainer.visibility = View.VISIBLE
-        val expandAnimator = ValueAnimator.ofInt(0, 60)
-        expandAnimator.duration = 30
-        expandAnimator.addUpdateListener { animator ->
-            val value = animator.animatedValue as Int
-            val layoutParams = aiOptionsContainer.layoutParams
-            layoutParams.height = (value * context.resources.displayMetrics.density).toInt()
-            aiOptionsContainer.layoutParams = layoutParams
-        }
-
-        grammarBtn.alpha = 0f
-        translateBtn.alpha = 0f
-        rephraseBtn.alpha = 0f
-        val fadeInAnimator1 = ObjectAnimator.ofFloat(grammarBtn, "alpha", 0f, 1f)
-        val fadeInAnimator2 = ObjectAnimator.ofFloat(translateBtn, "alpha", 0f, 1f)
-        val fadeInAnimator3 = ObjectAnimator.ofFloat(rephraseBtn, "alpha", 0f, 1f)
-        fadeInAnimator1.startDelay = 150
-        fadeInAnimator2.startDelay = 200
-        fadeInAnimator3.startDelay = 250
-        fadeInAnimator1.duration = 200
-        fadeInAnimator2.duration = 200
-        fadeInAnimator3.duration = 200
-
-        AnimatorSet().apply {
-            playTogether(rotateAnimator, expandAnimator, fadeInAnimator1, fadeInAnimator2, fadeInAnimator3)
-            start()
-        }
-    }
-
-    private fun hideAIOptions() {
-        isOptionsExpanded = false
-        val rotateAnimator = ObjectAnimator.ofFloat(aiOptionsIcon, "rotation", 180f, 0f)
-        rotateAnimator.duration = 30
-
-        val collapseAnimator = ValueAnimator.ofInt(60, 0)
-        collapseAnimator.duration = 30
-        collapseAnimator.addUpdateListener { animator ->
-            val value = animator.animatedValue as Int
-            val layoutParams = aiOptionsContainer.layoutParams
-            layoutParams.height = (value * context.resources.displayMetrics.density).toInt()
-            aiOptionsContainer.layoutParams = layoutParams
-        }
-
-        val fadeOutAnimator1 = ObjectAnimator.ofFloat(grammarBtn, "alpha", 1f, 0f)
-        val fadeOutAnimator2 = ObjectAnimator.ofFloat(translateBtn, "alpha", 1f, 0f)
-        val fadeOutAnimator3 = ObjectAnimator.ofFloat(rephraseBtn, "alpha", 1f, 0f)
-        fadeOutAnimator1.duration = 150
-        fadeOutAnimator2.duration = 150
-        fadeOutAnimator3.duration = 150
-
-        AnimatorSet().apply {
-            playTogether(rotateAnimator, collapseAnimator, fadeOutAnimator1, fadeOutAnimator2, fadeOutAnimator3)
-            addListener(object : android.animation.AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: android.animation.Animator) {
-                    aiOptionsContainer.visibility = View.GONE
-                }
-            })
-            start()
-        }
     }
 
     fun showGrammarInterface(text: String) {
@@ -573,7 +503,6 @@ class AIKeyboardView @JvmOverloads constructor(
                     normalKeyboardContainer.visibility = View.VISIBLE
                     currentOriginalText = ""
                     currentSuggestedText = ""
-                    if (isOptionsExpanded) hideAIOptions()
                 }
                 .start()
         }
