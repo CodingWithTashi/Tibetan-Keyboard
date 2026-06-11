@@ -13,9 +13,19 @@ import com.revenuecat.purchases.PurchasesAreCompletedBy.MY_APP
 import com.revenuecat.purchases.PurchasesAreCompletedBy.REVENUECAT
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 class TibetanKeyboardApp : Application() {
     lateinit var prefs: SharedPreferences
+
+    /**
+     * App-lived coroutine scope for fire-and-forget work that must outlive a single screen
+     * (e.g. post-login profile sync / analytics that should not be cancelled when LoginActivity
+     * finishes). SupervisorJob so one failed child doesn't cancel its siblings.
+     */
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     override fun onCreate() {
         // The app is a single premium dark-warm design; force light mode globally so no
         // activity needs to set it individually.

@@ -30,8 +30,7 @@ import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.kharagedition.tibetankeyboard.app.TibetanKeyboardApp
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -153,7 +152,7 @@ class LoginActivity : AppCompatActivity() {
         val email = firebaseUser.email ?: ""
         val photo = firebaseUser.photoUrl?.toString() ?: ""
         val hasName = firebaseUser.displayName != null
-        CoroutineScope(Dispatchers.IO).launch {
+        (application as TibetanKeyboardApp).applicationScope.launch {
             runCatching {
                 userRepository.createOrUpdateUser(
                     uid = uid,

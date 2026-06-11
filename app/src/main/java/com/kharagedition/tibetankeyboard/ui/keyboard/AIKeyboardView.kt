@@ -6,7 +6,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
@@ -17,14 +16,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.data.repository.AIService
-import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
-import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import kotlinx.coroutines.*
 import com.kharagedition.botok.autocomplete.SuggestionEngine
 
@@ -41,7 +39,6 @@ class AIKeyboardView @JvmOverloads constructor(
     private lateinit var proTranslateBtn: ImageView
     private lateinit var normalKeyboardContainer: FrameLayout
     private lateinit var aiInterfaceContainer: LinearLayout
-    private lateinit var authManager: AuthManager
     private lateinit var aiBackBtn: ImageView
     private lateinit var aiTitleText: TextView
     private lateinit var originalTextView: TextView
@@ -66,18 +63,27 @@ class AIKeyboardView @JvmOverloads constructor(
     private val aiService = AIService()
     private var isPremiumUser = false
 
+    // Kept as a field so we can removeObserver() on detach — the IME rebuilds this view on every
+    // onStartInputView, and the LiveData lives on a process-wide singleton, so an un-removed
+    // observeForever would leak every previous view (and run applyPremiumState on detached views).
+    private val premiumObserver = Observer<Boolean> { isPremium ->
+        isPremiumUser = isPremium
+        applyPremiumState()
+    }
+
     init {
         orientation = VERTICAL
         setupView()
-        RevenueCatManager.getInstance().isPremiumUser.observeForever { isPremium ->
-            isPremiumUser = isPremium
-            applyPremiumState()
-        }
+        RevenueCatManager.getInstance().isPremiumUser.observeForever(premiumObserver)
+    }
+
+    override fun onDetachedFromWindow() {
+        RevenueCatManager.getInstance().isPremiumUser.removeObserver(premiumObserver)
+        super.onDetachedFromWindow()
     }
 
     private fun setupView() {
         LayoutInflater.from(context).inflate(R.layout.ai_keyboard_layout, this, true)
-        authManager = AuthManager(context)
 
         initializeViews()
         setupClickListeners()
@@ -103,24 +109,6 @@ class AIKeyboardView @JvmOverloads constructor(
         proChatBtn.alpha = if (pro) activeAlpha else lockedAlpha
         proTranslateBtn.alpha = if (pro) activeAlpha else lockedAlpha
         proAutoBtn.alpha = lockedAlpha
-    }
-
-    /**
-     * Free users tapping a PRO control: send to login first if signed out (login then
-     * forwards to the paywall), otherwise straight to the premium paywall.
-     */
-    private fun routeToUnlock() {
-        if (!authManager.isUserAuthenticated()) {
-            authManager.redirectToLogin(openPremiumAfter = true)
-        } else {
-            authManager.openPremium()
-        }
-    }
-
-    private fun openChat() {
-        val intent = Intent(context, ChatActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
     }
 
     /**
@@ -188,20 +176,20 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun setupClickListeners() {
         // Gold upsell pill — free users only (hidden for PRO).
-        proPill.setOnClickListener { routeToUnlock() }
+        proPill.setOnClickListener { aiKeyboardInterface?.onUnlockPro() }
 
         // AI Chat — PRO opens the chat screen; free routes to unlock.
         proChatBtn.setOnClickListener {
-            if (isPremiumUser) openChat() else routeToUnlock()
+            if (isPremiumUser) aiKeyboardInterface?.onOpenChat() else aiKeyboardInterface?.onUnlockPro()
         }
 
         // Autocomplete — shown to free users only as an upsell.
-        proAutoBtn.setOnClickListener { routeToUnlock() }
+        proAutoBtn.setOnClickListener { aiKeyboardInterface?.onUnlockPro() }
 
         // Translate — PRO opens the translate panel; free routes to unlock.
         proTranslateBtn.setOnClickListener {
             if (!isPremiumUser) {
-                routeToUnlock()
+                aiKeyboardInterface?.onUnlockPro()
                 return@setOnClickListener
             }
             val currentText = getCurrentInputText()

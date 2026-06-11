@@ -1,7 +1,7 @@
 package com.kharagedition.tibetankeyboard.service
 
-import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.Drawable
@@ -27,6 +27,8 @@ import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
+import com.kharagedition.tibetankeyboard.auth.AuthManager
+import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardView
@@ -231,14 +233,6 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             KeyboardType.SYMBOL_EN -> {
                 keyboardView?.keyboard = Keyboard(this, R.xml.symbol_en)
             }
-            KeyboardType.GEMINI -> {
-                var chatactivity = "com.kharagedition.tibetankeyboard.ui.chat.ChatActivity"
-                var intent = packageManager.getLaunchIntentForPackage("com.kharagedition.tibetankeyboard")
-                if (intent != null) {
-                    intent.component = ComponentName("com.kharagedition.tibetankeyboard", chatactivity)
-                    startActivity(intent)
-                }
-            }
             KeyboardType.EMOJI_KEYBOARD -> {
                 toggleEmojiKeyboard()
             }
@@ -437,6 +431,22 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         ic.commitText(word, 1)
         currentWordLength = 0
         aiKeyboardView?.updateSuggestions("")
+    }
+
+    override fun onOpenChat() {
+        startActivity(
+            Intent(this, ChatActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+
+    override fun onUnlockPro() {
+        // Not signed in → login (which forwards to the paywall); signed in but free → paywall.
+        val authManager = AuthManager(this)
+        if (!authManager.isUserAuthenticated()) {
+            authManager.redirectToLogin(openPremiumAfter = true)
+        } else {
+            authManager.openPremium()
+        }
     }
 
     // Returns the Unicode code points the user has typed since the last word boundary,

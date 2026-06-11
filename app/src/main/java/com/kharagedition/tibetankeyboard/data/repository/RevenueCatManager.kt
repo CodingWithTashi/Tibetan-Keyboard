@@ -109,13 +109,29 @@ class RevenueCatManager private constructor() {
                 callback?.onError(errorMsg)
             }
         } else {
-            // Already configured, just refresh customer info
-            Log.d(TAG, "RevenueCat already configured, refreshing customer info")
+            // Already configured this process. After a logout we call Purchases.logOut(), which
+            // switches RevenueCat to a fresh ANONYMOUS user — so on re-login we must explicitly
+            // re-identify the Firebase user with logIn() BEFORE reading entitlements. Without this,
+            // a logout→login in the same session reads the anonymous user's (empty) entitlements and
+            // a paying user is wrongly shown as not subscribed. logIn() also handles account
+            // switching (user A → user B) and is a cheap no-op when the user is already current.
+            Log.d(TAG, "RevenueCat already configured; identifying user before refresh: $userId")
+            Purchases.sharedInstance.logIn(userId, object : LogInCallback {
+                override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
+                    Log.d(TAG, "RevenueCat logIn success (created=$created) for $userId")
+                    // Sync purchases to ensure Google Play acknowledgment, then refresh entitlements.
+                    syncPurchasesWithGooglePlay()
+                    fetchCustomerInfoAndOfferings(callback)
+                }
 
-            // CRITICAL: Sync purchases to ensure Google Play acknowledgment
-            syncPurchasesWithGooglePlay()
-
-            fetchCustomerInfoAndOfferings(callback)
+                override fun onError(error: PurchasesError) {
+                    _isLoading.value = false
+                    val errorMsg = "RevenueCat logIn failed: ${error.message}"
+                    Log.e(TAG, errorMsg)
+                    _error.value = errorMsg
+                    callback?.onError(errorMsg)
+                }
+            })
         }
     }
 
