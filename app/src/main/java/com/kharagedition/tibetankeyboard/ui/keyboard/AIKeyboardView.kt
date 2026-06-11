@@ -12,6 +12,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.LifecycleOwner
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.data.repository.AIService
@@ -79,7 +82,45 @@ class AIKeyboardView @JvmOverloads constructor(
         setupClickListeners()
         updateLanguageLabels()
         loadSuggestionEngine()
+        applyBottomInsetPadding()
     }
+
+    /**
+     * Lift the whole keyboard above the system's IME navigation bar (the hide-keyboard
+     * arrow on the left and the switch-input globe on the right). Without this the root
+     * view draws to the screen's bottom edge and those system buttons overlap our bottom
+     * key row.
+     *
+     * We prefer the REAL navigation-bar inset — on gesture-nav devices that's just the slim
+     * pill height, so we don't over-pad the way the platform navigation_bar_height resource
+     * (≈48dp, the old 3-button height) would. The IME rebuilds this view on every open
+     * (onStartInputView) and the inset only reports non-zero on the first settle, so we cache
+     * the last good value statically and reuse it on later opens — that avoids both the
+     * reopen-collapse and the over-padding from the resource fallback.
+     */
+    private fun applyBottomInsetPadding() {
+        val base = if (cachedNavInset >= 0) cachedNavInset else systemNavBarHeight()
+        updatePadding(bottom = base + EXTRA_BOTTOM_GAP_PX)
+        ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            if (navBars.bottom > 0) cachedNavInset = navBars.bottom
+            val resolved = if (cachedNavInset >= 0) cachedNavInset else navBars.bottom
+            v.updatePadding(bottom = resolved + EXTRA_BOTTOM_GAP_PX)
+            insets
+        }
+        ViewCompat.requestApplyInsets(this)
+    }
+
+    /** Fallback only, used before any real inset arrives; over-reports on gesture nav. */
+    private fun systemNavBarHeight(): Int {
+        val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        return if (resId > 0) resources.getDimensionPixelSize(resId)
+        else (16 * resources.displayMetrics.density).toInt()
+    }
+
+    /** The breathing room above the system IME bar — tune this single value to taste. */
+    private val EXTRA_BOTTOM_GAP_PX: Int
+        get() = (8 * resources.displayMetrics.density).toInt()
 
     private fun initializeViews() {
         aiToolbar = findViewById(R.id.ai_toolbar)
@@ -226,6 +267,9 @@ class AIKeyboardView @JvmOverloads constructor(
         // matches the premium dark-warm design and the brown key caps pop above it.
         val surface = darken(Color.parseColor(themeColor), 0.42f)
         val lighterColor = adjustColorBrightness(surface, 0.45f)
+        // Tint the root too so the bottom inset padding (the gap above the system IME bar)
+        // matches the keyboard surface rather than showing the lighter root brown.
+        setBackgroundColor(surface)
         aiToolbar.setBackgroundColor(surface)
         suggestionStrip.setThemeColor(surface)
         grammarBtn.setBackgroundColor(lighterColor)
@@ -598,5 +642,8 @@ class AIKeyboardView @JvmOverloads constructor(
         private const val TAG = "AIKeyboardView"
         @Volatile
         private var sharedEngine: SuggestionEngine? = null
+        /** Last real navigation-bar inset, remembered across IME view rebuilds. -1 = unknown. */
+        @Volatile
+        private var cachedNavInset = -1
     }
 }
