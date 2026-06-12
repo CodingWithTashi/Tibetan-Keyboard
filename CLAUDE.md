@@ -26,10 +26,13 @@ npm run deploy    # Deploy to Firebase Functions (asia-south1)
 ```
 
 > [!NOTE]
-> `:app:testDebugUnitTest` currently fails to **compile** a pre-existing test
-> (`AIGrammarViewModelTest`) because `mockito` / `androidx.arch.core:core-testing` were never
-> added as test deps. This is unrelated to app code. Use `:botok:test` for the real suite, and
-> verify the app via `assembleDebug` + on-device install.
+> `:app:testDebugUnitTest` now compiles and runs (the stale `AIGrammarViewModelTest`, which
+> referenced deleted Grammar classes, was removed). It holds **pure JVM tests** for the
+> conversion-critical decision logic — `ProStripState` (free-vs-PRO strip), `UnlockRouter`
+> (auth→paywall routing), `PostLoginDestination` (post-login routing), and `KeyboardLayoutTest`
+> (guards the removed "+"/`-20` key across all `res/xml` layouts). Keep view/IME/RevenueCat-SDK
+> behaviour out of these (no mockito/Robolectric); test it by extracting the decision into a pure
+> unit (see those classes) or via on-device verification. `:botok:test` remains the tokenizer suite.
 
 ## Architecture Overview
 

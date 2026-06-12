@@ -28,6 +28,8 @@ import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.auth.AuthManager
+import com.kharagedition.tibetankeyboard.auth.UnlockDestination
+import com.kharagedition.tibetankeyboard.auth.UnlockRouter
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
@@ -442,10 +444,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     override fun onUnlockPro() {
         // Not signed in → login (which forwards to the paywall); signed in but free → paywall.
         val authManager = AuthManager(this)
-        if (!authManager.isUserAuthenticated()) {
-            authManager.redirectToLogin(openPremiumAfter = true)
-        } else {
-            authManager.openPremium()
+        when (UnlockRouter.destinationFor(authManager.isUserAuthenticated())) {
+            UnlockDestination.PREMIUM -> authManager.openPremium()
+            UnlockDestination.LOGIN_THEN_PREMIUM -> authManager.redirectToLogin(openPremiumAfter = true)
         }
     }
 

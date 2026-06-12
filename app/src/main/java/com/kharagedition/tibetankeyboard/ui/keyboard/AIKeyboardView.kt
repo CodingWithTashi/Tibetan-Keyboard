@@ -101,14 +101,12 @@ class AIKeyboardView @JvmOverloads constructor(
      *    works while typing); Chat + Translate are full-opacity and functional.
      */
     private fun applyPremiumState() {
-        val pro = isPremiumUser
-        proPill.visibility = if (pro) View.GONE else View.VISIBLE
-        proAutoBtn.visibility = if (pro) View.GONE else View.VISIBLE
-        val activeAlpha = 1f
-        val lockedAlpha = 0.5f
-        proChatBtn.alpha = if (pro) activeAlpha else lockedAlpha
-        proTranslateBtn.alpha = if (pro) activeAlpha else lockedAlpha
-        proAutoBtn.alpha = lockedAlpha
+        val s = ProStripState.forPremium(isPremiumUser)
+        proPill.visibility = if (s.pillVisible) View.VISIBLE else View.GONE
+        proAutoBtn.visibility = if (s.autocompleteVisible) View.VISIBLE else View.GONE
+        proChatBtn.alpha = s.chatAlpha
+        proTranslateBtn.alpha = s.translateAlpha
+        proAutoBtn.alpha = s.autocompleteAlpha
     }
 
     /**
@@ -274,8 +272,8 @@ class AIKeyboardView @JvmOverloads constructor(
         setBackgroundColor(surface)
         aiToolbar.setBackgroundColor(surface)
         suggestionStrip.setThemeColor(surface)
-        val textColor = if (isColorDark(surface)) Color.WHITE else Color.BLACK
-        aiReplaceBtn.setTextColor(textColor)
+        // The translate/grammar panel keeps a fixed espresso look from XML; its Replace button is
+        // dark-on-gold, so no runtime text-colour override is needed here.
     }
 
     private fun darken(color: Int, factor: Float): Int {
@@ -283,11 +281,6 @@ class AIKeyboardView @JvmOverloads constructor(
         val green = (Color.green(color) * factor).toInt().coerceIn(0, 255)
         val blue = (Color.blue(color) * factor).toInt().coerceIn(0, 255)
         return Color.rgb(red, green, blue)
-    }
-
-    private fun isColorDark(color: Int): Boolean {
-        val darkness = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
-        return darkness >= 0.5
     }
 
     fun showGrammarInterface(text: String) {
@@ -474,6 +467,8 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun showAIInterface() {
+        // Hide the PRO strip so the panel is the single, cohesive surface (its own header takes over).
+        aiToolbar.visibility = View.GONE
         normalKeyboardContainer.visibility = View.GONE
         suggestionStrip.visibility = View.GONE
         aiInterfaceContainer.visibility = View.VISIBLE
@@ -488,6 +483,7 @@ class AIKeyboardView @JvmOverloads constructor(
                 .setDuration(300)
                 .withEndAction {
                     aiInterfaceContainer.visibility = View.GONE
+                    aiToolbar.visibility = View.VISIBLE
                     normalKeyboardContainer.visibility = View.VISIBLE
                     currentOriginalText = ""
                     currentSuggestedText = ""

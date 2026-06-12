@@ -235,8 +235,10 @@ class LoginActivity : AppCompatActivity() {
         // When the login was launched from a PRO upsell (e.g. the keyboard's PRO strip),
         // forward to the premium paywall after a successful sign-in instead of the chat.
         val openPremium = intent?.getBooleanExtra(EXTRA_OPEN_PREMIUM_AFTER_LOGIN, false) == true
-        val next = if (openPremium) Intent(this, PremiumActivity::class.java)
-                   else Intent(this, ChatActivity::class.java)
+        val next = when (postLoginDestination(openPremium)) {
+            PostLoginDestination.PREMIUM -> Intent(this, PremiumActivity::class.java)
+            PostLoginDestination.CHAT -> Intent(this, ChatActivity::class.java)
+        }
         startActivity(next)
         finish()
     }

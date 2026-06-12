@@ -73,6 +73,9 @@
     <string name="pro_badge">PRO</string>
     <string name="cd_ai_chat">AI Chat</string>
     <string name="cd_autocomplete">Autocomplete</string>
+    <string name="translate_original">ORIGINAL</string>
+    <string name="translate_suggested">✦ SUGGESTED</string>
+    <string name="translate_summary">SUMMARY</string>
     <string name="rephrase">Rephrase</string>
     <string name="retry">Retry</string>
     <string name="use_translation">Use Translation</string>

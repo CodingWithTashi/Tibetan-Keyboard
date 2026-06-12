@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Language chip — subtle gold fill + gold outline, fully rounded. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#14F2C264" />
+    <corners android:radius="18dp" />
+    <stroke android:width="1dp" android:color="#59F2C264" />
+</shape>

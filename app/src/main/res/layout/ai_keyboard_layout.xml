@@ -124,74 +124,92 @@
 
     </FrameLayout>
 
-    <!-- AI Interface Container (Initially Hidden) -->
+    <!-- AI Interface Container (Initially Hidden) — dark-warm translate/grammar/rephrase panel.
+         Sticky header + scrollable body + sticky action bar. The PRO strip is hidden while this is
+         open (AIKeyboardView.showAIInterface) so this is the single, cohesive surface. -->
     <LinearLayout
         android:id="@+id/ai_interface_container"
         android:layout_width="match_parent"
-        android:layout_height="320dp"
-        android:background="@android:color/white"
+        android:layout_height="360dp"
+        android:orientation="vertical"
+        android:background="@color/tk_bg_900"
         android:visibility="gone"
         android:elevation="8dp">
 
+        <!-- Sticky header (app-bar) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="14dp">
+
+            <ImageView
+                android:id="@+id/ai_back_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_arrow_back"
+                android:padding="8dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_back"
+                android:tint="@color/tk_cream" />
+
+            <TextView
+                android:id="@+id/ai_title_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Translate"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/tk_cream"
+                android:layout_marginStart="6dp" />
+
+            <ProgressBar
+                android:id="@+id/loading_progress_bar"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="10dp"
+                android:visibility="gone"
+                android:indeterminateTint="@color/tk_gold" />
+
+            <Button
+                android:id="@+id/ai_inner_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="Retry"
+                android:paddingHorizontal="14dp"
+                android:minHeight="0dp"
+                android:minWidth="0dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:textColor="@color/tk_gold"
+                android:background="@drawable/ai_cancel_button_background" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1FFCF5E8" />
+
+        <!-- Scrollable body -->
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingBottom="24dp">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:scrollbars="none">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="8dp"
-                android:paddingVertical="12dp"
-                >
-
-                <!-- Header -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:id="@+id/ai_back_btn"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_arrow_back"
-                        android:padding="6dp"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:tint="#FF704C04" />
-
-                    <TextView
-                        android:id="@+id/ai_title_text"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Grammar Check"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#FF704C04"
-                        android:layout_marginStart="12dp" />
-                    <Button
-                        android:id="@+id/ai_inner_btn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Translate"
-                        android:padding="8dp"
-                        android:minHeight="0dp"
-                        android:minWidth="0dp"
-                        android:textAllCaps="false"
-                        android:visibility="visible"
-                        android:textColor="@color/white"
-                        android:background="@drawable/ai_replace_button_background"/>
-                    <ProgressBar
-                        android:id="@+id/loading_progress_bar"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:visibility="gone"
-                        android:indeterminateTint="#FF704C04" />
-
-                </LinearLayout>
+                android:paddingHorizontal="14dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="14dp">
 
                 <!-- Translation Language Controls (Only visible for translation) -->
                 <LinearLayout
@@ -199,200 +217,187 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/translation_controls_background"
-                    android:padding="4dp">
+                    android:layout_marginBottom="12dp">
 
                     <TextView
                         android:id="@+id/source_language_text"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:layout_weight="1"
                         android:text="བོད་སྐད།"
-                        android:textSize="12sp"
+                        android:textSize="13sp"
                         android:textStyle="bold"
-                        android:textColor="#FF704C04"
+                        android:textColor="@color/tk_gold"
                         android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:background="@drawable/tk_lang_pill"
                         android:visibility="gone" />
 
                     <ImageView
                         android:id="@+id/translate_swap_btn"
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:padding="9dp"
+                        android:layout_marginHorizontal="10dp"
                         android:src="@drawable/ic_swap_horiz"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:background="@drawable/tk_swap_bg"
                         android:visibility="gone"
-                        app:tint="#FF704C04"
-                        android:tint="#FF704C04"
-                        />
+                        android:tint="@color/tk_gold" />
 
                     <TextView
                         android:id="@+id/target_language_text"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:layout_weight="1"
                         android:text="English"
-                        android:textSize="12sp"
+                        android:textSize="13sp"
                         android:textStyle="bold"
-                        android:textColor="#FF704C04"
+                        android:textColor="@color/tk_gold"
                         android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:background="@drawable/tk_lang_pill"
                         android:visibility="gone" />
 
                 </LinearLayout>
 
                 <!-- Original Text Section -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="1dp"
-                    app:cardBackgroundColor="#F5F5F5">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="5dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Original Text"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:textColor="#666666"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:id="@+id/original_text_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Your original text will appear here..."
-                            android:textSize="14sp"
-                            android:textColor="#333333"
-                            android:gravity="center_vertical"
-                            android:textIsSelectable="true" />
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Suggested Text Section -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="1dp"
-                    app:cardBackgroundColor="#E8F5E8">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="8dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Suggested Text"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:textColor="#2E7D32"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:id="@+id/suggested_text_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Improved text will appear here..."
-                            android:textSize="14sp"
-                            android:textColor="#333333"
-                            android:gravity="center_vertical"
-                            android:textIsSelectable="true" />
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Summary Section -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="1dp"
-                    app:cardBackgroundColor="#FFF3E0">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="5dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Summary"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:textColor="#E65100"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:id="@+id/ai_summary_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Analysis summary will appear here..."
-                            android:textSize="14sp"
-                            android:textColor="#333333"
-                            android:gravity="center_vertical" />
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Action Buttons -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center">
+                    android:orientation="vertical"
+                    android:background="@drawable/tk_translate_card"
+                    android:padding="14dp"
+                    android:layout_marginBottom="10dp">
 
-                    <Button
-                        android:id="@+id/ai_cancel_btn"
-                        android:layout_width="0dp"
-                        android:layout_height="45dp"
-                        android:minHeight="0dp"
-                        android:layout_weight="1"
-                        android:text="Cancel"
-                        android:textColor="#666666"
-                        android:textSize="12sp"
-                        android:background="@drawable/ai_cancel_button_background"
-                        android:layout_marginEnd="8dp"
-                        android:textAllCaps="false"
-                        android:elevation="1dp" />
-
-                    <Button
-                        android:id="@+id/ai_replace_btn"
-                        android:layout_width="0dp"
-                        android:layout_height="45dp"
-                        android:minHeight="0dp"
-                        android:layout_weight="1"
-                        android:text="Replace"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/translate_original"
+                        android:textSize="11sp"
                         android:textStyle="bold"
-                        android:textAllCaps="false"
-                        android:background="@drawable/ai_replace_button_background"
-                        android:layout_marginStart="8dp"
-                        android:elevation="1dp" />
+                        android:letterSpacing="0.08"
+                        android:textColor="@color/tk_cream_dim"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:id="@+id/original_text_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Your original text will appear here..."
+                        android:textSize="15sp"
+                        android:lineSpacingExtra="2dp"
+                        android:textColor="@color/tk_cream"
+                        android:textColorHighlight="#66F2C264"
+                        android:textIsSelectable="true" />
+
+                </LinearLayout>
+
+                <!-- Suggested Text Section (highlighted result) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/tk_translate_card_accent"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/translate_suggested"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08"
+                        android:textColor="@color/tk_gold"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:id="@+id/suggested_text_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Improved text will appear here..."
+                        android:textSize="16sp"
+                        android:lineSpacingExtra="2dp"
+                        android:textColor="@color/tk_cream"
+                        android:textColorHighlight="#66F2C264"
+                        android:textIsSelectable="true" />
+
+                </LinearLayout>
+
+                <!-- Summary Section -->
+                <LinearLayout
+                    android:id="@+id/ai_summary_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/tk_translate_card"
+                    android:padding="14dp"
+                    android:layout_marginTop="10dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/translate_summary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08"
+                        android:textColor="@color/tk_cream_dim"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:id="@+id/ai_summary_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Analysis summary will appear here..."
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="1dp"
+                        android:textColor="@color/tk_cream_dim" />
 
                 </LinearLayout>
 
             </LinearLayout>
         </ScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1FFCF5E8" />
+
+        <!-- Sticky action bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="10dp">
+
+            <Button
+                android:id="@+id/ai_cancel_btn"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:minHeight="0dp"
+                android:layout_weight="1"
+                android:text="Cancel"
+                android:textColor="@color/tk_cream_dim"
+                android:textSize="14sp"
+                android:textAllCaps="false"
+                android:background="@drawable/ai_cancel_button_background"
+                android:layout_marginEnd="10dp" />
+
+            <Button
+                android:id="@+id/ai_replace_btn"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:minHeight="0dp"
+                android:layout_weight="1.5"
+                android:text="Replace"
+                android:textColor="#FF3A2606"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:background="@drawable/ai_replace_button_background" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
