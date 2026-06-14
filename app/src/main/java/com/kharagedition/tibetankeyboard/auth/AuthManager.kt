@@ -70,11 +70,18 @@ class AuthManager(private val context: Context) {
     /**
      * Redirect to login activity
      */
-    fun redirectToLogin(openPremiumAfter: Boolean = false) {
+    fun redirectToLogin(
+        openPremiumAfter: Boolean = false,
+        finishCaller: Boolean = true,
+        target: Class<*>? = null,
+    ) {
         val intent = Intent(context, LoginActivity::class.java)
 
         if (openPremiumAfter) {
             intent.putExtra(LoginActivity.EXTRA_OPEN_PREMIUM_AFTER_LOGIN, true)
+        }
+        if (target != null) {
+            intent.putExtra(LoginActivity.EXTRA_POST_LOGIN_TARGET, target.name)
         }
 
         if (context !is Activity) {
@@ -83,7 +90,9 @@ class AuthManager(private val context: Context) {
 
         context.startActivity(intent)
 
-        (context as? Activity)?.finish()
+        // Keep the caller alive when asked (e.g. Home stays beneath the paywall so
+        // closing the paywall never leaves an empty back stack).
+        if (finishCaller) (context as? Activity)?.finish()
     }
 
     /**

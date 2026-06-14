@@ -11,13 +11,32 @@ A secure, production-ready Cloud Function providing translation and grammar chec
 
 ## Features
 
-- 🔐 Secure API key authentication
-- 🌍 Multi-language translation via Google Translate
+- 🤖 Chat & translation powered by **Claude** (`claude-haiku-4-5` / `claude-sonnet-4-6`, user-switchable per request)
+- ⚡ Two-tier response cache: in-memory → Firestore (`ai_cache`) → Claude
+- 🛡️ Per-IP rate limiting on the AI endpoints (30 req/min) + global limiter
 - ✍️ Grammar checking and correction
-- 📊 User usage tracking and daily limits
-- 🛡️ Rate limiting and security middleware
 - 🔥 Firestore integration for user management
+- 🧪 Unit tests (`npm test`) + structured logging (`firebase-functions/logger`)
 - 📝 TypeScript for type safety
+
+## Claude (Anthropic) configuration
+
+`/chat` and `/translate` call Claude via the official `@anthropic-ai/sdk`. The
+model is chosen per request via a `model` field/header (`claude-haiku-4-5` or
+`claude-sonnet-4-6`; defaults to Haiku). Set the API key as a Firebase secret —
+**do not commit it**:
+
+```bash
+firebase functions:secrets:set ANTHROPIC_API_KEY
+```
+
+For local emulation, put `ANTHROPIC_API_KEY=...` in `.env` (gitignored).
+
+Run the unit tests (cache flow + model resolution + session helpers):
+
+```bash
+npm test
+```
 
 ## Setup
 

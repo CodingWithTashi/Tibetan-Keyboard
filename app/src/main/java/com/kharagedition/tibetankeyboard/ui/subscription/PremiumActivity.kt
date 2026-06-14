@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard.ui.subscription
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -11,6 +12,7 @@ import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
+import com.kharagedition.tibetankeyboard.ui.home.HomeActivity
 import com.kharagedition.tibetankeyboard.util.showToast
 
 /** Compose paywall. UI state in [PremiumViewModel]; purchase/restore call RevenueCat with this Activity. */
@@ -24,11 +26,12 @@ class PremiumActivity : AppCompatActivity() {
             TibetanKeyboardTheme {
                 val priceLabel by viewModel.priceLabel.collectAsStateWithLifecycle()
                 val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
-                LaunchedEffect(isPremium) { if (isPremium) finish() }
+                // Premium users have nothing to buy — close the paywall.
+                LaunchedEffect(isPremium) { if (isPremium) closePaywall() }
 
                 PremiumScreen(
                     priceLabel = priceLabel,
-                    onBack = { finish() },
+                    onBack = { closePaywall() },
                     onPurchase = { purchasePremium() },
                     onRestore = { restorePurchases() },
                 )
@@ -41,9 +44,20 @@ class PremiumActivity : AppCompatActivity() {
         viewModel.refreshPrice()
     }
 
+    /**
+     * Close the paywall without ever leaving an empty back stack. If this is the task root
+     * (e.g. reached right after a login that finished the launching screen), go to Home.
+     */
+    private fun closePaywall() {
+        if (isTaskRoot) {
+            startActivity(Intent(this, HomeActivity::class.java))
+        }
+        finish()
+    }
+
     private fun purchasePremium() {
         RevenueCatManager.getInstance().purchasePremium(this, subscriptionCallback(
-            onSuccess = { showToast(it); finish() },
+            onSuccess = { showToast(it); closePaywall() },
             onError = { showToast(it) },
         ))
     }

@@ -11,11 +11,14 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.EmojiEmotions
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.SmartToy
@@ -58,4 +61,7 @@ object AppIcons {
     val Globe: ImageVector = Icons.Rounded.Language
     val Emoji: ImageVector = Icons.Rounded.EmojiEmotions
     val Download: ImageVector = Icons.Rounded.Download
+    val Lock: ImageVector = Icons.Rounded.Lock
+    val ExpandMore: ImageVector = Icons.Rounded.ExpandMore
+    val SwapHoriz: ImageVector = Icons.Rounded.SwapHoriz
 }

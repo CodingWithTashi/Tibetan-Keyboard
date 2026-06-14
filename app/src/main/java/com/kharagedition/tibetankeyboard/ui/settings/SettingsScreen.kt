@@ -44,11 +44,16 @@ import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
 
 /** A selectable option backing a SharedPreferences value. */
-data class PrefOption(val label: String, val sub: String?, val value: String)
+data class PrefOption(
+    val label: String,
+    val sub: String?,
+    val value: String,
+    val premium: Boolean = false,
+)
 
 data class SettingsState(
-    val color: String = SettingsPrefs.COLOR_BROWN,
-    val style: String = SettingsPrefs.STYLE_CLASSIC,
+    val color: String = SettingsPrefs.DEFAULT_COLOR,
+    val style: String = SettingsPrefs.DEFAULT_STYLE,
     val vibrate: Boolean = false,
     val sound: Boolean = true,
     val eventNotification: Boolean = true,
@@ -172,14 +177,18 @@ fun SettingsScreen(
             title = stringResource(R.string.keyboard_background_title),
             options = SettingsPrefs.colorOptions,
             selected = state.color,
+            isPremium = state.isPremium,
             onSelect = { actions.onColorChange(it); dialog = null },
+            onUpgrade = { dialog = null; actions.onUpgrade() },
             onDismiss = { dialog = null },
         )
         "style" -> OptionPickerDialog(
             title = stringResource(R.string.keyboard_layout_title),
             options = SettingsPrefs.styleOptions,
             selected = state.style,
+            isPremium = state.isPremium,
             onSelect = { actions.onStyleChange(it); dialog = null },
+            onUpgrade = { dialog = null; actions.onUpgrade() },
             onDismiss = { dialog = null },
         )
     }
@@ -239,7 +248,9 @@ private fun OptionPickerDialog(
     title: String,
     options: List<PrefOption>,
     selected: String,
+    isPremium: Boolean,
     onSelect: (String) -> Unit,
+    onUpgrade: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -249,24 +260,40 @@ private fun OptionPickerDialog(
         text = {
             Column {
                 options.forEach { opt ->
+                    val locked = opt.premium && !isPremium
+                    val onClick = { if (locked) onUpgrade() else onSelect(opt.value) }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .selectable(selected = opt.value == selected, onClick = { onSelect(opt.value) })
+                            .selectable(selected = opt.value == selected, onClick = onClick)
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(
                             selected = opt.value == selected,
-                            onClick = { onSelect(opt.value) },
+                            onClick = onClick,
+                            enabled = !locked,
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = TibetanColors.Gold300,
                                 unselectedColor = TibetanColors.CreamDim,
+                                disabledUnselectedColor = TibetanColors.CreamFaint,
                             ),
                         )
-                        Column(Modifier.padding(start = 4.dp)) {
-                            Text(opt.label, color = TibetanColors.Cream, fontSize = 15.sp)
+                        Column(Modifier.weight(1f).padding(start = 4.dp)) {
+                            Text(
+                                opt.label,
+                                color = if (locked) TibetanColors.CreamDim else TibetanColors.Cream,
+                                fontSize = 15.sp,
+                            )
                             if (opt.sub != null) Text(opt.sub, color = TibetanColors.CreamDim, fontSize = 12.sp)
+                        }
+                        if (locked) {
+                            Icon(
+                                AppIcons.Lock,
+                                contentDescription = stringResource(R.string.premium_feature),
+                                tint = TibetanColors.Gold300,
+                                modifier = Modifier.size(18.dp),
+                            )
                         }
                     }
                 }

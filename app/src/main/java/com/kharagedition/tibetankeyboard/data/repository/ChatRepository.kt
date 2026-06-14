@@ -6,12 +6,13 @@ import com.kharagedition.tibetankeyboard.data.model.GeminiChatRequest
 class ChatRepository() {
     private var currentSessionId: String? = null
 
-    suspend fun sendMessage(message: String, userId: String): String {
+    suspend fun sendMessage(message: String, userId: String, model: String? = null): String {
         return try {
             val request = GeminiChatRequest(
                 message = message,
                 sessionId = currentSessionId,
-                resetChat = false
+                resetChat = false,
+                model = model
             )
 
             val response = RetrofitClient.geminiAPI.chatWithGemini(request,userId)

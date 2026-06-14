@@ -1,13 +1,16 @@
 package com.kharagedition.tibetankeyboard.ui.chat
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kharagedition.tibetankeyboard.data.model.ChatMessage
 import com.kharagedition.tibetankeyboard.data.repository.ChatRepository
+import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import kotlinx.coroutines.launch
-class ChatViewModel : ViewModel() {
+
+class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repository = ChatRepository()
 
@@ -16,6 +19,15 @@ class ChatViewModel : ViewModel() {
 
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
+
+    /** Currently selected Claude model (persisted in the shared prefs). */
+    private val _model = MutableLiveData(SettingsPrefs.readModel(app))
+    val model: LiveData<String> = _model
+
+    fun setModel(value: String) {
+        SettingsPrefs.putString(getApplication(), SettingsPrefs.KEY_AI_MODEL, value)
+        _model.value = value
+    }
 
     fun sendMessage(messageText: String, userId: String) {
         if (messageText.isBlank()) return
@@ -33,11 +45,14 @@ class ChatViewModel : ViewModel() {
         // Set loading state to true when waiting for response
         _isLoading.value = true
 
-        // Start a coroutine to simulate an AI response
+        // Start a coroutine to fetch the AI response
         viewModelScope.launch {
             try {
-                // Simulate an AI response
-                val response = repository.sendMessage(messageText,userId)
+                val response = repository.sendMessage(
+                    messageText,
+                    userId,
+                    _model.value ?: SettingsPrefs.DEFAULT_MODEL
+                )
 
                 // Add assistant message to the list
                 val updatedList = _messages.value.orEmpty().toMutableList()
@@ -77,12 +92,10 @@ class ChatViewModel : ViewModel() {
         }
     }
 
-     fun clearMessages() {
+    fun clearMessages() {
         viewModelScope.launch {
-            repository.resetChat();
+            repository.resetChat()
             _messages.value = emptyList()
-
         }
-
     }
 }

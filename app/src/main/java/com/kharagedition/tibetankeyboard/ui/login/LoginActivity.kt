@@ -232,10 +232,14 @@ class LoginActivity : AppCompatActivity() {
     private fun hideLoading() = viewModel.setLoading(false)
 
     private fun navigateToChatActivity() {
-        // When the login was launched from a PRO upsell (e.g. the keyboard's PRO strip),
-        // forward to the premium paywall after a successful sign-in instead of the chat.
+        // If the login was launched to reach a specific screen (e.g. the AI Translate
+        // screen sends the user through login), return there. Otherwise fall back to the
+        // PRO-upsell → paywall vs normal → chat routing.
+        val target = intent?.getStringExtra(EXTRA_POST_LOGIN_TARGET)
         val openPremium = intent?.getBooleanExtra(EXTRA_OPEN_PREMIUM_AFTER_LOGIN, false) == true
-        val next = when (postLoginDestination(openPremium)) {
+        val next = if (!target.isNullOrEmpty()) {
+            Intent().setClassName(this, target)
+        } else when (postLoginDestination(openPremium)) {
             PostLoginDestination.PREMIUM -> Intent(this, PremiumActivity::class.java)
             PostLoginDestination.CHAT -> Intent(this, ChatActivity::class.java)
         }
@@ -246,6 +250,9 @@ class LoginActivity : AppCompatActivity() {
     companion object {
         /** Set true to route to the premium paywall after a successful login. */
         const val EXTRA_OPEN_PREMIUM_AFTER_LOGIN = "open_premium_after_login"
+
+        /** Fully-qualified Activity class name to open after a successful login. */
+        const val EXTRA_POST_LOGIN_TARGET = "post_login_target"
     }
 
     public override fun onStart() {

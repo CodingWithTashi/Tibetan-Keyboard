@@ -30,6 +30,7 @@ const translateSchema = Joi.object({
       )}`,
       "any.required": "Target language is required",
     }),
+ model: Joi.string().optional(),
 });
 
 const grammarSchema = Joi.object({

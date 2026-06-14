@@ -26,14 +26,15 @@ import {
   GeminiChatRequest,
   GeminiChatResponse,
 } from "./types";
-import { translateText } from "./services/translationService";
-import { freeTranslateText } from "./services/freeTranslationService";
 import { log } from "console";
 import {
   ChatSessionManager,
   generateSessionId,
 } from "./manager/ChatSessionManager";
-import { user } from "firebase-functions/v1/auth";
+import { resolveModel, translateWithClaude } from "./services/anthropicService";
+import { cachedCompute, makeCacheKey } from "./services/cacheService";
+import { defineSecret } from "firebase-functions/params";
+import * as logger from "firebase-functions/logger";
 
 // Set global options for all functions
 setGlobalOptions({
@@ -46,7 +47,14 @@ setGlobalOptions({
 // Initialize Firebase Admin
 admin.initializeApp();
 
+// Anthropic API key — set with: firebase functions:secrets:set ANTHROPIC_API_KEY
+const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
+
 const app = express();
+
+// Behind the Cloud Functions / Hosting proxy, trust the first forwarded hop so
+// express-rate-limit sees the real client IP.
+app.set("trust proxy", 1);
 
 // Security middleware
 app.use(helmet());
@@ -71,39 +79,61 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(express.json({ limit: "10kb" }));
 
+// Stricter per-IP limiter for the AI (Claude) endpoints — protects spend and
+// blocks abuse on the paid provider calls.
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 AI requests per IP per minute
+  message: {
+    success: false,
+    error: "Too many requests",
+    message:
+      "Too many AI requests from this IP. Please slow down and try again shortly.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
-// Translation endpoint
+// Translation endpoint — Claude-powered, cached (memory -> Firestore -> Claude).
 app.post(
   "/translate",
-  //validateApiKey,
+  aiLimiter,
   validateTranslateRequest,
-  //checkUserLimits("translation"),
   async (req, res) => {
     try {
-      console.log("Received translation request:", req.body);
-
       const { text, sourceLang, targetLang }: TranslateRequest = req.body;
-      //const userId = (req as any).userId;
-      const userId = req.headers["userid"] as string;
-
-      console.log(
-        `Translating text for user ${userId} from ${sourceLang} to ${targetLang}`
+      const userId = (req.headers["userid"] as string) || "anonymous";
+      const model = resolveModel(
+        (req.body.model as string) || (req.headers["x-model"] as string)
       );
 
-      //const translatedText = await translateText(text, from, to);
-      const translatedText = await freeTranslateText(
+      logger.info("Translate request", {
+        userId,
+        model,
+        sourceLang,
+        targetLang,
+        chars: text.length,
+      });
+
+      const cacheKey = makeCacheKey("translate", {
+        model,
         text,
         sourceLang,
-        targetLang
-      );
-      console.log("Translation successful:", translatedText);
+        targetLang,
+      });
 
-      // Update user usage
-      //await updateUserUsage(userId, "translation", text.length);
+      const { value: translatedText, source } = await cachedCompute(
+        cacheKey,
+        () => translateWithClaude(model, text, sourceLang, targetLang),
+        { type: "translate", model, sourceLang, targetLang }
+      );
+
+      logger.info("Translate success", { userId, model, source });
 
       const response: ApiResponse<{ translatedText: string }> = {
         success: true,
@@ -116,7 +146,9 @@ app.post(
 
       res.json(response);
     } catch (error) {
-      console.error("Translation error:", error);
+      logger.error("Translation error", {
+        message: error instanceof Error ? error.message : String(error),
+      });
       res.status(500).json({
         success: false,
         error: "Translation failed",
@@ -126,39 +158,43 @@ app.post(
   }
 );
 
-// Chat with gemini
-
+// Chat with Claude (Tibetan assistant). Model is user-switchable per request.
 app.post(
   "/chat",
-  //validateApiKey,
+  aiLimiter,
   validateChatRequest,
-  //checkUserLimits("translation"),
   async (req, res) => {
     try {
-      console.log("Received chat request:", req.body);
-
       const { message, sessionId, resetChat }: GeminiChatRequest = req.body;
       const userId = req.headers["userid"] as string;
+      const model = resolveModel(
+        (req.body.model as string) || (req.headers["x-model"] as string)
+      );
 
       // Generate or use provided session ID
       //const currentSessionId = sessionId || generateSessionId();
       const currentSessionId = userId;
-      console.log(
-        `Processing chat for user ${userId}, session: ${currentSessionId}`
-      );
+      logger.info("Chat request", {
+        userId,
+        sessionId: currentSessionId,
+        model,
+        chars: message.length,
+        resetChat: !!resetChat,
+      });
 
       // Reset chat session if requested
       if (resetChat) {
         ChatSessionManager.resetSession(currentSessionId);
       }
 
-      // Send message to Gemini and get Tibetan response
+      // Send message to Claude and get a Tibetan response
       const tibetanResponse = await ChatSessionManager.sendMessage(
         currentSessionId,
-        message
+        message,
+        { model }
       );
 
-      console.log("Chat response generated successfully");
+      logger.info("Chat success", { userId, model });
 
       // Calculate usage
       const charactersUsed = message.length + tibetanResponse.length;
@@ -181,7 +217,9 @@ app.post(
 
       res.json(response);
     } catch (error) {
-      console.error("Chat error:", error);
+      logger.error("Chat error", {
+        message: error instanceof Error ? error.message : String(error),
+      });
 
       res.status(500).json({
         success: false,
@@ -458,7 +496,7 @@ app.post("/api/transliterate/database/lookup", async (req, res) => {
 });
 
 // Enhanced Chat with Tutoring Support
-app.post("/api/chat/message", async (req, res) => {
+app.post("/api/chat/message", aiLimiter, async (req, res) => {
   try {
     const {
       sessionId,
@@ -487,11 +525,14 @@ app.post("/api/chat/message", async (req, res) => {
       documentContext
     );
 
-    // Send message to Gemini
+    // Send message to Claude
+    const model = resolveModel(
+      (req.body.model as string) || (req.headers["x-model"] as string)
+    );
     const tibetanResponse = await ChatSessionManager.sendMessage(
       currentSessionId,
       message,
-      conversationMode as any
+      { model, mode: conversationMode as any }
     );
 
     // Save message to Firestore
@@ -578,7 +619,7 @@ app.get("/api/chat/history", async (req, res) => {
     }
 
     const snapshot = await query.get();
-    const conversations = snapshot.docs.map((doc) => ({
+    const conversations = snapshot.docs.map((doc: any) => ({
       conversationId: doc.id,
       ...doc.data(),
     }));
@@ -644,6 +685,7 @@ export const api = onRequest(
     maxInstances: 10,
     timeoutSeconds: 60,
     memory: "256MiB",
+    secrets: [anthropicApiKey],
     // Add additional options if needed
     // invoker: 'public', // Makes function publicly accessible
     // secrets: [], // Add secrets if needed

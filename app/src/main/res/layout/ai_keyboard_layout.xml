@@ -6,16 +6,18 @@
     android:orientation="vertical"
     android:background="#FF704C04">
 
-    <!-- PRO features strip — gold upsell pill + premium action icons.
-         Replaces the old "AI Assistant" toolbar. Visibility/dim of children is
-         driven by premium state in AIKeyboardView.applyPremiumState(). -->
+    <!-- Single Gboard-style top bar — one fixed-height row holding BOTH the suggestion strip
+         (the weighted middle) and the premium controls. Free users see the gold upsell pill +
+         dimmed feature icons; PRO users see live suggestions + active Chat/Translate. The bar
+         height never changes, so the keyboard never jumps as suggestions come and go.
+         Visibility/dim of children is driven by premium state in AIKeyboardView.applyPremiumState(). -->
     <LinearLayout
         android:id="@+id/ai_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="48dp"
         android:orientation="horizontal"
         android:background="#FF704C04"
-        android:paddingHorizontal="10dp"
+        android:paddingHorizontal="8dp"
         android:gravity="center_vertical"
         android:elevation="4dp">
 
@@ -41,14 +43,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/pro_badge"
+                android:text="@string/unlock_pro"
                 android:textColor="#3A2606"
                 android:textStyle="bold"
                 android:textSize="12sp"
                 android:letterSpacing="0.06" />
         </LinearLayout>
 
-        <Space
+        <!-- Suggestion strip — the flexible middle of the bar. Always present (acts as the spacer
+             that pushes the pill left and the icons right). Holds autocomplete chips for PRO users
+             while typing; empty otherwise. Never toggles height, so the keyboard never jumps. -->
+        <com.kharagedition.tibetankeyboard.ui.keyboard.SuggestionStripView
+            android:id="@+id/suggestion_strip"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
@@ -92,13 +98,6 @@
             android:tint="@color/tk_gold" />
 
     </LinearLayout>
-
-    <!-- Suggestion Strip (shown when autocomplete candidates are available) -->
-    <com.kharagedition.tibetankeyboard.ui.keyboard.SuggestionStripView
-        android:id="@+id/suggestion_strip"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:visibility="gone" />
 
     <!-- Main Keyboard Container - This will switch between normal keyboard and emoji keyboard -->
     <FrameLayout

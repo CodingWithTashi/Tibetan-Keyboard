@@ -46,7 +46,12 @@ class AIService {
         }
     }
 
-    suspend fun translateText(text: String, sourceLang: String, targetLang: String): TranslationResult {
+    suspend fun translateText(
+        text: String,
+        sourceLang: String,
+        targetLang: String,
+        model: String? = null
+    ): TranslationResult {
         return withContext(Dispatchers.IO) {
             try {
                 if (text.isEmpty()) {
@@ -57,7 +62,8 @@ class AIService {
                     TranslationRequest(
                         text = text,
                         sourceLang = sourceLang,
-                        targetLang = targetLang
+                        targetLang = targetLang,
+                        model = model
                     )
                 )
 

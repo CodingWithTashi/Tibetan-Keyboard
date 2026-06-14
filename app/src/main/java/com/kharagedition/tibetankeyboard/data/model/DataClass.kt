@@ -27,7 +27,8 @@ data class TranslationResult(
 data class TranslationRequest(
     val text: String,
     val sourceLang: String,
-    val targetLang: String
+    val targetLang: String,
+    val model: String? = null
 )
 
 @Serializable
@@ -102,7 +103,8 @@ data class GrammarCheckResponse(
 data class GeminiChatRequest(
     val message: String,
     val sessionId: String? = null,
-    val resetChat: Boolean? = false
+    val resetChat: Boolean? = false,
+    val model: String? = null
 )
 @Serializable
 data class GeminiChatResponse(

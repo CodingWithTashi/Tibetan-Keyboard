@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +58,7 @@ class HomeActions(
     val onEnableKeyboard: () -> Unit,
     val onPickInputMethod: () -> Unit,
     val onChat: () -> Unit,
-    val onThemes: () -> Unit,
+    val onTranslate: () -> Unit,
     val onSettings: () -> Unit,
     val onShare: () -> Unit,
     val onRate: () -> Unit,
@@ -116,11 +118,15 @@ private fun BrandHeader() {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(TibetanTokens.GoldVertical),
+                .clip(RoundedCornerShape(12.dp)),
+                //.background(TibetanTokens.GoldVertical),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(AppIcons.Lotus, null, tint = TibetanColors.Espresso, modifier = Modifier.size(24.dp))
+            Image(
+                painter = painterResource(R.mipmap.ic_launcher),
+                contentDescription = null,
+                modifier = Modifier.size(72.dp,).clip(RoundedCornerShape(10.dp))
+            )
         }
         Column {
             Text(stringResource(R.string.app_name), color = TibetanColors.Cream, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
@@ -244,7 +250,7 @@ private fun SetupStep(index: Int, label: String, done: Boolean, active: Boolean,
 private fun QuickActionsGrid(state: HomeUiState, actions: HomeActions) {
     val items = listOf(
         QuickAction("AI Chat", AppIcons.Bot, tag = if (!state.isPremium) "PRO" else null, onClick = actions.onChat),
-        QuickAction("Themes", AppIcons.Palette, onClick = actions.onThemes),
+        QuickAction(stringResource(R.string.ai_translate), AppIcons.Translate, tag = if (!state.isPremium) "PRO" else null, onClick = actions.onTranslate),
         QuickAction("Settings", AppIcons.Settings, onClick = actions.onSettings),
         QuickAction("Share", AppIcons.Share, onClick = actions.onShare),
         QuickAction("Rate", AppIcons.Star, onClick = actions.onRate),

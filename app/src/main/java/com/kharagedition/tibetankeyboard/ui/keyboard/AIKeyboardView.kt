@@ -107,6 +107,9 @@ class AIKeyboardView @JvmOverloads constructor(
         proChatBtn.alpha = s.chatAlpha
         proTranslateBtn.alpha = s.translateAlpha
         proAutoBtn.alpha = s.autocompleteAlpha
+        // Free users never get suggestions, so clear any stale chips — the strip stays present as
+        // the bar's flexible spacer (weight=1), pushing the upsell pill left and the icons right.
+        if (!isPremiumUser) suggestionStrip.setSuggestions(emptyList())
     }
 
     /**
@@ -467,10 +470,10 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun showAIInterface() {
-        // Hide the PRO strip so the panel is the single, cohesive surface (its own header takes over).
+        // Hide the top bar (suggestion strip is a child of it now) so the panel is the single,
+        // cohesive surface — its own header takes over.
         aiToolbar.visibility = View.GONE
         normalKeyboardContainer.visibility = View.GONE
-        suggestionStrip.visibility = View.GONE
         aiInterfaceContainer.visibility = View.VISIBLE
         aiInterfaceContainer.translationY = aiInterfaceContainer.height.toFloat()
         aiInterfaceContainer.animate().translationY(0f).setDuration(300).start()
@@ -483,6 +486,7 @@ class AIKeyboardView @JvmOverloads constructor(
                 .setDuration(300)
                 .withEndAction {
                     aiInterfaceContainer.visibility = View.GONE
+                    // The suggestion strip lives inside aiToolbar, so it returns with it.
                     aiToolbar.visibility = View.VISIBLE
                     normalKeyboardContainer.visibility = View.VISIBLE
                     currentOriginalText = ""
@@ -493,10 +497,8 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     fun updateSuggestions(prefix: String) {
-        if (!isPremiumUser) {
-            suggestionStrip.visibility = View.GONE
-            return
-        }
+        // Free users get no autocomplete; the strip stays empty (it's the bar's spacer).
+        if (!isPremiumUser) return
         val engine = suggestionEngine
         if (engine == null) {
             Log.d(TAG, "updateSuggestions: engine not loaded yet, prefix='$prefix'")
@@ -508,12 +510,9 @@ class AIKeyboardView @JvmOverloads constructor(
         }
         val suggestions = if (prefix.isNotEmpty()) engine.getSuggestions(prefix, 4) else emptyList()
         Log.d(TAG, "updateSuggestions: prefix='$prefix' → ${suggestions.size} results: $suggestions")
-        if (suggestions.isEmpty()) {
-            suggestionStrip.visibility = View.GONE
-        } else {
-            suggestionStrip.setSuggestions(suggestions)
-            suggestionStrip.visibility = View.VISIBLE
-        }
+        // Only swap the chips inside the single top bar — never change its height. Empty list →
+        // blank middle; the bar stays one fixed height so the keyboard never jumps (Gboard flow).
+        suggestionStrip.setSuggestions(suggestions)
     }
 
     private fun loadSuggestionEngine() {

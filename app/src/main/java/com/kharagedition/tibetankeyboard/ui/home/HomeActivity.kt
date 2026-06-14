@@ -41,9 +41,10 @@ import com.kharagedition.tibetankeyboard.ui.about.AboutActivity
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
-import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
+import com.kharagedition.tibetankeyboard.ui.translate.TranslateActivity
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.CommonUtils
+import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import kotlinx.coroutines.launch
 
 /**
@@ -111,14 +112,27 @@ class HomeActivity : InputMethodActivity() {
             })
         },
         onPickInputMethod = { pickInput() },
-        onChat = { startActivity(Intent(this, ChatActivity::class.java)) },
-        onThemes = { startActivity(Intent(this, SettingsActivity::class.java)) },
+        onChat = { openIfPremiumOrUpgrade(ChatActivity::class.java) },
+        onTranslate = { openIfPremiumOrUpgrade(TranslateActivity::class.java) },
         onSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
         onShare = { shareApp() },
         onRate = { openView(CommonUtils.PLAY_STORE_URL) },
         onAbout = { startActivity(Intent(this, AboutActivity::class.java)) },
-        onUpgrade = { startActivity(Intent(this, PremiumActivity::class.java)) },
+        onUpgrade = { openPremiumUpgrade() },
     )
+
+    /**
+     * PRO feature entry points. Subscribers get the screen. Signed-in free users get the
+     * paywall. Signed-out users can't be classified yet, so we open the screen — it routes
+     * them through login and back, after which a free user is gated on the first action.
+     */
+    private fun openIfPremiumOrUpgrade(target: Class<*>) {
+        if (viewModel.uiState.value.isPremium || !viewModel.isUserAuthenticated()) {
+            startActivity(Intent(this, target))
+        } else {
+            openPremiumUpgrade()
+        }
+    }
 
     /** Loads/destroys the native ad as premium status changes (ad Views can't live in the VM). */
     private fun observeAdGating() {

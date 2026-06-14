@@ -153,7 +153,7 @@ Respond with ONLY the 3 versions, one per line, in Tibetan script.`;
     return {
       corrections: [],
       toneAnalysis: {
-        detectedTone: "neutral",
+        detectedTone: "casual",
         score: 0.7,
         suggestions: [],
       },

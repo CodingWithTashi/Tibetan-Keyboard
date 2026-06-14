@@ -71,6 +71,7 @@
     <string name="fix">Fix</string>
     <string name="translate">Translate</string>
     <string name="pro_badge">PRO</string>
+    <string name="unlock_pro">Unlock PRO</string>
     <string name="cd_ai_chat">AI Chat</string>
     <string name="cd_autocomplete">Autocomplete</string>
     <string name="translate_original">ORIGINAL</string>
@@ -149,9 +150,7 @@
 
     <!-- Premium Features -->
     <string name="premium_feature">Premium Feature</string>
-    <string name="premium_required">This feature is available only for Premium users.\n\nUpgrade now to unlock all features!\n1. AI Chat\n2. Google Translate\n3. Ad-free Experience\n4. Priority Support</string>
     <string name="upgrade">Upgrade</string>
-    <string name="maybe_later">Maybe Later</string>
     <string name="daily_limit_exceeded">Daily limit exceeded.\n\nUpgrade to Premium for unlimited access!</string>
     <string name="remaining_uses">You have %d uses remaining today.\n\nUpgrade to Premium for unlimited access!</string>
 
@@ -252,5 +251,14 @@
     <string name="and_word"> and </string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="version_label">Version %1$s</string>
+
+    <!-- AI Translate -->
+    <string name="ai_translate">AI Translate</string>
+    <string name="translate_input_hint">Enter text to translate…</string>
+    <string name="translate_empty_hint">The translation will appear here.</string>
+    <string name="cd_swap_languages">Swap languages</string>
+    <string name="lang_tibetan">Tibetan</string>
+    <string name="lang_english">English</string>
+    <string name="lang_chinese">Chinese</string>
 
 </resources>

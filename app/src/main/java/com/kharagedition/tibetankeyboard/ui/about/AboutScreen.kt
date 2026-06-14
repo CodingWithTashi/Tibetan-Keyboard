@@ -36,6 +36,8 @@ import com.kharagedition.tibetankeyboard.ui.compose.components.BackHeader
 import com.kharagedition.tibetankeyboard.ui.compose.components.BoText
 import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenScaffold
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 
 class AboutActions(
     val onBack: () -> Unit,
@@ -68,7 +70,11 @@ fun AboutScreen(actions: AboutActions) {
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(AppIcons.Lotus, null, tint = TibetanColors.Gold300, modifier = Modifier.size(40.dp))
+                    Image(
+                        painter = painterResource(R.mipmap.ic_launcher),
+                        contentDescription = null,
+                        modifier = Modifier.size(72.dp,).clip(RoundedCornerShape(10.dp))
+                    )
                     Spacer(Modifier.height(8.dp))
                     Text(stringResource(R.string.app_name), color = TibetanColors.Cream, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
@@ -113,8 +119,8 @@ fun AboutScreen(actions: AboutActions) {
                 modifier = Modifier.padding(start = 2.dp, bottom = 12.dp),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SisterApp("Tb–En Dictionary", "ཚིག་མཛོད", Modifier.weight(1f), actions.onDictionary)
-                SisterApp("Tibetan Calendar", "ལོ་ཐོ", Modifier.weight(1f), actions.onCalendar)
+                SisterApp("Tb–En Dictionary", "ཚིག་མཛོད", R.drawable.dictionary,Modifier.weight(1f), actions.onDictionary)
+                SisterApp("Tibetan Calendar", "ལོ་ཐོ", R.drawable.calendar,Modifier.weight(1f), actions.onCalendar)
             }
 
             // support
@@ -156,7 +162,7 @@ private fun PillAction(label: String, icon: ImageVector, modifier: Modifier, onC
 }
 
 @Composable
-private fun SisterApp(title: String, bo: String, modifier: Modifier, onClick: () -> Unit) {
+private fun SisterApp(title: String, bo: String,drawableId:Int, modifier: Modifier, onClick: () -> Unit) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
@@ -168,11 +174,24 @@ private fun SisterApp(title: String, bo: String, modifier: Modifier, onClick: ()
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(
-            modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp))
-                .background(Brush.linearGradient(listOf(TibetanColors.Brown500, TibetanColors.Brown600))),
+            modifier = Modifier
+                .size(52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            TibetanColors.Brown500,
+                            TibetanColors.Brown600
+                        )
+                    )
+                ),
             contentAlignment = Alignment.Center,
         ) {
-            BoText(bo, color = TibetanColors.Gold200, fontSize = 18.sp)
+            Image(
+                painter = painterResource(drawableId),
+                contentDescription = null,
+                modifier = Modifier.size(42.dp,).clip(RoundedCornerShape(10.dp))
+            )
         }
         Text(title, color = TibetanColors.Cream, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {

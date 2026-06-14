@@ -45,11 +45,10 @@ fun PremiumScreen(
 ) {
     val features = listOf(
         Feature(AppIcons.NoAds, "Remove all ads", "A clean, distraction-free keyboard"),
-        Feature(AppIcons.Bot, "AI Assistant", "Chat & compose in Tibetan with AI"),
+        Feature(AppIcons.Bot, "AI Chat assistant", "Chat & compose in Tibetan with AI"),
         Feature(AppIcons.Sparkle, "Next-word suggestions", "Smart Tibetan word prediction"),
-        Feature(AppIcons.Palette, "Premium themes", "Exclusive keyboard styles & colors"),
-//        Feature(AppIcons.Translate, "Tibetan ⇄ English", "Inline translation as you type"),
-        Feature(AppIcons.Spell, "Spell check", "Catch typos in Tibetan automatically"),
+        Feature(AppIcons.Palette, "Premium themes", "Exclusive keyboard layouts & colors"),
+        Feature(AppIcons.Translate, "AI Translate", "Tibetan ⇄ English ⇄ Chinese with AI"),
     )
 
     ScreenScaffold(bottomPadding = 16.dp) {

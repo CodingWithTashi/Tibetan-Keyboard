@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -90,7 +92,11 @@ private fun SplashContent(versionName: String?) {
                     .background(TibetanTokens.GoldVertical),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(AppIcons.Lotus, null, tint = TibetanColors.Espresso, modifier = Modifier.size(46.dp))
+                Image(
+                    painter = painterResource(R.mipmap.ic_launcher),
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp,).clip(RoundedCornerShape(10.dp))
+                )
             }
             Spacer(Modifier.height(22.dp))
             Text(stringResource(R.string.app_name), color = TibetanColors.Cream, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)

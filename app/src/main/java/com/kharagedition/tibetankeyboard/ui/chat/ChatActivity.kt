@@ -15,6 +15,7 @@ import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.util.isValidMessage
+import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.util.showConfirmationDialog
 import com.kharagedition.tibetankeyboard.util.showToast
 
@@ -45,11 +46,13 @@ class ChatActivity : AppCompatActivity() {
                 val messages by viewModel.messages.observeAsState(emptyList())
                 val isLoading by viewModel.isLoading.observeAsState(false)
                 val isPremium by RevenueCatManager.getInstance().isPremiumUser.observeAsState(false)
+                val model by viewModel.model.observeAsState(com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs.DEFAULT_MODEL)
 
                 ChatScreen(
                     messages = messages,
                     isLoading = isLoading,
                     isPremium = isPremium,
+                    model = model,
                     actions = chatActions(),
                 )
             }
@@ -86,14 +89,9 @@ class ChatActivity : AppCompatActivity() {
                 onPositive = { signOut() },
             )
         },
-        onUpgrade = { purchasePremium() },
+        onUpgrade = { openPremiumUpgrade() },
+        onModelChange = { viewModel.setModel(it) },
     )
-
-    private fun purchasePremium() {
-        RevenueCatManager.getInstance().purchasePremium(this, subscriptionCallback(
-            onError = { showToast(it) },
-        ))
-    }
 
     private fun signOut() {
         authManager.signOut {

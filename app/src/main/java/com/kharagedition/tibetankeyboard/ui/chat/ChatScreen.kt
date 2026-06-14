@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.data.model.ChatMessage
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
-import com.kharagedition.tibetankeyboard.ui.compose.components.PillBadge
+import com.kharagedition.tibetankeyboard.ui.compose.components.ModelSelector
 import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
@@ -60,6 +60,7 @@ class ChatActions(
     val onClear: () -> Unit,
     val onLogout: () -> Unit,
     val onUpgrade: () -> Unit,
+    val onModelChange: (String) -> Unit,
 )
 
 @Composable
@@ -67,10 +68,9 @@ fun ChatScreen(
     messages: List<ChatMessage>,
     isLoading: Boolean,
     isPremium: Boolean,
+    model: String,
     actions: ChatActions,
 ) {
-    var showPremiumDialog by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,7 +78,7 @@ fun ChatScreen(
             .statusBarsPadding()
             .imePadding()
     ) {
-        ChatHeader(actions)
+        ChatHeader(model, actions)
 
         val listState = rememberLazyListState()
         LaunchedEffect(messages.size, isLoading) {
@@ -100,28 +100,21 @@ fun ChatScreen(
         ChatInput(
             enabled = !isLoading,
             onSubmit = { text ->
-                if (!isPremium) showPremiumDialog = true else actions.onSend(text)
+                if (!isPremium) actions.onUpgrade() else actions.onSend(text)
             },
-        )
-    }
-
-    if (showPremiumDialog) {
-        PremiumRequiredDialog(
-            onUpgrade = { showPremiumDialog = false; actions.onUpgrade() },
-            onDismiss = { showPremiumDialog = false },
         )
     }
 }
 
 @Composable
-private fun ChatHeader(actions: ChatActions) {
+private fun ChatHeader(model: String, actions: ChatActions) {
     var menuOpen by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(
             AppIcons.Back, stringResource(R.string.cd_back), tint = TibetanColors.Cream,
@@ -137,7 +130,7 @@ private fun ChatHeader(actions: ChatActions) {
             Text(stringResource(R.string.ai_assistant), color = TibetanColors.Cream, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.online_tibetan), color = TibetanColors.Jade, fontSize = 12.sp)
         }
-        PillBadge("PRO")
+        ModelSelector(model = model, onModelChange = actions.onModelChange)
         Box {
             Icon(
                 AppIcons.More, stringResource(R.string.cd_menu), tint = TibetanColors.Cream,
@@ -271,32 +264,6 @@ private fun ChatInput(enabled: Boolean, onSubmit: (String) -> Unit) {
             Icon(AppIcons.Send, stringResource(R.string.cd_send), tint = TibetanColors.Espresso, modifier = Modifier.size(21.dp))
         }
     }
-}
-
-@Composable
-private fun PremiumRequiredDialog(onUpgrade: () -> Unit, onDismiss: () -> Unit) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = TibetanColors.Brown700,
-        icon = { Icon(AppIcons.Crown, null, tint = TibetanColors.Gold300) },
-        title = { Text(stringResource(R.string.premium_required), color = TibetanColors.Cream, fontWeight = FontWeight.Bold) },
-        text = {
-            Text(
-                "This feature is available only for Premium users.\n\nUpgrade now to unlock:\n· AI Chat\n· Google Translate\n· Ad-free Experience\n· Priority Support",
-                color = TibetanColors.Cream2, fontSize = 14.sp,
-            )
-        },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onUpgrade) {
-                Text(stringResource(R.string.upgrade), color = TibetanColors.Gold300, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.maybe_later), color = TibetanColors.CreamDim)
-            }
-        },
-    )
 }
 
 private fun timeOf(date: Date): String =

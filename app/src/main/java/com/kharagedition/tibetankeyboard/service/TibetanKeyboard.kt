@@ -27,9 +27,7 @@ import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
-import com.kharagedition.tibetankeyboard.auth.AuthManager
-import com.kharagedition.tibetankeyboard.auth.UnlockDestination
-import com.kharagedition.tibetankeyboard.auth.UnlockRouter
+import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
@@ -118,7 +116,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     private fun setKeyBoardView() {
         val color = prefs.getString("colors", "#FF704C04")
-        val keyboardStyle = prefs.getString("keyboard_style", "classic")
+        val keyboardStyle = prefs.getString("keyboard_style", "borderless")
 
         if (keyboardStyle == "borderless") {
             // Borderless is colour-agnostic: one transparent-key layout, surface tint
@@ -442,12 +440,8 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onUnlockPro() {
-        // Not signed in → login (which forwards to the paywall); signed in but free → paywall.
-        val authManager = AuthManager(this)
-        when (UnlockRouter.destinationFor(authManager.isUserAuthenticated())) {
-            UnlockDestination.PREMIUM -> authManager.openPremium()
-            UnlockDestination.LOGIN_THEN_PREMIUM -> authManager.redirectToLogin(openPremiumAfter = true)
-        }
+        // Single source of truth for the upgrade flow (login-then-paywall if needed).
+        openPremiumUpgrade()
     }
 
     // Returns the Unicode code points the user has typed since the last word boundary,

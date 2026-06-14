@@ -1,9 +1,18 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import {
+  ClaudeMessage,
+  createMessage,
+  resolveModel,
+  DEFAULT_MODEL,
+} from "../services/anthropicService";
+import { cachedCompute, makeCacheKey } from "../services/cacheService";
+
+type ChatMode = "general" | "tutoring" | "translation";
+type TutoringLevel = "beginner" | "intermediate" | "advanced";
 
 interface ChatSession {
-  chat: any;
-  mode: "general" | "tutoring" | "translation";
-  tutoringLevel?: "beginner" | "intermediate" | "advanced";
+  history: ClaudeMessage[];
+  mode: ChatMode;
+  tutoringLevel?: TutoringLevel;
   documentContext?: string;
   createdAt: Date;
 }
@@ -15,88 +24,94 @@ interface TutoringCurriculum {
   focusAreas: string[];
 }
 
+interface SendOptions {
+  model?: string;
+  mode?: ChatMode;
+}
+
+// Keep conversation context bounded to control token usage.
+const MAX_HISTORY_MESSAGES = 20;
+
 class ChatSessionManager {
   private static sessions = new Map<string, ChatSession>();
-  private static genAI = new GoogleGenerativeAI(
-    process.env.GEMINI_API_KEY || "AIzaSyCxUMaoBVH5SIII7Wa0uQYvjrjI9IjV9cg"
-  );
 
-  static async getOrCreateSession(
+  static getOrCreateSession(
     sessionId: string,
-    mode: "general" | "tutoring" | "translation" = "general",
-    tutoringLevel?: "beginner" | "intermediate" | "advanced",
+    mode: ChatMode = "general",
+    tutoringLevel?: TutoringLevel,
     documentContext?: string
-  ) {
-    if (!this.sessions.has(sessionId)) {
-      const model = this.genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 800,
-        },
-      });
-
-      const chat = model.startChat();
-
-      // Generate system instructions based on mode
-      const systemInstructions = this.getSystemInstructions(
+  ): ChatSession {
+    let session = this.sessions.get(sessionId);
+    if (!session) {
+      session = {
+        history: [],
         mode,
         tutoringLevel,
-        documentContext
-      );
-
-      try {
-        // Initialize with system instructions
-        await chat.sendMessage(systemInstructions);
-        this.sessions.set(sessionId, {
-          chat,
-          mode,
-          tutoringLevel,
-          documentContext,
-          createdAt: new Date(),
-        });
-        console.log(`New chat session created: ${sessionId}, mode: ${mode}`);
-      } catch (error) {
-        console.error("Failed to initialize chat session:", error);
-        throw new Error("Failed to initialize chat session");
-      }
+        documentContext,
+        createdAt: new Date(),
+      };
+      this.sessions.set(sessionId, session);
+      console.log(`New chat session created: ${sessionId}, mode: ${mode}`);
     }
-
-    return this.sessions.get(sessionId)?.chat;
+    return session;
   }
 
   static async sendMessage(
     sessionId: string,
     message: string,
-    mode?: "general" | "tutoring" | "translation"
+    options: SendOptions = {}
   ): Promise<string> {
-    try {
-      const chat = await this.getOrCreateSession(sessionId, mode);
-      const result = await chat.sendMessage(message);
-      let response = result.response.text().trim();
+    const session = this.getOrCreateSession(sessionId, options.mode);
+    if (options.mode) session.mode = options.mode;
 
-      // Fallback for empty responses
+    const model = resolveModel(options.model);
+    const system = this.getSystemInstructions(
+      session.mode,
+      session.tutoringLevel,
+      session.documentContext
+    );
+
+    const userTurn: ClaudeMessage = { role: "user", content: message };
+    const requestMessages = [...session.history, userTurn].slice(
+      -MAX_HISTORY_MESSAGES
+    );
+
+    try {
+      // Cache keyed by model + system + the exact message sequence, so an
+      // identical conversation turn is served from cache instead of re-billing.
+      const key = makeCacheKey("chat", { model, system, messages: requestMessages });
+      const { value, source } = await cachedCompute(
+        key,
+        () => createMessage(model, system, requestMessages, 1024),
+        { type: "chat", model }
+      );
+
+      let response = value;
       if (!response || response.length === 0) {
         response =
           "དགོངས་དག། ལན་འདེབས་དཀའ་ངལ་འཕྲད་སོང་། ཡང་བསྐྱར་འབད་བརྩོན་གནང་རོགས།";
       }
+      console.log(`Chat (${model}) served from ${source}`);
+
+      // Persist the turn for conversation continuity.
+      const assistantTurn: ClaudeMessage = { role: "assistant", content: response };
+      session.history = [...requestMessages, assistantTurn].slice(
+        -MAX_HISTORY_MESSAGES
+      );
 
       return response;
     } catch (error) {
-      console.error("Error sending message to Gemini:", error);
-      // Return Tibetan error message
+      console.error("Error sending message to Claude:", error);
       return "དགོངས་དག། ཕྱི་ཕྱོགས་དང་འབྲེལ་བའི་དཀའ་ངལ་ཞིག་འཕྲད་སོང་། ཡང་བསྐྱར་འབད་བརྩོན་གནང་རོགས།";
     }
   }
 
-  static resetSession(sessionId: string) {
+  static resetSession(sessionId: string): void {
     this.sessions.delete(sessionId);
     console.log(`Chat session reset: ${sessionId}`);
   }
 
-  static removeSession(sessionId: string) {
+  static removeSession(sessionId: string): void {
     this.sessions.delete(sessionId);
   }
 
@@ -106,29 +121,25 @@ class ChatSessionManager {
 
   static updateSessionMode(
     sessionId: string,
-    mode: "general" | "tutoring" | "translation",
-    tutoringLevel?: "beginner" | "intermediate" | "advanced"
-  ) {
-    const session = this.sessions.get(sessionId);
-    if (session) {
-      session.mode = mode;
-      session.tutoringLevel = tutoringLevel;
-    }
+    mode: ChatMode,
+    tutoringLevel?: TutoringLevel
+  ): void {
+    const session = this.getOrCreateSession(sessionId);
+    session.mode = mode;
+    session.tutoringLevel = tutoringLevel;
   }
 
-  static setDocumentContext(sessionId: string, context: string) {
-    const session = this.sessions.get(sessionId);
-    if (session) {
-      session.documentContext = context;
-    }
+  static setDocumentContext(sessionId: string, context: string): void {
+    const session = this.getOrCreateSession(sessionId);
+    session.documentContext = context;
   }
 
   private static getSystemInstructions(
-    mode: "general" | "tutoring" | "translation",
-    tutoringLevel?: "beginner" | "intermediate" | "advanced",
+    mode: ChatMode,
+    tutoringLevel?: TutoringLevel,
     documentContext?: string
   ): string {
-    let baseInstructions = `Instructions:
+    const baseInstructions = `Instructions:
 - You are Lundup, an expert in Tibetan language and culture.
 - You must respond ONLY in Tibetan script (བོད་ཡིག་).
 - Do not respond in any language other than Tibetan script.
@@ -195,8 +206,8 @@ Reference this context when relevant to their questions.`;
     return baseInstructions + modeSpecific + documentInfo;
   }
 
-  static getTutoringCurriculum(level: "beginner" | "intermediate" | "advanced"): TutoringCurriculum {
-    const curricula = {
+  static getTutoringCurriculum(level: TutoringLevel): TutoringCurriculum {
+    const curricula: Record<TutoringLevel, TutoringCurriculum> = {
       beginner: {
         currentLesson: "lesson_1_alphabet",
         nextLesson: "lesson_2_basic_verbs",
@@ -207,13 +218,23 @@ Reference this context when relevant to their questions.`;
         currentLesson: "lesson_5_complex_grammar",
         nextLesson: "lesson_6_idioms",
         progressPercentage: 50,
-        focusAreas: ["complex_grammar", "verb_forms", "idiomatic_expressions", "writing_styles"],
+        focusAreas: [
+          "complex_grammar",
+          "verb_forms",
+          "idiomatic_expressions",
+          "writing_styles",
+        ],
       },
       advanced: {
         currentLesson: "lesson_10_classical_tibetan",
         nextLesson: "lesson_11_regional_dialects",
         progressPercentage: 85,
-        focusAreas: ["classical_literature", "dialects", "academic_writing", "cultural_nuances"],
+        focusAreas: [
+          "classical_literature",
+          "dialects",
+          "academic_writing",
+          "cultural_nuances",
+        ],
       },
     };
 
@@ -226,4 +247,4 @@ function generateSessionId(): string {
   return `chat_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 }
 
-export { ChatSessionManager, generateSessionId };
+export { ChatSessionManager, generateSessionId, DEFAULT_MODEL };
