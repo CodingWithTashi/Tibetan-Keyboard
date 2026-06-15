@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.data.repository.AIService
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
@@ -55,13 +56,17 @@ class TranslateViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setTargetLang(value: String) = _uiState.update { it.copy(targetLang = value) }
 
-    fun swapLanguages() = _uiState.update {
-        it.copy(sourceLang = it.targetLang, targetLang = it.sourceLang, input = it.output, output = it.input)
+    fun swapLanguages() {
+        AppAnalytics.logTranslateLanguagesSwapped()
+        _uiState.update {
+            it.copy(sourceLang = it.targetLang, targetLang = it.sourceLang, input = it.output, output = it.input)
+        }
     }
 
     fun setModel(value: String) {
         SettingsPrefs.putString(getApplication(), SettingsPrefs.KEY_TRANSLATE_ENGINE, value)
         _uiState.update { it.copy(model = value) }
+        AppAnalytics.logTranslateEngineChanged(value)
     }
 
     fun refreshPremium() = RevenueCatManager.getInstance().refreshCustomerInfo()
@@ -77,6 +82,12 @@ class TranslateViewModel(app: Application) : AndroidViewModel(app) {
                 sourceLang = state.sourceLang,
                 targetLang = state.targetLang,
                 model = state.model,
+            )
+            AppAnalytics.logTranslatePerformed(
+                sourceLang = state.sourceLang,
+                targetLang = state.targetLang,
+                engine = state.model,
+                success = result.error == null,
             )
             _uiState.update {
                 it.copy(

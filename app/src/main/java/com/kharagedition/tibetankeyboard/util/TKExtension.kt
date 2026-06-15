@@ -11,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.auth.UnlockDestination
 import com.kharagedition.tibetankeyboard.auth.UnlockRouter
@@ -24,7 +25,8 @@ import com.kharagedition.tibetankeyboard.auth.UnlockRouter
  * Never show a custom paywall dialog — route here so users always land on the same
  * "Unlock everything" subscription page (signing in first if needed).
  */
-fun Context.openPremiumUpgrade() {
+fun Context.openPremiumUpgrade(source: String = AppAnalytics.UpgradeSource.UNKNOWN) {
+    AppAnalytics.logUpgradeClicked(source)
     val authManager = AuthManager(this)
     when (UnlockRouter.destinationFor(authManager.isUserAuthenticated())) {
         UnlockDestination.PREMIUM -> authManager.openPremium()

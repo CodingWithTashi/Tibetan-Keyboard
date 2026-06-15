@@ -13,6 +13,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.util.showConfirmationDialog
@@ -46,7 +47,7 @@ class SettingsActivity : AppCompatActivity() {
         onVibrate = viewModel::setVibrate,
         onSound = viewModel::setSound,
         onNotification = viewModel::setNotification,
-        onUpgrade = { openPremiumUpgrade() },
+        onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.SETTINGS) },
         onLogout = {
             showConfirmationDialog(
                 title = getString(R.string.sign_out),

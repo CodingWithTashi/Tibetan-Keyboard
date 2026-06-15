@@ -33,6 +33,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.UpdateNotificationManager
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
 import com.kharagedition.tibetankeyboard.ads.TemplateView
 import com.kharagedition.tibetankeyboard.app.InputMethodActivity
@@ -107,18 +108,44 @@ class HomeActivity : InputMethodActivity() {
 
     private fun homeActions() = HomeActions(
         onEnableKeyboard = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.ENABLE_KEYBOARD)
+            AppAnalytics.logKeyboardEnableClicked()
             startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             })
         },
-        onPickInputMethod = { pickInput() },
-        onChat = { openIfPremiumOrUpgrade(ChatActivity::class.java) },
-        onTranslate = { openIfPremiumOrUpgrade(TranslateActivity::class.java) },
-        onSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
-        onShare = { shareApp() },
-        onRate = { openView(CommonUtils.PLAY_STORE_URL) },
-        onAbout = { startActivity(Intent(this, AboutActivity::class.java)) },
-        onUpgrade = { openPremiumUpgrade() },
+        onPickInputMethod = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.PICK_INPUT_METHOD)
+            pickInput()
+        },
+        onChat = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.CHAT)
+            openIfPremiumOrUpgrade(ChatActivity::class.java)
+        },
+        onTranslate = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.TRANSLATE)
+            openIfPremiumOrUpgrade(TranslateActivity::class.java)
+        },
+        onSettings = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.SETTINGS)
+            startActivity(Intent(this, SettingsActivity::class.java))
+        },
+        onShare = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.SHARE)
+            shareApp()
+        },
+        onRate = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.RATE)
+            openView(CommonUtils.PLAY_STORE_URL)
+        },
+        onAbout = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.ABOUT)
+            startActivity(Intent(this, AboutActivity::class.java))
+        },
+        onUpgrade = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.UPGRADE)
+            openPremiumUpgrade(AppAnalytics.UpgradeSource.HOME)
+        },
     )
 
     /**
@@ -130,7 +157,7 @@ class HomeActivity : InputMethodActivity() {
         if (viewModel.uiState.value.isPremium || !viewModel.isUserAuthenticated()) {
             startActivity(Intent(this, target))
         } else {
-            openPremiumUpgrade()
+            openPremiumUpgrade(AppAnalytics.UpgradeSource.HOME_FEATURE_GATE)
         }
     }
 
@@ -158,6 +185,7 @@ class HomeActivity : InputMethodActivity() {
             contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD
         )?.contains(PACKAGE) == true
         viewModel.refreshSetup(enabled, enabled && isDefault)
+        AppAnalytics.setKeyboardSetup(enabled = enabled, isDefault = enabled && isDefault)
     }
 
     @SuppressLint("NewApi")

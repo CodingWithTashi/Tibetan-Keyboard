@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessaging
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.revenuecat.purchases.LogLevel
 import com.revenuecat.purchases.Purchases
@@ -31,6 +32,8 @@ class TibetanKeyboardApp : Application() {
         // activity needs to set it individually.
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        // Product analytics — release-only (no-op in debug builds, see AppAnalytics).
+        AppAnalytics.init(this)
         // setup RevenueCat
         setUpRevenueCat()
         val enableEventNotification = prefs.getBoolean("event_notification", true)

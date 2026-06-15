@@ -30,6 +30,7 @@ import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import android.util.Log
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.app.TibetanKeyboardApp
 import kotlinx.coroutines.launch
 
@@ -130,6 +131,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun handleSuccessfulLogin(firebaseUser: FirebaseUser, isNewUser: Boolean) {
+        // Product analytics: tie events to this user and record the sign-in.
+        AppAnalytics.setUser(firebaseUser.uid)
+        AppAnalytics.logLogin(isNewUser)
+
         // Persist login state — this alone is enough to treat the user as signed in.
         userPreferences.saveUserLoginState(
             isLoggedIn = true,
@@ -213,6 +218,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+
+        AppAnalytics.logLoginFailed(exception?.message ?: "Unknown error")
 
         // Track failed login attempt
         lifecycleScope.launch {

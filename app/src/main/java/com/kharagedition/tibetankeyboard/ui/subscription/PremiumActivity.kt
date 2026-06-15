@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
@@ -22,6 +23,7 @@ class PremiumActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppAnalytics.logPaywallViewed()
         setContent {
             TibetanKeyboardTheme {
                 val priceLabel by viewModel.priceLabel.collectAsStateWithLifecycle()
@@ -56,15 +58,16 @@ class PremiumActivity : AppCompatActivity() {
     }
 
     private fun purchasePremium() {
+        AppAnalytics.logPurchaseStarted()
         RevenueCatManager.getInstance().purchasePremium(this, subscriptionCallback(
-            onSuccess = { showToast(it); closePaywall() },
-            onError = { showToast(it) },
+            onSuccess = { AppAnalytics.logPurchaseCompleted(); showToast(it); closePaywall() },
+            onError = { AppAnalytics.logPurchaseFailed(it); showToast(it) },
         ))
     }
 
     private fun restorePurchases() {
         RevenueCatManager.getInstance().syncPurchases(subscriptionCallback(
-            onSuccess = { showToast(getString(R.string.purchases_restored)) },
+            onSuccess = { AppAnalytics.logPurchaseRestored(); showToast(getString(R.string.purchases_restored)) },
             onError = { showToast(it) },
         ))
     }

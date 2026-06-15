@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.ads.MobileAds
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.service.MyFirebaseMessagingService
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BoText
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
@@ -53,6 +55,10 @@ class SplashScreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MobileAds.initialize(this) {}
+
+        if (intent?.getBooleanExtra(MyFirebaseMessagingService.EXTRA_FROM_NOTIFICATION, false) == true) {
+            AppAnalytics.logNotificationOpened()
+        }
 
         val versionName = try {
             packageManager.getPackageInfo(packageName, 0).versionName

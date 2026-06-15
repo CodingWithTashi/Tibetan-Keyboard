@@ -25,6 +25,7 @@ import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
@@ -65,6 +66,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         currentWordLength = 0
+        if (!restarting) AppAnalytics.logKeyboardShown()
         setInputView(onCreateInputView())
         super.onStartInputView(info, restarting)
     }
@@ -208,6 +210,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,true)
                 prefs.apply()
+                AppAnalytics.logKeyboardLanguageSwitched(AppAnalytics.KeyboardLanguage.TIBETAN)
                 keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
 
@@ -222,6 +225,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                     "com.kharagedition.dictionary", Context.MODE_PRIVATE).edit()
                 prefs.putBoolean(AppConstant.IS_TIB,false)
                 prefs.apply()
+                AppAnalytics.logKeyboardLanguageSwitched(AppAnalytics.KeyboardLanguage.ENGLISH)
                 keyboardView?.keyboard = Keyboard(this, R.xml.qwerty)
             }
             KeyboardType.TIBETAN -> {
@@ -262,6 +266,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     private fun showEmojiKeyboard() {
+        AppAnalytics.logKeyboardEmojiOpened()
         if (emojiKeyboardView == null) {
             emojiKeyboardView = EmojiKeyboardView(this)
             val themeColor = prefs.getString("colors", "#FF704C04") ?: "#FF704C04"
@@ -384,6 +389,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onGrammarReplace(originalText: String, correctedText: String) {
+        AppAnalytics.logKeyboardAiApplied(AppAnalytics.KeyboardFeature.GRAMMAR)
         val inputConnection = currentInputConnection
         if (inputConnection != null) {
             // Clear current text and insert corrected text
@@ -396,6 +402,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onTranslateReplace(originalText: String, translatedText: String) {
+        AppAnalytics.logKeyboardAiApplied(AppAnalytics.KeyboardFeature.TRANSLATE)
         val inputConnection = currentInputConnection
         if (inputConnection != null) {
             // Clear current text and insert rephrased text
@@ -408,6 +415,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onRephraseReplace(originalText: String, rephrasedText: String) {
+        AppAnalytics.logKeyboardAiApplied(AppAnalytics.KeyboardFeature.REPHRASE)
         val inputConnection = currentInputConnection
         if (inputConnection != null) {
             // Clear current text and insert rephrased text
@@ -426,6 +434,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     override fun onSuggestionSelected(word: String) {
         val ic = currentInputConnection ?: return
+        AppAnalytics.logKeyboardSuggestionSelected()
         Log.d("TibetanKeyboard", "onSuggestionSelected: '$word', deleting $currentWordLength chars")
         if (currentWordLength > 0) ic.deleteSurroundingText(currentWordLength, 0)
         ic.commitText(word, 1)
@@ -441,7 +450,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     override fun onUnlockPro() {
         // Single source of truth for the upgrade flow (login-then-paywall if needed).
-        openPremiumUpgrade()
+        openPremiumUpgrade(AppAnalytics.UpgradeSource.KEYBOARD)
     }
 
     // Returns the Unicode code points the user has typed since the last word boundary,

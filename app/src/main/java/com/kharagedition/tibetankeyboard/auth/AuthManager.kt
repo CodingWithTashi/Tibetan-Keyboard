@@ -11,6 +11,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
 import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
@@ -81,6 +82,8 @@ class AuthManager(private val context: Context) {
             .build()
         GoogleSignIn.getClient(context, gso).signOut()
         userPreferences.clearUserData()
+        AppAnalytics.logLogout()
+        AppAnalytics.setUser(null)
     }
 
     /**

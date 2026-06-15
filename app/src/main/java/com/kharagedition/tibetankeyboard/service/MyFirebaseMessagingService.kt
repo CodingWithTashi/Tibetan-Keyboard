@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -21,12 +22,20 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         private const val TAG = "FCMService"
         private const val CHANNEL_ID = "app_update_channel"
         private const val NOTIFICATION_ID = 1001
+
+        /** Set on the tap intent so the launched screen can report a [AppAnalytics.logNotificationOpened]. */
+        const val EXTRA_FROM_NOTIFICATION = "from_notification"
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
         Log.d(TAG, "Message received from: ${remoteMessage.from}")
+
+        // Report delivery once per message (regardless of fore/background handling below).
+        val type = remoteMessage.data["type"]
+            ?: if (remoteMessage.notification != null) "system" else "unknown"
+        AppAnalytics.logNotificationReceived(type)
 
         // Handle both notification and data payloads
         // This ensures the notification works in all app states
@@ -142,6 +151,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Create intent to open the app
         val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_FROM_NOTIFICATION, true)
         }
 
         val pendingIntent = PendingIntent.getActivity(

@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
@@ -40,6 +41,7 @@ class ChatActivity : AppCompatActivity() {
         ))
 
         viewModel.addWelcomeMessage()
+        AppAnalytics.logChatOpened()
 
         setContent {
             TibetanKeyboardTheme {
@@ -89,7 +91,7 @@ class ChatActivity : AppCompatActivity() {
                 onPositive = { signOut() },
             )
         },
-        onUpgrade = { openPremiumUpgrade() },
+        onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.CHAT) },
         onModelChange = { viewModel.setModel(it) },
     )
 

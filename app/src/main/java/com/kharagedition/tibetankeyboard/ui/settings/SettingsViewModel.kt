@@ -3,6 +3,7 @@ package com.kharagedition.tibetankeyboard.ui.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,10 +35,15 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setColor(value: String) = write(SettingsPrefs.KEY_COLOR, value) { it.copy(color = value) }
+        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.COLOR, value) }
     fun setStyle(value: String) = write(SettingsPrefs.KEY_STYLE, value) { it.copy(style = value) }
+        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.STYLE, value) }
     fun setVibrate(on: Boolean) = write(SettingsPrefs.KEY_VIBRATE, on) { it.copy(vibrate = on) }
+        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.VIBRATE, on.toString()) }
     fun setSound(on: Boolean) = write(SettingsPrefs.KEY_SOUND, on) { it.copy(sound = on) }
+        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.SOUND, on.toString()) }
     fun setNotification(on: Boolean) = write(SettingsPrefs.KEY_NOTIFICATION, on) { it.copy(eventNotification = on) }
+        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.NOTIFICATION, on.toString()) }
 
     private fun write(key: String, value: String, reduce: (SettingsState) -> SettingsState) {
         SettingsPrefs.putString(getApplication(), key, value)

@@ -3,6 +3,7 @@ package com.kharagedition.tibetankeyboard.app
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 
 
 /**
@@ -26,6 +27,7 @@ abstract class InputMethodActivity : AppCompatActivity() {
 
     private var mState = 0
     protected fun pickInput() {
+        AppAnalytics.logKeyboardPickerOpened()
         val imm: InputMethodManager =
             applicationContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showInputMethodPicker()

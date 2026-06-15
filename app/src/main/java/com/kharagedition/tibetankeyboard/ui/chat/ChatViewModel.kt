@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.data.model.ChatMessage
 import com.kharagedition.tibetankeyboard.data.repository.ChatRepository
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
@@ -27,6 +28,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun setModel(value: String) {
         SettingsPrefs.putString(getApplication(), SettingsPrefs.KEY_AI_MODEL, value)
         _model.value = value
+        AppAnalytics.logChatModelChanged(value)
     }
 
     fun sendMessage(messageText: String, userId: String) {
@@ -45,13 +47,16 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         // Set loading state to true when waiting for response
         _isLoading.value = true
 
+        val model = _model.value ?: SettingsPrefs.DEFAULT_MODEL
+        AppAnalytics.logChatMessageSent(model)
+
         // Start a coroutine to fetch the AI response
         viewModelScope.launch {
             try {
                 val response = repository.sendMessage(
                     messageText,
                     userId,
-                    _model.value ?: SettingsPrefs.DEFAULT_MODEL
+                    model
                 )
 
                 // Add assistant message to the list
@@ -63,8 +68,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 )
                 _messages.value = updatedList
+                AppAnalytics.logChatResponseReceived(model, success = true)
 
             } catch (e: Exception) {
+                AppAnalytics.logChatResponseReceived(model, success = false)
                 // In case of an error, add a predefined error message
                 val updatedList = _messages.value.orEmpty().toMutableList()
                 updatedList.add(
@@ -96,6 +103,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             repository.resetChat()
             _messages.value = emptyList()
+            AppAnalytics.logChatCleared()
         }
     }
 }

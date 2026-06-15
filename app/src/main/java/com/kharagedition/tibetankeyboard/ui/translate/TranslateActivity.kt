@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
@@ -35,6 +36,8 @@ class TranslateActivity : AppCompatActivity() {
             onError = { android.util.Log.w("TranslateActivity", "RevenueCat init: $it") },
         ))
 
+        AppAnalytics.logTranslateOpened()
+
         setContent {
             TibetanKeyboardTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -56,7 +59,7 @@ class TranslateActivity : AppCompatActivity() {
             clipboard.setPrimaryClip(ClipData.newPlainText("translation", text))
             showToast(getString(R.string.copied))
         },
-        onUpgrade = { openPremiumUpgrade() },
+        onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.TRANSLATE) },
     )
 
     override fun onResume() {

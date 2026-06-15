@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.data.repository.AIService
 import com.kharagedition.tibetankeyboard.data.model.GrammarResult
@@ -335,6 +336,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
     fun showGrammarInterface(text: String) {
         Log.d("AIKeyboardView", "showGrammarInterface called with text: $text")
+        AppAnalytics.logKeyboardAiUsed(AppAnalytics.KeyboardFeature.GRAMMAR)
         currentOriginalText = text
         aiTitleText.text = "Grammar Check"
         originalTextView.text = text
@@ -355,6 +357,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
     fun showTranslateInterface(text: String) {
         Log.d("AIKeyboardView", "showTranslateInterface called with text: $text")
+        AppAnalytics.logKeyboardAiUsed(AppAnalytics.KeyboardFeature.TRANSLATE)
         currentOriginalText = text
         aiTitleText.text = "Translate Text"
         originalTextView.text = text
@@ -386,6 +389,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
     fun showRephraseInterface(text: String) {
         Log.d("AIKeyboardView", "showRephraseInterface called with text: $text")
+        AppAnalytics.logKeyboardAiUsed(AppAnalytics.KeyboardFeature.REPHRASE)
 
         currentOriginalText = text
 
