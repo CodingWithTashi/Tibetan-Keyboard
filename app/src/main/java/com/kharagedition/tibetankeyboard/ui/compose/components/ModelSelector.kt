@@ -24,17 +24,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
+import com.kharagedition.tibetankeyboard.ui.settings.PrefOption
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 
 /**
- * Compact pill that lets the user switch the Claude model (Haiku 4.5 / Sonnet 4.6).
- * Shared by the Chat and Translate screens.
+ * Compact pill that lets the user switch the active AI option.
+ *  - Chat uses the defaults (Claude Haiku / Sonnet model).
+ *  - Translate passes the translation engine options (Azure / Claude Haiku / Sonnet).
  */
 @Composable
 fun ModelSelector(
     model: String,
     onModelChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    options: List<PrefOption> = SettingsPrefs.modelOptions,
+    labelOf: (String) -> String = SettingsPrefs::modelLabel,
 ) {
     var open by remember { mutableStateOf(false) }
 
@@ -50,7 +54,7 @@ fun ModelSelector(
     ) {
         Icon(AppIcons.Sparkle, null, tint = TibetanColors.Gold300, modifier = Modifier.size(15.dp))
         Text(
-            SettingsPrefs.modelLabel(model),
+            labelOf(model),
             color = TibetanColors.Cream,
             fontSize = 12.5.sp,
             fontWeight = FontWeight.SemiBold,
@@ -58,7 +62,7 @@ fun ModelSelector(
         Icon(AppIcons.ExpandMore, null, tint = TibetanColors.CreamDim, modifier = Modifier.size(16.dp))
 
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            SettingsPrefs.modelOptions.forEach { opt ->
+            options.forEach { opt ->
                 DropdownMenuItem(
                     text = {
                         Row(

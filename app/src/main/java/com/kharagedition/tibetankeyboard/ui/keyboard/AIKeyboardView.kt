@@ -11,7 +11,10 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.widget.*
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -23,6 +26,7 @@ import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import kotlinx.coroutines.*
 import com.kharagedition.botok.autocomplete.SuggestionEngine
 
@@ -51,6 +55,10 @@ class AIKeyboardView @JvmOverloads constructor(
     private lateinit var translateSwapBtn: ImageView
     private lateinit var sourceLanguageText: TextView
     private lateinit var targetLanguageText: TextView
+    private lateinit var engineSelectorRow: View
+    private lateinit var engineChipAzure: TextView
+    private lateinit var engineChipHaiku: TextView
+    private lateinit var engineChipSonnet: TextView
 
     private var aiKeyboardInterface: AIKeyboardInterface? = null
     private var themeColor: String = "#FF704C04"
@@ -60,6 +68,9 @@ class AIKeyboardView @JvmOverloads constructor(
     private var currentSuggestedText = ""
     private var currentSourceLang = "en" // English
     private var currentTargetLang = "bo" // Tibetan
+    // Translation engine (azure / claude-haiku / claude-sonnet) — shared with the
+    // standalone Translate screen via SettingsPrefs; re-read each time the panel opens.
+    private var currentEngine = SettingsPrefs.DEFAULT_TRANSLATE_ENGINE
     private val aiService = AIService()
     private var isPremiumUser = false
 
@@ -169,6 +180,10 @@ class AIKeyboardView @JvmOverloads constructor(
         translateSwapBtn = findViewById(R.id.translate_swap_btn)
         sourceLanguageText = findViewById(R.id.source_language_text)
         targetLanguageText = findViewById(R.id.target_language_text)
+        engineSelectorRow = findViewById(R.id.engine_selector_row)
+        engineChipAzure = findViewById(R.id.engine_chip_azure)
+        engineChipHaiku = findViewById(R.id.engine_chip_haiku)
+        engineChipSonnet = findViewById(R.id.engine_chip_sonnet)
         suggestionStrip = findViewById(R.id.suggestion_strip)
         suggestionStrip.onSuggestionClick = { word ->
             aiKeyboardInterface?.onSuggestionSelected(word)
@@ -237,6 +252,38 @@ class AIKeyboardView @JvmOverloads constructor(
 
         translateSwapBtn.setOnClickListener {
             swapTranslationLanguages()
+        }
+
+        engineChipAzure.setOnClickListener { setEngine(SettingsPrefs.ENGINE_AZURE) }
+        engineChipHaiku.setOnClickListener { setEngine(SettingsPrefs.ENGINE_HAIKU) }
+        engineChipSonnet.setOnClickListener { setEngine(SettingsPrefs.ENGINE_SONNET) }
+    }
+
+    private fun setEngine(value: String) {
+        if (value == currentEngine) return
+        currentEngine = value
+        SettingsPrefs.putString(context, SettingsPrefs.KEY_TRANSLATE_ENGINE, value)
+        styleEngineChips()
+        // Re-run with the new engine if a translation is on screen.
+        if (currentOriginalText.isNotEmpty() && engineSelectorRow.visibility == View.VISIBLE) {
+            runTranslation()
+        }
+    }
+
+    /** Paint the selected engine chip gold, the rest as subtle outlined pills. */
+    private fun styleEngineChips() {
+        val chips = listOf(
+            engineChipAzure to SettingsPrefs.ENGINE_AZURE,
+            engineChipHaiku to SettingsPrefs.ENGINE_HAIKU,
+            engineChipSonnet to SettingsPrefs.ENGINE_SONNET,
+        )
+        val creamColor = ContextCompat.getColor(context, R.color.tk_cream)
+        for ((chip, value) in chips) {
+            val selected = value == currentEngine
+            chip.setBackgroundResource(
+                if (selected) R.drawable.pro_pill_background else R.drawable.tk_lang_pill
+            )
+            chip.setTextColor(if (selected) Color.parseColor("#3A2606") else creamColor)
         }
     }
 
@@ -311,13 +358,24 @@ class AIKeyboardView @JvmOverloads constructor(
         currentOriginalText = text
         aiTitleText.text = "Translate Text"
         originalTextView.text = text
+        // Pick up the engine the user last chose (here or on the Translate screen).
+        currentEngine = SettingsPrefs.readTranslateEngine(context)
         showTranslationControls()
+        runTranslation()
+    }
+
+    /** Translate [currentOriginalText] with the current languages + engine. */
+    private fun runTranslation() {
+        if (currentOriginalText.isEmpty()) return
         showLoadingState()
-
-
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val result = aiService.translateText(text, currentSourceLang, currentTargetLang)
+                val result = aiService.translateText(
+                    currentOriginalText,
+                    currentSourceLang,
+                    currentTargetLang,
+                    currentEngine,
+                )
                 showTranslationResult(result)
             } catch (e: Exception) {
                 Log.e("AIKeyboardView", "Translation failed", e)
@@ -357,6 +415,8 @@ class AIKeyboardView @JvmOverloads constructor(
         translateSwapBtn.visibility = View.VISIBLE
         sourceLanguageText.visibility = View.VISIBLE
         targetLanguageText.visibility = View.VISIBLE
+        engineSelectorRow.visibility = View.VISIBLE
+        styleEngineChips()
         updateLanguageLabels()
     }
 
@@ -364,6 +424,7 @@ class AIKeyboardView @JvmOverloads constructor(
         translateSwapBtn.visibility = View.GONE
         sourceLanguageText.visibility = View.GONE
         targetLanguageText.visibility = View.GONE
+        engineSelectorRow.visibility = View.GONE
     }
 
     private fun swapTranslationLanguages() {
@@ -383,18 +444,7 @@ class AIKeyboardView @JvmOverloads constructor(
         updateLanguageLabels()
 
         // Re-translate with swapped languages if we have text
-        if (currentOriginalText.isNotEmpty()) {
-            showLoadingState()
-            CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    val result = aiService.translateText(currentOriginalText, currentSourceLang, currentTargetLang)
-                    showTranslationResult(result)
-                } catch (e: Exception) {
-                    Log.e("AIKeyboardView", "Translation swap failed", e)
-                    showError("Failed to translate text")
-                }
-            }
-        }
+        runTranslation()
     }
 
     private fun updateLanguageLabels() {
@@ -469,31 +519,48 @@ class AIKeyboardView @JvmOverloads constructor(
         aiInrBtn.text = context.getString(R.string.retry);
     }
 
+    /** Small vertical offset for the panel's fade-in/out — a hint of motion, not a full slide. */
+    private val PANEL_SLIDE_PX: Float
+        get() = 26 * resources.displayMetrics.density
+
     private fun showAIInterface() {
         // Hide the top bar (suggestion strip is a child of it now) so the panel is the single,
         // cohesive surface — its own header takes over.
         aiToolbar.visibility = View.GONE
         normalKeyboardContainer.visibility = View.GONE
+        // Cancel any in-flight close so a quick reopen doesn't fight the dismiss animation.
+        aiInterfaceContainer.animate().cancel()
         aiInterfaceContainer.visibility = View.VISIBLE
-        aiInterfaceContainer.translationY = aiInterfaceContainer.height.toFloat()
-        aiInterfaceContainer.animate().translationY(0f).setDuration(300).start()
+        aiInterfaceContainer.alpha = 0f
+        aiInterfaceContainer.translationY = PANEL_SLIDE_PX
+        aiInterfaceContainer.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(220)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
     }
 
     fun showNormalKeyboard() {
-        if (aiInterfaceContainer.visibility == View.VISIBLE) {
-            aiInterfaceContainer.animate()
-                .translationY(aiInterfaceContainer.height.toFloat())
-                .setDuration(300)
-                .withEndAction {
-                    aiInterfaceContainer.visibility = View.GONE
-                    // The suggestion strip lives inside aiToolbar, so it returns with it.
-                    aiToolbar.visibility = View.VISIBLE
-                    normalKeyboardContainer.visibility = View.VISIBLE
-                    currentOriginalText = ""
-                    currentSuggestedText = ""
-                }
-                .start()
-        }
+        if (aiInterfaceContainer.visibility != View.VISIBLE) return
+        aiInterfaceContainer.animate().cancel()
+        aiInterfaceContainer.animate()
+            .alpha(0f)
+            .translationY(PANEL_SLIDE_PX)
+            .setDuration(170)
+            .setInterpolator(AccelerateInterpolator())
+            .withEndAction {
+                aiInterfaceContainer.visibility = View.GONE
+                // Reset so the panel is ready for its next fade-in.
+                aiInterfaceContainer.alpha = 1f
+                aiInterfaceContainer.translationY = 0f
+                // The suggestion strip lives inside aiToolbar, so it returns with it.
+                aiToolbar.visibility = View.VISIBLE
+                normalKeyboardContainer.visibility = View.VISIBLE
+                currentOriginalText = ""
+                currentSuggestedText = ""
+            }
+            .start()
     }
 
     fun updateSuggestions(prefix: String) {

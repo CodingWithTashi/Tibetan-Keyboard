@@ -20,7 +20,7 @@ data class TranslateUiState(
     val input: String = "",
     val output: String = "",
     val isLoading: Boolean = false,
-    val model: String = SettingsPrefs.DEFAULT_MODEL,
+    val model: String = SettingsPrefs.DEFAULT_TRANSLATE_ENGINE,
     val isPremium: Boolean = false,
     val error: String? = null,
 )
@@ -36,7 +36,7 @@ class TranslateViewModel(app: Application) : AndroidViewModel(app) {
     private val premiumLiveData = RevenueCatManager.getInstance().isPremiumUser
 
     private val _uiState = MutableStateFlow(
-        TranslateUiState(model = SettingsPrefs.readModel(app))
+        TranslateUiState(model = SettingsPrefs.readTranslateEngine(app))
     )
     val uiState: StateFlow<TranslateUiState> = _uiState.asStateFlow()
 
@@ -60,7 +60,7 @@ class TranslateViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setModel(value: String) {
-        SettingsPrefs.putString(getApplication(), SettingsPrefs.KEY_AI_MODEL, value)
+        SettingsPrefs.putString(getApplication(), SettingsPrefs.KEY_TRANSLATE_ENGINE, value)
         _uiState.update { it.copy(model = value) }
     }
 

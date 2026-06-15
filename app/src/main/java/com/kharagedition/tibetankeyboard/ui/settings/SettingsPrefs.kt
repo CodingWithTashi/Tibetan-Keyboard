@@ -18,6 +18,7 @@ object SettingsPrefs {
     const val KEY_SOUND = "sound"
     const val KEY_NOTIFICATION = "event_notification"
     const val KEY_AI_MODEL = "ai_model"
+    const val KEY_TRANSLATE_ENGINE = "translate_engine"
 
     const val COLOR_BROWN = "#FF704C04"
     const val COLOR_BLACK = "#FF000000"
@@ -35,6 +36,15 @@ object SettingsPrefs {
     const val MODEL_HAIKU = "claude-haiku-4-5"
     const val MODEL_SONNET = "claude-sonnet-4-6"
     const val DEFAULT_MODEL = MODEL_HAIKU
+
+    // Translation engines (must match the backend translateProvider allow-list).
+    // Azure is a separate provider; the two Claude values reuse the model ids.
+    // Azure is the default — it transparently falls back to Claude server-side,
+    // so translation works even before the Azure key is configured.
+    const val ENGINE_AZURE = "azure"
+    const val ENGINE_HAIKU = MODEL_HAIKU
+    const val ENGINE_SONNET = MODEL_SONNET
+    const val DEFAULT_TRANSLATE_ENGINE = ENGINE_AZURE
 
     // Brown is free; black & green are PRO.
     val colorOptions = listOf(
@@ -55,9 +65,18 @@ object SettingsPrefs {
         PrefOption("Sonnet 4.6", "Most capable", MODEL_SONNET, premium = false),
     )
 
+    // Translation engine choices shown in the engine selector (Translate screen + keyboard).
+    val translateEngineOptions = listOf(
+        PrefOption("Azure", "Fast neural translation", ENGINE_AZURE, premium = false),
+        PrefOption("Claude Haiku", "Fast & efficient", ENGINE_HAIKU, premium = false),
+        PrefOption("Claude Sonnet", "Most nuanced", ENGINE_SONNET, premium = false),
+    )
+
     fun colorLabel(value: String) = colorOptions.firstOrNull { it.value == value }?.label ?: "Brown"
     fun styleLabel(value: String) = styleOptions.firstOrNull { it.value == value }?.label ?: "Borderless"
     fun modelLabel(value: String) = modelOptions.firstOrNull { it.value == value }?.label ?: "Haiku 4.5"
+    fun engineLabel(value: String) =
+        translateEngineOptions.firstOrNull { it.value == value }?.label ?: "Azure"
 
     /** True when [value] is a PRO-only keyboard colour. */
     fun isColorPremium(value: String) = colorOptions.firstOrNull { it.value == value }?.premium == true
@@ -81,6 +100,10 @@ object SettingsPrefs {
 
     fun readModel(context: Context): String =
         prefs(context).getString(KEY_AI_MODEL, DEFAULT_MODEL) ?: DEFAULT_MODEL
+
+    fun readTranslateEngine(context: Context): String =
+        prefs(context).getString(KEY_TRANSLATE_ENGINE, DEFAULT_TRANSLATE_ENGINE)
+            ?: DEFAULT_TRANSLATE_ENGINE
 
     fun putString(context: Context, key: String, value: String) {
         prefs(context).edit().putString(key, value).apply()

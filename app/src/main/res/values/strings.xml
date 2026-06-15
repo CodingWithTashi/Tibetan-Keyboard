@@ -77,6 +77,10 @@
     <string name="translate_original">ORIGINAL</string>
     <string name="translate_suggested">✦ SUGGESTED</string>
     <string name="translate_summary">SUMMARY</string>
+    <string name="translate_engine_label">ENGINE</string>
+    <string name="engine_azure">Azure</string>
+    <string name="engine_haiku">Haiku</string>
+    <string name="engine_sonnet">Sonnet</string>
     <string name="rephrase">Rephrase</string>
     <string name="retry">Retry</string>
     <string name="use_translation">Use Translation</string>

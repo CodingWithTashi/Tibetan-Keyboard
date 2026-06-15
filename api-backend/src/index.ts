@@ -31,7 +31,8 @@ import {
   ChatSessionManager,
   generateSessionId,
 } from "./manager/ChatSessionManager";
-import { resolveModel, translateWithClaude } from "./services/anthropicService";
+import { resolveModel } from "./services/anthropicService";
+import { resolveEngine, translate } from "./services/translateProvider";
 import { cachedCompute, makeCacheKey } from "./services/cacheService";
 import { attachProStatus, enforceFreeLimit } from "./middleware/proStatus";
 import { revenueCatWebhook } from "./webhooks/revenueCatWebhook";
@@ -51,6 +52,12 @@ admin.initializeApp();
 
 // Anthropic API key — set with: firebase functions:secrets:set ANTHROPIC_API_KEY
 const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
+
+// Azure Translator subscription key — powers the "azure" translation engine.
+// Set with: firebase functions:secrets:set AZURE_TRANSLATOR_KEY
+// Region/endpoint are non-secret and read from env (see .env), defaulting to
+// eastus + the global text endpoint when unset.
+const azureTranslatorKey = defineSecret("AZURE_TRANSLATOR_KEY");
 
 // RevenueCat secrets:
 // - REVENUECAT_WEBHOOK_SECRET: the "Authorization header value" you set in the
@@ -148,21 +155,23 @@ app.post(
     try {
       const { text, sourceLang, targetLang }: TranslateRequest = req.body;
       const userId = (req.headers["userid"] as string) || "anonymous";
-      const model = resolveModel(
+      // The client sends the chosen translation engine in `model` (azure /
+      // claude-haiku-4-5 / claude-sonnet-4-6); x-model header is a fallback.
+      const engine = resolveEngine(
         (req.body.model as string) || (req.headers["x-model"] as string)
       );
 
       logger.info("Translate request", {
         userId,
         isPro: (req as any).isPro === true,
-        model,
+        engine,
         sourceLang,
         targetLang,
         chars: text.length,
       });
 
       const cacheKey = makeCacheKey("translate", {
-        model,
+        engine,
         text,
         sourceLang,
         targetLang,
@@ -170,11 +179,12 @@ app.post(
 
       const { value: translatedText, source } = await cachedCompute(
         cacheKey,
-        () => translateWithClaude(model, text, sourceLang, targetLang),
-        { type: "translate", model, sourceLang, targetLang }
+        async () =>
+          (await translate(engine, text, sourceLang, targetLang)).text,
+        { type: "translate", engine, sourceLang, targetLang }
       );
 
-      logger.info("Translate success", { userId, model, source });
+      logger.info("Translate success", { userId, engine, source });
 
       const response: ApiResponse<{ translatedText: string }> = {
         success: true,
@@ -729,7 +739,12 @@ export const api = onRequest(
     maxInstances: 10,
     timeoutSeconds: 60,
     memory: "256MiB",
-    secrets: [anthropicApiKey, revenueCatWebhookSecret, revenueCatApiKey],
+    secrets: [
+      anthropicApiKey,
+      azureTranslatorKey,
+      revenueCatWebhookSecret,
+      revenueCatApiKey,
+    ],
     // Add additional options if needed
     // invoker: 'public', // Makes function publicly accessible
     // secrets: [], // Add secrets if needed

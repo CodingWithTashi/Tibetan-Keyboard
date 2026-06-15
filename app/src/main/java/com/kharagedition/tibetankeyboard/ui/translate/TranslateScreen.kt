@@ -43,6 +43,7 @@ import com.kharagedition.tibetankeyboard.ui.compose.components.SectionLabel
 import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
+import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 
 class TranslateActions(
     val onBack: () -> Unit,
@@ -77,7 +78,12 @@ fun TranslateScreen(state: TranslateUiState, actions: TranslateActions) {
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ModelSelector(model = state.model, onModelChange = actions.onModelChange)
+            ModelSelector(
+                model = state.model,
+                onModelChange = actions.onModelChange,
+                options = SettingsPrefs.translateEngineOptions,
+                labelOf = SettingsPrefs::engineLabel,
+            )
         }
 
         Spacer(Modifier.height(14.dp))

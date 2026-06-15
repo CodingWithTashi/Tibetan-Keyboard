@@ -210,6 +210,75 @@
                 android:paddingTop="12dp"
                 android:paddingBottom="14dp">
 
+                <!-- Translation engine selector (Only visible for translation) — on-theme
+                     single-tap chips: Azure / Haiku / Sonnet. Selected = gold; styling is
+                     driven from AIKeyboardView.styleEngineChips(). -->
+                <LinearLayout
+                    android:id="@+id/engine_selector_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/translate_engine_label"
+                        android:textColor="@color/tk_cream_dim"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        android:id="@+id/engine_chip_azure"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/engine_azure"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/tk_cream"
+                        android:background="@drawable/tk_lang_pill"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/engine_chip_haiku"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/engine_haiku"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/tk_cream"
+                        android:background="@drawable/tk_lang_pill"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/engine_chip_sonnet"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/engine_sonnet"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/tk_cream"
+                        android:background="@drawable/tk_lang_pill"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                </LinearLayout>
+
                 <!-- Translation Language Controls (Only visible for translation) -->
                 <LinearLayout
                     android:layout_width="match_parent"
