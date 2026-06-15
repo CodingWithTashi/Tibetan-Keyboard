@@ -4,10 +4,13 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
 import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
@@ -50,14 +53,12 @@ class AuthManager(private val context: Context) {
 
         revenueCatManager.logout(object : RevenueCatManager.SubscriptionCallback {
             override fun onSuccess(message: String) {
-                auth.signOut()
-                userPreferences.clearUserData()
+                finishSignOut()
                 onComplete()
             }
 
             override fun onError(error: String) {
-                auth.signOut()
-                userPreferences.clearUserData()
+                finishSignOut()
                 onComplete()
             }
 
@@ -65,6 +66,21 @@ class AuthManager(private val context: Context) {
 
             }
         })
+    }
+
+    /**
+     * Tear down every cached session. Firebase's signOut alone leaves Google's last-used account
+     * cached on the device, so the next sign-in silently re-picks it; signing out of the
+     * GoogleSignInClient too forces the account chooser to reappear on the next login.
+     */
+    private fun finishSignOut() {
+        auth.signOut()
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(context, gso).signOut()
+        userPreferences.clearUserData()
     }
 
     /**

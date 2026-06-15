@@ -6,6 +6,7 @@ import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationRequest
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -58,13 +59,19 @@ class AIService {
                     return@withContext TranslationResult("", sourceLang, targetLang,)
                 }
 
+                // Backend identifies the user (for pro check + free-tier limits)
+                // from this header. Must be the Firebase UID — the same id used
+                // as the RevenueCat appUserID.
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+
                 val response = RetrofitClient.translateAPI.translateText(
                     TranslationRequest(
                         text = text,
                         sourceLang = sourceLang,
                         targetLang = targetLang,
                         model = model
-                    )
+                    ),
+                    userId = userId,
                 )
 
                 TranslationResult(

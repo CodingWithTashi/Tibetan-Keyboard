@@ -33,6 +33,8 @@ import {
 } from "./manager/ChatSessionManager";
 import { resolveModel, translateWithClaude } from "./services/anthropicService";
 import { cachedCompute, makeCacheKey } from "./services/cacheService";
+import { attachProStatus, enforceFreeLimit } from "./middleware/proStatus";
+import { revenueCatWebhook } from "./webhooks/revenueCatWebhook";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 
@@ -50,6 +52,26 @@ admin.initializeApp();
 // Anthropic API key — set with: firebase functions:secrets:set ANTHROPIC_API_KEY
 const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
 
+// RevenueCat secrets:
+// - REVENUECAT_WEBHOOK_SECRET: the "Authorization header value" you set in the
+//   RevenueCat dashboard webhook config; we reject any webhook call that doesn't
+//   send exactly this value in its Authorization header.
+// - REVENUECAT_API_KEY: a RevenueCat *secret* REST key (sk_...) used only as a
+//   live fallback when the Firestore pro mirror says "not pro".
+// Set both with: firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET
+//                firebase functions:secrets:set REVENUECAT_API_KEY
+const revenueCatWebhookSecret = defineSecret("REVENUECAT_WEBHOOK_SECRET");
+const revenueCatApiKey = defineSecret("REVENUECAT_API_KEY");
+
+// Reusable middleware that sets req.isPro (Firestore mirror + RC REST fallback).
+const attachPro = attachProStatus(() => {
+  try {
+    return revenueCatApiKey.value();
+  } catch {
+    return undefined;
+  }
+});
+
 const app = express();
 
 // Behind the Cloud Functions / Hosting proxy, trust the first forwarded hop so
@@ -64,6 +86,22 @@ app.use(
       "http://localhost:3000",
     ],
     credentials: true,
+  })
+);
+
+// RevenueCat webhook — registered BEFORE the global IP rate limiter (it's
+// authenticated by a shared secret, and renewal spikes shouldn't be throttled)
+// and with its own JSON parser (RevenueCat payloads can exceed the 10kb cap we
+// apply to the AI endpoints).
+app.post(
+  "/revenuecat-webhook",
+  express.json({ limit: "64kb" }),
+  revenueCatWebhook(() => {
+    try {
+      return revenueCatWebhookSecret.value();
+    } catch {
+      return undefined;
+    }
   })
 );
 
@@ -104,6 +142,8 @@ app.post(
   "/translate",
   aiLimiter,
   validateTranslateRequest,
+  attachPro,
+  enforceFreeLimit("translation"),
   async (req, res) => {
     try {
       const { text, sourceLang, targetLang }: TranslateRequest = req.body;
@@ -114,6 +154,7 @@ app.post(
 
       logger.info("Translate request", {
         userId,
+        isPro: (req as any).isPro === true,
         model,
         sourceLang,
         targetLang,
@@ -163,6 +204,8 @@ app.post(
   "/chat",
   aiLimiter,
   validateChatRequest,
+  attachPro,
+  enforceFreeLimit("chat"),
   async (req, res) => {
     try {
       const { message, sessionId, resetChat }: GeminiChatRequest = req.body;
@@ -176,6 +219,7 @@ app.post(
       const currentSessionId = userId;
       logger.info("Chat request", {
         userId,
+        isPro: (req as any).isPro === true,
         sessionId: currentSessionId,
         model,
         chars: message.length,
@@ -685,7 +729,7 @@ export const api = onRequest(
     maxInstances: 10,
     timeoutSeconds: 60,
     memory: "256MiB",
-    secrets: [anthropicApiKey],
+    secrets: [anthropicApiKey, revenueCatWebhookSecret, revenueCatApiKey],
     // Add additional options if needed
     // invoker: 'public', // Makes function publicly accessible
     // secrets: [], // Add secrets if needed

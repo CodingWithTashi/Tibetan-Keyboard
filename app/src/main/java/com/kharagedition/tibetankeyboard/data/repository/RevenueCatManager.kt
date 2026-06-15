@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.kharagedition.tibetankeyboard.BuildConfig
 import com.revenuecat.purchases.*
 import com.revenuecat.purchases.interfaces.*
@@ -376,81 +375,28 @@ class RevenueCatManager private constructor() {
     }
 
     /**
-     * Update premium status based on customer info
+     * Update premium status based on customer info.
+     *
+     * This ONLY updates the in-app LiveData that drives the UI (locks/PRO tags),
+     * which reflects instantly on purchase for good UX. It does NOT write to
+     * Firestore: the backend is the single, authoritative writer of server-side
+     * pro state (`users/{uid}.isPro`), kept in sync by the RevenueCat webhook +
+     * a live REST fallback. Keeping the client out of Firestore avoids competing
+     * writers / field sprawl and means pro gating can't be spoofed from the app.
      */
     private fun updatePremiumStatus(customerInfo: CustomerInfo) {
         val proEntitlement = customerInfo.entitlements[PREMIUM_ENTITLEMENT_ID]
         val isPremium = proEntitlement?.isActive == true
 
-        // CRITICAL FIX: Do not use debug mode bypass in production
         _isPremiumUser.value = isPremium
 
-        // Get subscription expiry date from entitlement
-        val expiryDate = proEntitlement?.expirationDate
-        val willRenew = proEntitlement?.willRenew ?: false
-        val periodType = proEntitlement?.periodType?.toString() ?: "unknown"
-
-        // Enhanced logging for debugging
         Log.d(TAG, "==== Premium Status Update ====")
         Log.d(TAG, "App User ID: ${customerInfo.originalAppUserId}")
         Log.d(TAG, "Premium Status: $isPremium")
-        Log.d(TAG, "Expiry Date: $expiryDate")
-        Log.d(TAG, "Will Renew: $willRenew")
-        Log.d(TAG, "Period Type: $periodType")
+        Log.d(TAG, "Expiry Date: ${proEntitlement?.expirationDate}")
+        Log.d(TAG, "Will Renew: ${proEntitlement?.willRenew}")
         Log.d(TAG, "Active Subscriptions: ${customerInfo.activeSubscriptions.joinToString()}")
-        Log.d(TAG, "All Entitlements: ${customerInfo.entitlements.all.keys.joinToString()}")
-        Log.d(TAG, "Pro Entitlement Active: ${proEntitlement?.isActive}")
-        Log.d(TAG, "Request Date: ${customerInfo.requestDate}")
         Log.d(TAG, "============================")
-
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        val db = FirebaseFirestore.getInstance()
-        if(userId==null) {
-            Log.w(TAG, "Cannot update Firestore: User ID is null")
-            return
-        }
-
-        if (isPremium) {
-            // CRITICAL FIX: Use actual expiration date from entitlement, not request date
-            val premiumDetails = hashMapOf(
-                "isPremium" to true,
-                "subscribed" to true,
-                "isSubscribed" to true,
-                "subscriptionType" to "premium",
-                "activeSubscriptions" to customerInfo.activeSubscriptions.toList(),
-                "premiumExpiryDate" to (expiryDate ?: customerInfo.requestDate), // Use actual expiry or fallback to request date
-                "willRenew" to willRenew,
-                "periodType" to periodType,
-                "revenueCatUserId" to customerInfo.originalAppUserId,
-                "lastUpdated" to customerInfo.requestDate,
-                "originalPurchaseDate" to proEntitlement.originalPurchaseDate
-            )
-            val userRef = db.collection("users").document(userId)
-
-            userRef.update(premiumDetails)
-                .addOnSuccessListener {
-                    Log.d(TAG, "Firestore: User premium details updated successfully for user: $userId")
-                    Log.d(TAG, "Firestore: Subscription expires at: $expiryDate")
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "Firestore: Failed to update premium details - ${e.message}", e)
-                }
-        } else {
-            val userRef = db.collection("users").document(userId)
-
-            userRef.update(mapOf<String, Any>(
-                "isPremium" to false,
-                "subscribed" to false,
-                "isSubscribed" to false,
-                "lastUpdated" to customerInfo.requestDate
-            ))
-                .addOnSuccessListener {
-                    Log.d(TAG, "Firestore: User premium status set to false for user: $userId")
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "Firestore: Failed to set premium status - ${e.message}", e)
-                }
-        }
     }
 
     /**
