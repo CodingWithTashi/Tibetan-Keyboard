@@ -219,6 +219,14 @@
     <string name="setup_enable_keyboard">Enable Tibetan Keyboard</string>
     <string name="setup_choose_input">Choose input method</string>
     <string name="setup_progress">%1$d of 2</string>
+    <!-- Tap-target coach marks guiding first-time keyboard setup -->
+    <string name="setup_coach_step1_title">Turn on Tibetan Keyboard</string>
+    <string name="setup_coach_step1_desc">Tap here to open your phone\'s keyboard settings, then switch on Tibetan Keyboard in the list.</string>
+    <string name="setup_coach_step2_title">Switch to Tibetan Keyboard</string>
+    <string name="setup_coach_step2_desc">Tap here, then pick Tibetan Keyboard from the popup to start typing.</string>
+    <string name="setup_coach_got_it">Got it</string>
+    <string name="setup_coach_hint">Tap the highlighted step to continue</string>
+    <string name="cd_setup_coach">Setup guide overlay</string>
     <string name="design_and_ui">Design &amp; UI</string>
     <string name="sound_and_control">Sound &amp; Control</string>
     <string name="title_notification">Notification</string>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,8 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -43,8 +48,10 @@ import com.kharagedition.tibetankeyboard.ui.compose.components.IconTile
 import com.kharagedition.tibetankeyboard.ui.compose.components.PillBadge
 import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenScaffold
 import com.kharagedition.tibetankeyboard.ui.compose.components.SectionLabel
+import com.kharagedition.tibetankeyboard.ui.compose.components.TapTargetPrompt
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
+import kotlinx.coroutines.delay
 
 /** Immutable UI state driving the Home screen. */
 data class HomeUiState(
@@ -79,31 +86,86 @@ fun HomeScreen(
     actions: HomeActions,
     adSlot: (@Composable () -> Unit)? = null,
 ) {
-    ScreenScaffold(horizontalPadding = 18.dp) {
-        Spacer(Modifier.height(8.dp))
-        BrandHeader()
-        Spacer(Modifier.height(18.dp))
-        SetupCard(state, actions)
+    // On-screen bounds of each setup step, captured for the tap-target spotlight.
+    var step1Bounds by remember { mutableStateOf<Rect?>(null) }
+    var step2Bounds by remember { mutableStateOf<Rect?>(null) }
+    // Steps the user has dismissed the coach-mark for, this session.
+    var dismissed by remember { mutableStateOf(setOf<Int>()) }
 
-        Spacer(Modifier.height(14.dp))
-        if (state.keyboardEnabled && state.inputMethodSelected) {
-            TestKeyboardField()
-        } else {
-            SetupDemo(if (!state.keyboardEnabled) R.drawable.keyboard else R.drawable.input)
+    // The first incomplete step is the one we coach toward (null = setup finished).
+    val activeStep = when {
+        !state.keyboardEnabled -> 1
+        !state.inputMethodSelected -> 2
+        else -> null
+    }
+    val activeBounds = when (activeStep) {
+        1 -> step1Bounds
+        2 -> step2Bounds
+        else -> null
+    }
+
+    // Briefly delay the reveal so layout settles (and so it doesn't flash mid-navigation).
+    var ready by remember { mutableStateOf(false) }
+    LaunchedEffect(activeStep) {
+        ready = false
+        if (activeStep != null) {
+            delay(500)
+            ready = true
+        }
+    }
+    val showPrompt = activeStep != null && activeStep !in dismissed && activeBounds != null && ready
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        ScreenScaffold(horizontalPadding = 18.dp) {
+            Spacer(Modifier.height(8.dp))
+            BrandHeader()
+            Spacer(Modifier.height(18.dp))
+            SetupCard(
+                state = state,
+                actions = actions,
+                onStep1Bounds = { step1Bounds = it },
+                onStep2Bounds = { step2Bounds = it },
+            )
+
+            Spacer(Modifier.height(14.dp))
+            if (state.keyboardEnabled && state.inputMethodSelected) {
+                TestKeyboardField()
+            } else {
+               // SetupDemo(if (!state.keyboardEnabled) R.drawable.keyboard else R.drawable.input)
+            }
+
+            Spacer(Modifier.height(22.dp))
+            SectionLabel(stringResource(R.string.quick_actions), color = TibetanColors.CreamDim, modifier = Modifier.padding(start = 2.dp))
+            Spacer(Modifier.height(12.dp))
+            QuickActionsGrid(state, actions)
+
+            if (!state.isPremium) {
+                Spacer(Modifier.height(16.dp))
+                GoProBanner(onUpgrade = actions.onUpgrade)
+                if (adSlot != null) {
+                    Spacer(Modifier.height(16.dp))
+                    adSlot()
+                }
+            }
         }
 
-        Spacer(Modifier.height(22.dp))
-        SectionLabel(stringResource(R.string.quick_actions), color = TibetanColors.CreamDim, modifier = Modifier.padding(start = 2.dp))
-        Spacer(Modifier.height(12.dp))
-        QuickActionsGrid(state, actions)
-
-        if (!state.isPremium) {
-            Spacer(Modifier.height(16.dp))
-            GoProBanner(onUpgrade = actions.onUpgrade)
-            if (adSlot != null) {
-                Spacer(Modifier.height(16.dp))
-                adSlot()
-            }
+        if (showPrompt && activeStep != null && activeBounds != null) {
+            TapTargetPrompt(
+                targetBounds = activeBounds,
+                title = stringResource(
+                    if (activeStep == 1) R.string.setup_coach_step1_title else R.string.setup_coach_step2_title
+                ),
+                description = stringResource(
+                    if (activeStep == 1) R.string.setup_coach_step1_desc else R.string.setup_coach_step2_desc
+                ),
+                hint = stringResource(R.string.setup_coach_hint),
+                dismissLabel = stringResource(R.string.setup_coach_got_it),
+                icon = if (activeStep == 1) AppIcons.Globe else AppIcons.SwapHoriz,
+                onTargetClick = {
+                    if (activeStep == 1) actions.onEnableKeyboard() else actions.onPickInputMethod()
+                },
+                onDismiss = { dismissed = dismissed + activeStep },
+            )
         }
     }
 }
@@ -136,7 +198,12 @@ private fun BrandHeader() {
 }
 
 @Composable
-private fun SetupCard(state: HomeUiState, actions: HomeActions) {
+private fun SetupCard(
+    state: HomeUiState,
+    actions: HomeActions,
+    onStep1Bounds: (Rect) -> Unit = {},
+    onStep2Bounds: (Rect) -> Unit = {},
+) {
     val doneCount = (if (state.keyboardEnabled) 1 else 0) + (if (state.inputMethodSelected) 1 else 0)
     val allDone = doneCount == 2
 
@@ -183,6 +250,7 @@ private fun SetupCard(state: HomeUiState, actions: HomeActions) {
             done = state.keyboardEnabled,
             active = !state.keyboardEnabled,
             onClick = actions.onEnableKeyboard,
+            modifier = Modifier.onGloballyPositioned { onStep1Bounds(it.boundsInRoot()) },
         )
         Spacer(Modifier.height(12.dp))
         SetupStep(
@@ -191,15 +259,23 @@ private fun SetupCard(state: HomeUiState, actions: HomeActions) {
             done = state.inputMethodSelected,
             active = state.keyboardEnabled && !state.inputMethodSelected,
             onClick = actions.onPickInputMethod,
+            modifier = Modifier.onGloballyPositioned { onStep2Bounds(it.boundsInRoot()) },
         )
     }
 }
 
 @Composable
-private fun SetupStep(index: Int, label: String, done: Boolean, active: Boolean, onClick: () -> Unit) {
+private fun SetupStep(
+    index: Int,
+    label: String,
+    done: Boolean,
+    active: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     if (active) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(TibetanTokens.GoldVertical)
@@ -220,7 +296,7 @@ private fun SetupStep(index: Int, label: String, done: Boolean, active: Boolean,
         }
     } else {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
