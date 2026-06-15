@@ -5,24 +5,17 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { checkGrammar } from "./services/grammarService";
 import advancedGrammarService from "./services/advancedGrammarService";
 import transliterationService from "./services/transliterationService";
 import {
-  validateApiKey,
-  checkUserLimits,
-  updateUserUsage,
-} from "./middleware/auth";
-import {
   validateTranslateRequest,
-  validateGrammarRequest,
   validateChatRequest,
+  enforceGlobalCharLimit,
 } from "./middleware/validation";
 import { errorHandler } from "./middleware/errorHandler";
 import {
   ApiResponse,
   TranslateRequest,
-  GrammarRequest,
   GeminiChatRequest,
   GeminiChatResponse,
 } from "./types";
@@ -123,6 +116,11 @@ const limiter = rateLimit({
 
 app.use(limiter);
 app.use(express.json({ limit: "10kb" }));
+
+// Global hard cap on user-typed input (text / message / query / documentContext)
+// for EVERY endpoint — the front-line guard against pasting a whole document
+// into one call to burn paid AI tokens. Runs after JSON parsing, before routes.
+app.use(enforceGlobalCharLimit);
 
 // Stricter per-IP limiter for the AI (Claude) endpoints — protects spend and
 // blocks abuse on the paid provider calls.
@@ -312,49 +310,12 @@ app.post("/chat/reset", async (req, res) => {
   }
 });
 
-// Grammar check endpoint
-app.post(
-  "/grammar",
-  //validateApiKey,
-  validateGrammarRequest,
-  checkUserLimits("grammar"),
-  async (req, res) => {
-    try {
-      const { text }: GrammarRequest = req.body;
-      const userId = (req as any).userId;
-
-      const grammarResult = await checkGrammar(text);
-
-      // Update user usage
-      //await updateUserUsage(userId, "grammar", text.length);
-
-      const response: ApiResponse<typeof grammarResult> = {
-        success: true,
-        data: grammarResult,
-        usage: {
-          charactersUsed: text.length,
-          remainingCharacters: (req as any).remainingCredits - text.length,
-        },
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error("Grammar check error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Grammar check failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  }
-);
-
 // ============================================
 // NEW PREMIUM FEATURE ENDPOINTS
 // ============================================
 
 // Advanced Tibetan Grammar Analysis Endpoint
-app.post("/api/grammar/analyze", async (req, res) => {
+app.post("/api/grammar/analyze", aiLimiter, async (req, res) => {
   try {
     const { text, mode = "realtime", style = "formal", contextualInfo } = req.body;
     const userId = req.headers["userid"] as string;
@@ -412,7 +373,7 @@ app.post("/api/grammar/analyze", async (req, res) => {
 });
 
 // Tone Alternatives Endpoint
-app.post("/api/grammar/suggestions", async (req, res) => {
+app.post("/api/grammar/suggestions", aiLimiter, async (req, res) => {
   try {
     const { text, correctionId, type } = req.body;
 
