@@ -15,12 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,10 +30,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.R
@@ -71,6 +80,8 @@ private fun langLabel(code: String): String = when (code) {
 
 @Composable
 fun TranslateScreen(state: TranslateUiState, actions: TranslateActions) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     ScreenScaffold(horizontalPadding = 18.dp) {
         BackHeader(stringResource(R.string.ai_translate), onBack = actions.onBack)
 
@@ -99,6 +110,11 @@ fun TranslateScreen(state: TranslateUiState, actions: TranslateActions) {
             isLoading = state.isLoading,
             enabled = state.input.length <= AiLimits.MAX_INPUT_CHARS,
             onClick = {
+                // Dismiss the soft keyboard so the result is fully visible.
+                // hide() is what actually collapses the IME; clearFocus() alone
+                // does not on most devices.
+                keyboardController?.hide()
+                focusManager.clearFocus(force = true)
                 if (!state.isPremium) actions.onUpgrade() else actions.onTranslate()
             },
         )

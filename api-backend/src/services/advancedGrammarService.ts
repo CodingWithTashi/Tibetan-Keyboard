@@ -53,9 +53,10 @@ class AdvancedGrammarService {
   private genAI: GoogleGenerativeAI;
 
   constructor() {
-    this.genAI = new GoogleGenerativeAI(
-      process.env.GEMINI_API_KEY || "AIzaSyCxUMaoBVH5SIII7Wa0uQYvjrjI9IjV9cg"
-    );
+    // Read the key from the environment ONLY. Never hardcode a fallback — a
+    // committed key is a leaked credential (rotate the old one in Google AI
+    // Studio). If unset, calls throw and the route returns a clean error.
+    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
   }
 
   async analyzeTibetanGrammar(

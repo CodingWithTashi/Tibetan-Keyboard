@@ -28,6 +28,9 @@ import { resolveModel } from "./services/anthropicService";
 import { resolveEngine, translate } from "./services/translateProvider";
 import { cachedCompute, makeCacheKey } from "./services/cacheService";
 import { attachProStatus, enforceFreeLimit } from "./middleware/proStatus";
+import { enforceGlobalDailyBudget } from "./middleware/globalBudget";
+import { sendFailure, USER_MESSAGES } from "./middleware/responses";
+import { RATE } from "./config/constants";
 import { revenueCatWebhook } from "./webhooks/revenueCatWebhook";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
@@ -122,16 +125,32 @@ app.use(express.json({ limit: "10kb" }));
 // into one call to burn paid AI tokens. Runs after JSON parsing, before routes.
 app.use(enforceGlobalCharLimit);
 
-// Stricter per-IP limiter for the AI (Claude) endpoints — protects spend and
-// blocks abuse on the paid provider calls.
+// Stricter per-IP limiter for the AI (Claude/Azure) endpoints — protects spend
+// and blocks burst abuse on the paid provider calls.
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // 30 AI requests per IP per minute
+  max: RATE.AI_PER_MINUTE,
   message: {
     success: false,
-    error: "Too many requests",
+    error: "rate_limited",
     message:
-      "Too many AI requests from this IP. Please slow down and try again shortly.",
+      "You're sending requests too quickly. Please slow down and try again in a moment.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Per-IP DAILY ceiling on the AI endpoints. The per-minute limiter stops bursts;
+// this bounds a single IP that drips requests all day (e.g. rotating the
+// `userid` header to dodge the per-user free caps).
+const aiDailyLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: RATE.AI_PER_DAY_PER_IP,
+  message: {
+    success: false,
+    error: "rate_limited",
+    message:
+      "You've reached the daily request limit for this device. Please try again tomorrow.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -146,9 +165,11 @@ app.get("/health", (req, res) => {
 app.post(
   "/translate",
   aiLimiter,
+  aiDailyLimiter,
   validateTranslateRequest,
   attachPro,
   enforceFreeLimit("translation"),
+  enforceGlobalDailyBudget,
   async (req, res) => {
     try {
       const { text, sourceLang, targetLang }: TranslateRequest = req.body;
@@ -184,24 +205,31 @@ app.post(
 
       logger.info("Translate success", { userId, engine, source });
 
+      // `remainingCredits` is only set for tracked (non-pro, identified/anon)
+      // users; pro users are unmetered. Report it only when we actually have it.
+      const remainingCredits = (req as any).remainingCredits;
+      const usage =
+        typeof remainingCredits === "number"
+          ? {
+              charactersUsed: text.length,
+              remainingCharacters: Math.max(0, remainingCredits),
+            }
+          : { charactersUsed: text.length };
+
       const response: ApiResponse<{ translatedText: string }> = {
         success: true,
         data: { translatedText },
-        usage: {
-          charactersUsed: text.length,
-          remainingCharacters: (req as any).remainingCredits - text.length,
-        },
+        usage,
       };
 
       res.json(response);
     } catch (error) {
-      logger.error("Translation error", {
-        message: error instanceof Error ? error.message : String(error),
-      });
-      res.status(500).json({
-        success: false,
-        error: "Translation failed",
-        message: error instanceof Error ? error.message : "Unknown error",
+      // Log the real error; return only a clean, user-facing message.
+      sendFailure(res, 500, {
+        error: "translation_failed",
+        message: USER_MESSAGES.TRANSLATE_FAILED,
+        cause: error,
+        logContext: { path: "/translate" },
       });
     }
   }
@@ -211,9 +239,11 @@ app.post(
 app.post(
   "/chat",
   aiLimiter,
+  aiDailyLimiter,
   validateChatRequest,
   attachPro,
   enforceFreeLimit("chat"),
+  enforceGlobalDailyBudget,
   async (req, res) => {
     try {
       const { message, sessionId, resetChat }: GeminiChatRequest = req.body;
@@ -269,15 +299,12 @@ app.post(
 
       res.json(response);
     } catch (error) {
-      logger.error("Chat error", {
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      res.status(500).json({
-        success: false,
-        error: "Chat failed",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
+      // Log the real error; return only a clean, user-facing message.
+      sendFailure(res, 500, {
+        error: "chat_failed",
+        message: USER_MESSAGES.CHAT_FAILED,
+        cause: error,
+        logContext: { path: "/chat" },
       });
     }
   }

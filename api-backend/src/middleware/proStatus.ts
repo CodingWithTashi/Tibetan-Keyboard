@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import { Request, Response, NextFunction } from "express";
 import * as logger from "firebase-functions/logger";
 import { getProFromRevenueCat } from "../services/revenueCatService";
-import { LIMITS } from "../config/constants";
+import { LIMITS, RATE } from "../config/constants";
 
 /**
  * Backend pro-status checks.
@@ -145,6 +145,11 @@ export function attachProStatus(getRcApiKey: () => string | undefined) {
   };
 }
 
+/** Firestore-safe doc id from a client IP (no "/" allowed in doc ids). */
+function ipDocId(ip: string | undefined): string {
+  return (ip || "unknown").replace(/[/]/g, "_");
+}
+
 /**
  * Enforce free-tier daily limits. Pro users (req.isPro) are skipped entirely.
  * Requires `attachProStatus` to have run first.
@@ -152,8 +157,11 @@ export function attachProStatus(getRcApiKey: () => string | undefined) {
  * - "chat": counts 1 per message, cap = FREE_DAILY_CHAT_MESSAGES.
  * - "translation": counts text.length chars, cap = DAILY_TRANSLATION_CHARS.
  *
- * Counters live on `users/{uid}` (chatUsed / translationUsed) and reset daily
- * via `resetDate` (UTC date). Fails OPEN — a Firestore blip won't block users.
+ * Identified users are tracked on `users/{uid}`. Anonymous/unidentified callers
+ * are NOT skipped — they'd otherwise get unlimited paid access by simply omitting
+ * the `userid` header — they're tracked per IP in `anon_usage/{ip}` with the
+ * (lower) anonymous daily caps. Counters reset daily via `resetDate` (UTC date).
+ * Fails OPEN — a Firestore blip won't block users.
  */
 export function enforceFreeLimit(service: "chat" | "translation") {
   return async (
@@ -168,25 +176,22 @@ export function enforceFreeLimit(service: "chat" | "translation") {
       return;
     }
 
-    // No identity to track against — fall back to the per-IP limiter only.
-    if (!userId || userId === "anonymous") {
-      logger.info("free-limit: skipped (anonymous user, no per-user tracking)", {
-        service,
-      });
-      next();
-      return;
-    }
-
+    const isAnon = !userId || userId === "anonymous";
     const usedField = service === "chat" ? "chatUsed" : "translationUsed";
     const cost = service === "chat" ? 1 : req.body?.text?.length || 0;
-    const limit =
-      service === "chat"
-        ? LIMITS.FREE_DAILY_CHAT_MESSAGES
-        : LIMITS.DAILY_TRANSLATION_CHARS;
+    const limit = isAnon
+      ? service === "chat"
+        ? RATE.ANON_DAILY_CHAT_MESSAGES
+        : RATE.ANON_DAILY_TRANSLATION_CHARS
+      : service === "chat"
+      ? LIMITS.FREE_DAILY_CHAT_MESSAGES
+      : LIMITS.DAILY_TRANSLATION_CHARS;
 
     const db = admin.firestore();
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD (UTC)
-    const userRef = db.collection("users").doc(userId);
+    const userRef = isAnon
+      ? db.collection("anon_usage").doc(ipDocId(req.ip))
+      : db.collection("users").doc(userId);
 
     try {
       const snap = await userRef.get();

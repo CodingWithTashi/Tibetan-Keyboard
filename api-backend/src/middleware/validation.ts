@@ -71,12 +71,25 @@ export function validateTranslateRequest(
   res: Response,
   next: NextFunction
 ): void {
+  // Require the userid header to be present (the app always sends it — the
+  // Firebase UID, or "anonymous" when logged out). This rejects header-less
+  // scripted calls; abuse from "anonymous" is still bounded per-IP downstream.
+  const userId = req.headers["userid"];
+  if (userId == null || userId === "" || userId === "undefined") {
+    res.status(400).json({
+      success: false,
+      error: "invalid_request",
+      message: "User ID is required in headers",
+    });
+    return;
+  }
+
   const { error } = translateSchema.validate(req.body);
 
   if (error) {
     res.status(400).json({
       success: false,
-      error: "Validation error",
+      error: "validation_error",
       message: error.details[0].message,
     });
     return;

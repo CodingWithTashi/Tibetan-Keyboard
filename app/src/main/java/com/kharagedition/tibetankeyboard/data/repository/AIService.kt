@@ -6,6 +6,7 @@ import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationRequest
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
 import com.kharagedition.tibetankeyboard.data.remote.RetrofitClient
+import com.kharagedition.tibetankeyboard.util.ApiErrors
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
@@ -81,10 +82,12 @@ class AIService {
                 )
 
             } catch (e: Exception) {
-                println("Translation error: ${e.message}")
-                e.printStackTrace()
+                // Map to a clean, user-facing message (no raw "HTTP 429" / host
+                // errors). On a 429 this surfaces the backend's daily-limit copy.
+                val apiError = ApiErrors.from(e)
+                println("Translation error: ${apiError.type} - ${e.message}")
                 TranslationResult(
-                    error = e.message,
+                    error = apiError.message,
                     translatedText = text,
                     sourceLanguage = getLanguageName(sourceLang),
                     targetLanguage = getLanguageName(targetLang),

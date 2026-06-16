@@ -5,7 +5,7 @@ export interface ApiResponse<T = any> {
   message?: string;
   usage?: {
     charactersUsed: number;
-    remainingCharacters: number;
+    remainingCharacters?: number;
   };
 }
 
