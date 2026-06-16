@@ -14,8 +14,8 @@ android {
         applicationId "com.kharagedition.tibetankeyboard"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 46
-        versionName "2.2.3"
+        versionCode 48
+        versionName "2.2.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -43,6 +43,12 @@ android {
         viewBinding = true
         buildConfig = true
         compose = true
+    }
+    packaging {
+        jniLibs {
+            // Store native libs uncompressed + 16 KB page-aligned (Android 15+ requirement).
+            useLegacyPackaging = false
+        }
     }
     configurations {
         configureEach {
