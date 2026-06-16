@@ -25,7 +25,10 @@ import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
+import com.google.firebase.auth.FirebaseAuth
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
@@ -69,6 +72,48 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         NORMAL,
         AI_GRAMMAR,
         AI_REPHRASE
+    }
+
+    companion object {
+        /** Shared logcat tag for the client subscription flow (`adb logcat -s SubsFlow:*`). */
+        private const val SUBS_TAG = "SubsFlow"
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        // The IME can start in a FRESH process with no app Activity having run first
+        // (the user just types in another app), and Application.onCreate does NOT
+        // configure RevenueCat. Without this, RevenueCatManager.isPremiumUser stays
+        // false inside the keyboard, so a PAYING user sees Chat/Translate/Autocomplete
+        // locked and gets routed to the paywall. Firebase Auth restores currentUser
+        // synchronously in any process, and initialize() is idempotent (a cheap logIn
+        // when already configured), so this is safe on every IME create.
+        initializeRevenueCatForKeyboard()
+    }
+
+    /**
+     * Configure RevenueCat for this process so the keyboard knows the user's PRO status.
+     * No-ops for signed-out users (the keyboard simply runs free-tier). All lines are
+     * prefixed `subs-flow:` so the whole subscription path is greppable in logcat:
+     *   adb logcat | grep subs-flow
+     */
+    private fun initializeRevenueCatForKeyboard() {
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser
+        if (user == null) {
+            Log.d(SUBS_TAG, "subs-flow: IME onCreate — no Firebase user; keyboard runs free-tier")
+            return
+        }
+        Log.i(SUBS_TAG, "subs-flow: IME onCreate — initializing RevenueCat for uid=${user.uid}")
+        RevenueCatManager.getInstance().initialize(applicationContext, auth, subscriptionCallback(
+            onSuccess = {
+                Log.i(
+                    SUBS_TAG,
+                    "subs-flow: IME RevenueCat ready — premium=${RevenueCatManager.getInstance().isPremiumUserCached()}"
+                )
+            },
+            onError = { Log.w(SUBS_TAG, "subs-flow: IME RevenueCat init failed: $it") },
+        ))
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {

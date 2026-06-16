@@ -172,6 +172,8 @@ export function enforceFreeLimit(service: "chat" | "translation") {
     const userId = (req as any).userId as string;
 
     if ((req as any).isPro) {
+      // Explicit confirmation that a paying user reached the unmetered branch.
+      logger.info("free-limit: skipped (pro user, unmetered)", { userId, service });
       next();
       return;
     }

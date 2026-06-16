@@ -314,6 +314,11 @@ class RevenueCatManager private constructor() {
             object : PurchaseCallback {
                 override fun onCompleted(storeTransaction: StoreTransaction, customerInfo: CustomerInfo) {
                     _isLoading.value = false
+                    Log.i(
+                        TAG,
+                        "subs-flow: purchase completed — appUserId=${currentAppUserId(customerInfo)} " +
+                            "order=${storeTransaction.orderId} products=${storeTransaction.productIds.joinToString()}"
+                    )
                     Log.d(TAG, "==== Purchase Successful ====")
                     Log.d(TAG, "Transaction ID: ${storeTransaction.orderId}")
                     Log.d(TAG, "Product IDs: ${storeTransaction.productIds.joinToString()}")
@@ -390,6 +395,20 @@ class RevenueCatManager private constructor() {
 
         _isPremiumUser.value = isPremium
 
+        // Single greppable confirmation of the client's entitlement decision — mirrors the
+        // backend's `pro-status:` lines. Filter with: adb logcat | grep subs-flow
+        // IMPORTANT: log the CURRENT app user id (== Firebase UID == the backend's
+        // app_user_id), NOT customerInfo.originalAppUserId — the latter returns the
+        // historical/original alias (often "$RCAnonymousID:...") and is misleading when
+        // checking that client/server identities line up.
+        Log.i(
+            TAG,
+            "subs-flow: entitlement resolved — appUserId=${currentAppUserId(customerInfo)} " +
+                "premium=$isPremium expires=${proEntitlement?.expirationDate} " +
+                "willRenew=${proEntitlement?.willRenew} " +
+                "activeSubs=${customerInfo.activeSubscriptions.joinToString()}"
+        )
+
         Log.d(TAG, "==== Premium Status Update ====")
         Log.d(TAG, "App User ID: ${customerInfo.originalAppUserId}")
         Log.d(TAG, "Premium Status: $isPremium")
@@ -398,6 +417,15 @@ class RevenueCatManager private constructor() {
         Log.d(TAG, "Active Subscriptions: ${customerInfo.activeSubscriptions.joinToString()}")
         Log.d(TAG, "============================")
     }
+
+    /**
+     * The CURRENT identified app user id (Firebase UID after logIn/configure) — this is what
+     * RevenueCat sends as `app_user_id` to the webhook and what the backend keys pro state on.
+     * Falls back to the customer's original id only if the SDK isn't configured yet. Use this
+     * for identity logging, never [CustomerInfo.originalAppUserId] (the historical alias).
+     */
+    private fun currentAppUserId(customerInfo: CustomerInfo): String =
+        runCatching { Purchases.sharedInstance.appUserID }.getOrDefault(customerInfo.originalAppUserId)
 
     /**
      * Get premium package details for UI display
