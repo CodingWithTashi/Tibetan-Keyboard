@@ -190,7 +190,7 @@ class HomeActivity : InputMethodActivity() {
 
     @SuppressLint("NewApi")
     private fun loadNativeAd() {
-        val adUnitId = if (BuildConfig.DEBUG) AppConstant.TEST_APP_ID else AppConstant.PRODUCTION_ADS_NATIVE
+        val adUnitId = if (BuildConfig.DEBUG) AppConstant.TEST_ADS_NATIVE else AppConstant.PRODUCTION_ADS_NATIVE
         AdLoader.Builder(this, adUnitId)
             .forNativeAd { ad: NativeAd ->
                 if (isDestroyed) { ad.destroy(); return@forNativeAd }

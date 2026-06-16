@@ -208,6 +208,7 @@ public class TemplateView extends FrameLayout {
     nativeAdView.setCallToActionView(callToActionView);
     nativeAdView.setHeadlineView(primaryView);
     nativeAdView.setMediaView(mediaView);
+    nativeAdView.setIconView(iconView);
     secondaryView.setVisibility(VISIBLE);
     if (adHasOnlyStore(nativeAd)) {
       nativeAdView.setStoreView(secondaryView);
