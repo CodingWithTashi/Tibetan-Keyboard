@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BackHeader
+import com.kharagedition.tibetankeyboard.ui.compose.components.CharCounter
 import com.kharagedition.tibetankeyboard.ui.compose.components.ModelSelector
 import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenScaffold
 import com.kharagedition.tibetankeyboard.ui.compose.components.SectionLabel
@@ -44,6 +45,7 @@ import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
+import com.kharagedition.tibetankeyboard.util.AiLimits
 
 class TranslateActions(
     val onBack: () -> Unit,
@@ -95,6 +97,7 @@ fun TranslateScreen(state: TranslateUiState, actions: TranslateActions) {
         Spacer(Modifier.height(14.dp))
         TranslateButton(
             isLoading = state.isLoading,
+            enabled = state.input.length <= AiLimits.MAX_INPUT_CHARS,
             onClick = {
                 if (!state.isPremium) actions.onUpgrade() else actions.onTranslate()
             },
@@ -193,31 +196,37 @@ private fun InputCard(state: TranslateUiState, actions: TranslateActions) {
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        Spacer(Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            CharCounter(current = state.input.length)
+        }
     }
 }
 
 @Composable
-private fun TranslateButton(isLoading: Boolean, onClick: () -> Unit) {
+private fun TranslateButton(isLoading: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val active = enabled && !isLoading
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(TibetanTokens.GoldVertical)
-            .clickable(enabled = !isLoading, onClick = onClick)
+            .background(if (enabled) TibetanTokens.GoldVertical else SolidColor(TibetanColors.Brown600))
+            .clickable(enabled = active, onClick = onClick)
             .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
+        val contentColor = if (enabled) TibetanColors.Espresso else TibetanColors.CreamDim
         if (isLoading) {
             CircularProgressIndicator(
-                color = TibetanColors.Espresso,
+                color = contentColor,
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(20.dp),
             )
         } else {
-            Icon(AppIcons.Translate, null, tint = TibetanColors.Espresso, modifier = Modifier.size(20.dp))
+            Icon(AppIcons.Translate, null, tint = contentColor, modifier = Modifier.size(20.dp))
             Spacer(Modifier.size(8.dp))
-            Text(stringResource(R.string.translate), color = TibetanColors.Espresso, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.translate), color = contentColor, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

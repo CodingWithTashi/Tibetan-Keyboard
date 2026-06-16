@@ -8,6 +8,7 @@ import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.data.repository.AIService
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
+import com.kharagedition.tibetankeyboard.util.AiLimits
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,6 +75,14 @@ class TranslateViewModel(app: Application) : AndroidViewModel(app) {
     fun translate() {
         val state = _uiState.value
         if (state.input.isBlank() || state.isLoading) return
+        // Mirror the backend per-request cap (api-backend constants.ts). Guard
+        // here too so the abuse limit holds even if the UI button is bypassed.
+        if (state.input.length > AiLimits.MAX_INPUT_CHARS) {
+            _uiState.update {
+                it.copy(error = "Maximum ${AiLimits.MAX_INPUT_CHARS} characters allowed.", output = "")
+            }
+            return
+        }
 
         _uiState.update { it.copy(isLoading = true, error = null, output = "") }
         viewModelScope.launch {

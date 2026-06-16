@@ -118,8 +118,11 @@ fun Context.showLongToast(message: String) {
 }
 
 /**
- * Validate message length
+ * Validate message length against the shared AI request cap.
+ *
+ * Defaults to [AiLimits.MAX_INPUT_CHARS] so the client rejects at the same
+ * threshold the backend does (`api-backend/src/config/constants.ts`).
  */
-fun String.isValidMessage(maxLength: Int = 300): Boolean {
+fun String.isValidMessage(maxLength: Int = AiLimits.MAX_INPUT_CHARS): Boolean {
     return isNotBlank() && length <= maxLength
 }

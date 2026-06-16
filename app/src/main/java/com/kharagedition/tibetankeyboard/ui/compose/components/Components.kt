@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
+import com.kharagedition.tibetankeyboard.util.AiLimits
 
 /** Tibetan-script text using the bundled Uchen font. */
 @Composable
@@ -124,6 +125,29 @@ fun SectionLabel(
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 0.7.sp,
+    )
+}
+
+/**
+ * Live `current / max` character counter for AI inputs (chat & translate).
+ *
+ * Always visible so the user sees the per-request cap
+ * ([AiLimits.MAX_INPUT_CHARS]) and watches it update as they type. Turns
+ * warning-red once over the limit so the over-cap state reads at a glance.
+ */
+@Composable
+fun CharCounter(
+    current: Int,
+    modifier: Modifier = Modifier,
+    max: Int = AiLimits.MAX_INPUT_CHARS,
+) {
+    val over = current > max
+    Text(
+        text = "$current / $max",
+        modifier = modifier,
+        color = if (over) TibetanColors.MaroonSoft else TibetanColors.CreamDim,
+        fontSize = 11.5.sp,
+        fontWeight = if (over) FontWeight.Bold else FontWeight.Normal,
     )
 }
 

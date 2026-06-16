@@ -166,6 +166,7 @@
     <string name="error_message_required">Message is required</string>
     <string name="text_required">Text is required</string>
     <string name="message_too_long_or_short">Message too long or short</string>
+    <string name="input_too_long">Maximum %1$d characters allowed.</string>
     <string name="analysis_complete">Analysis complete</string>
     <string name="please_enter_text">Please enter text to analyze</string>
 
