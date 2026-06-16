@@ -39,8 +39,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.input.PlatformImeOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.R
@@ -50,6 +49,7 @@ import com.kharagedition.tibetankeyboard.ui.compose.components.CharCounter
 import com.kharagedition.tibetankeyboard.ui.compose.components.ModelSelector
 import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenScaffold
 import com.kharagedition.tibetankeyboard.ui.compose.components.SectionLabel
+import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
@@ -209,6 +209,16 @@ private fun InputCard(state: TranslateUiState, actions: TranslateActions) {
                 onValueChange = actions.onInputChange,
                 textStyle = TextStyle(color = TibetanColors.Cream, fontSize = 16.sp, fontFamily = LocalTibetanFont.current),
                 cursorBrush = SolidColor(TibetanColors.Gold300),
+                // Tell our IME which script the source language expects so it opens
+                // on the right layout (QWERTY for an English source, Uchen for
+                // Tibetan) instead of leaving the user on the last-used language.
+                keyboardOptions = remember(state.sourceLang) {
+                    KeyboardOptions(
+                        platformImeOptions = PlatformImeOptions(
+                            privateImeOptions = KeyboardLayoutHint.privateImeOption(state.sourceLang),
+                        ),
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

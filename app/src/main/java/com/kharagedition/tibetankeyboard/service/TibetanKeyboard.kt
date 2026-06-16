@@ -31,6 +31,7 @@ import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
+import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiKeyboardView
@@ -52,6 +53,12 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     private var emojiKeyboardView: EmojiKeyboardView? = null
     private var isEmojiMode = false
 
+    // Per-field layout override requested by the focused field via
+    // EditorInfo.privateImeOptions (e.g. the AI Translate source field forces
+    // QWERTY for an English source). true → Tibetan, false → QWERTY, null →
+    // honour the user's own saved language choice. Set on every onStartInputView.
+    private var forcedTibetan: Boolean? = null
+
     // Tracks how many Unicode code points the user has typed since the last word boundary.
     // Used to know exactly what to delete when a suggestion is selected.
     // Resets on: shad (།), space, newline, or suggestion commit.
@@ -66,6 +73,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         currentWordLength = 0
+        // Read the focused field's requested layout before (re)building the view,
+        // so onCreateInputView can open on the matching language.
+        forcedTibetan = KeyboardLayoutHint.forcedTibetan(info?.privateImeOptions)
         if (!restarting) AppAnalytics.logKeyboardShown()
         setInputView(onCreateInputView())
         super.onStartInputView(info, restarting)
@@ -88,6 +98,10 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
         isLanguageTibetan = getSharedPreferences("com.kharagedition.tibetankeyboard", MODE_PRIVATE).getBoolean(
             AppConstant.IS_TIB,true)
+        // A focused field can override the saved choice for itself only (e.g. the
+        // Translate source field). Doesn't touch the persisted preference, so the
+        // user's language in every other app is unaffected.
+        forcedTibetan?.let { isLanguageTibetan = it }
         keyboard = if(isLanguageTibetan){
             Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
         }else{
