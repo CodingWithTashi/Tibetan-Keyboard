@@ -1,12 +1,15 @@
 package com.kharagedition.tibetankeyboard.app
 
+import android.app.Activity
 import android.app.Application
 import android.content.SharedPreferences
+import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.analytics.UserActivityTracker
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.revenuecat.purchases.LogLevel
 import com.revenuecat.purchases.Purchases
@@ -34,6 +37,9 @@ class TibetanKeyboardApp : Application() {
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
         // Product analytics — release-only (no-op in debug builds, see AppAnalytics).
         AppAnalytics.init(this)
+        // Per-user activity aggregates (users/{uid}.activity) — drives the "most active users"
+        // Firestore query. Throttled to one write/user/day, so resuming any screen is cheap.
+        registerActivityLifecycleCallbacks(activityTracker)
         // setup RevenueCat
         setUpRevenueCat()
         val enableEventNotification = prefs.getBoolean("event_notification", true)
@@ -52,5 +58,22 @@ class TibetanKeyboardApp : Application() {
         // RevenueCat will be configured in RevenueCatManager when user is authenticated
         // This ensures purchases are always tied to the Firebase user ID
         Purchases.logLevel = LogLevel.DEBUG
+    }
+
+    /**
+     * Records a daily activity ping whenever any app screen comes to the foreground. The tracker
+     * itself is throttled (one write/user/day), so a ping on every resume is intentional and cheap.
+     */
+    private val activityTracker = object : ActivityLifecycleCallbacks {
+        override fun onActivityResumed(activity: Activity) {
+            UserActivityTracker.recordActive(activity, UserActivityTracker.Source.APP)
+        }
+
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+        override fun onActivityStarted(activity: Activity) {}
+        override fun onActivityPaused(activity: Activity) {}
+        override fun onActivityStopped(activity: Activity) {}
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+        override fun onActivityDestroyed(activity: Activity) {}
     }
 }

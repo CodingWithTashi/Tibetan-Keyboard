@@ -27,6 +27,7 @@ import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
 import com.google.firebase.auth.FirebaseAuth
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.analytics.UserActivityTracker
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
@@ -121,7 +122,11 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         // Read the focused field's requested layout before (re)building the view,
         // so onCreateInputView can open on the matching language.
         forcedTibetan = KeyboardLayoutHint.forcedTibetan(info?.privateImeOptions)
-        if (!restarting) AppAnalytics.logKeyboardShown()
+        if (!restarting) {
+            AppAnalytics.logKeyboardShown()
+            // Count keyboard usage toward the user's daily activity (throttled to one write/day).
+            UserActivityTracker.recordActive(this, UserActivityTracker.Source.KEYBOARD)
+        }
         setInputView(onCreateInputView())
         super.onStartInputView(info, restarting)
     }
