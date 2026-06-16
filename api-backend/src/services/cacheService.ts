@@ -36,12 +36,36 @@ export interface CachedResult {
   source: CacheSource;
 }
 
+/**
+ * Stable JSON serialization: object keys are sorted recursively at every depth,
+ * so two structurally-equal inputs always produce the same string.
+ *
+ * NB: do NOT use `JSON.stringify(value, keys.sort())` for this. The array form
+ * of the replacer is a property *allowlist* applied recursively, so any nested
+ * object whose keys aren't in the top-level list (e.g. each chat message's
+ * `role`/`content`) is silently stripped to `{}` — collapsing distinct inputs
+ * onto the same cache key.
+ */
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value) ?? "null";
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  const obj = value as Record<string, unknown>;
+  const entries = Object.keys(obj)
+    .sort()
+    .map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`);
+  return `{${entries.join(",")}}`;
+}
+
 /** Deterministic cache key from a namespace + the inputs that define the output. */
 export function makeCacheKey(
   namespace: string,
   parts: Record<string, unknown>
 ): string {
-  const canonical = JSON.stringify(parts, Object.keys(parts).sort());
+  const canonical = stableStringify(parts);
   const hash = crypto
     .createHash("sha256")
     .update(`${namespace}:${canonical}`)

@@ -27,6 +27,34 @@ test("different inputs produce different keys", () => {
   assert.notEqual(a, b);
 });
 
+test("nested object content differentiates keys (chat messages)", () => {
+  // Regression: the array-replacer form of JSON.stringify stripped nested keys,
+  // collapsing every first-turn chat message onto one cache key.
+  const a = makeCacheKey("chat", {
+    model: "m",
+    system: "sys",
+    messages: [{ role: "user", content: "hello" }],
+  });
+  const b = makeCacheKey("chat", {
+    model: "m",
+    system: "sys",
+    messages: [{ role: "user", content: "what is the weather?" }],
+  });
+  assert.notEqual(a, b);
+});
+
+test("nested keys are order-independent", () => {
+  const a = makeCacheKey("chat", {
+    messages: [{ role: "user", content: "hi" }],
+    model: "m",
+  });
+  const b = makeCacheKey("chat", {
+    model: "m",
+    messages: [{ content: "hi", role: "user" }],
+  });
+  assert.equal(a, b);
+});
+
 test("first call hits provider, second identical call hits memory", async () => {
   let calls = 0;
   const provider = async () => {

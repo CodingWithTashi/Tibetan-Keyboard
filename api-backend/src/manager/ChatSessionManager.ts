@@ -4,7 +4,6 @@ import {
   resolveModel,
   DEFAULT_MODEL,
 } from "../services/anthropicService";
-import { cachedCompute, makeCacheKey } from "../services/cacheService";
 
 type ChatMode = "general" | "tutoring" | "translation";
 type TutoringLevel = "beginner" | "intermediate" | "advanced";
@@ -77,21 +76,15 @@ class ChatSessionManager {
     );
 
     try {
-      // Cache keyed by model + system + the exact message sequence, so an
-      // identical conversation turn is served from cache instead of re-billing.
-      const key = makeCacheKey("chat", { model, system, messages: requestMessages });
-      const { value, source } = await cachedCompute(
-        key,
-        () => createMessage(model, system, requestMessages, 1024),
-        { type: "chat", model }
-      );
-
-      let response = value;
+      // Chat is intentionally NOT cached: every turn is context-dependent, so we
+      // always call the AI for a fresh, conversation-correct reply. (Translation
+      // is deterministic and still uses the cache in index.ts.)
+      let response = await createMessage(model, system, requestMessages, 1024);
       if (!response || response.length === 0) {
         response =
           "དགོངས་དག། ལན་འདེབས་དཀའ་ངལ་འཕྲད་སོང་། ཡང་བསྐྱར་འབད་བརྩོན་གནང་རོགས།";
       }
-      console.log(`Chat (${model}) served from ${source}`);
+      console.log(`Chat (${model}) responded`);
 
       // Persist the turn for conversation continuity.
       const assistantTurn: ClaudeMessage = { role: "assistant", content: response };
@@ -143,7 +136,14 @@ class ChatSessionManager {
 - You are Lundup, an expert in Tibetan language and culture.
 - You must respond ONLY in Tibetan script (བོད་ཡིག་).
 - Do not respond in any language other than Tibetan script.
-- Be respectful and culturally sensitive.`;
+- Be respectful and culturally sensitive.
+- Answer the user's actual question directly and precisely. Stay strictly on topic.
+- Be concise: respond in as few words as the question needs. For a greeting or a
+  simple question, reply with a single short sentence.
+- Do NOT add preambles, filler, restatements of the question, disclaimers, or
+  follow-up offers unless the user asks for them.
+- Only give a long, detailed answer when the user explicitly asks to explain,
+  elaborate, or for a list/steps.`;
 
     let modeSpecific = "";
 
@@ -189,10 +189,9 @@ class ChatSessionManager {
       case "general":
       default:
         modeSpecific = `\n\nGeneral Chat Mode:
-- Engage in helpful, friendly conversation.
-- Answer questions about Tibetan language and culture.
-- Provide information and guidance.
-- Be conversational and natural.`;
+- Answer questions about Tibetan language and culture directly and to the point.
+- Keep replies short and natural; match the length of the response to the question.
+- Skip greetings-padding, summaries, and "let me know if…" closers.`;
     }
 
     let documentInfo = "";
