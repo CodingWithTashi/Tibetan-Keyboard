@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Primary gold CTA (Replace / Apply / inner action) — gold gradient, darker when pressed. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#FF704C04" />
-            <corners android:radius="12dp" />
+            <gradient
+                android:startColor="#FFCF9A2A"
+                android:endColor="#FFB07A1A"
+                android:angle="270" />
+            <corners android:radius="14dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#FF704C04" />
-            <corners android:radius="12dp" />
+            <gradient
+                android:startColor="#FFF2C264"
+                android:centerColor="#FFE7B14E"
+                android:endColor="#FFCF9A2A"
+                android:angle="270" />
+            <corners android:radius="14dp" />
+            <stroke android:width="0.5dp" android:color="#66FFE9B8" />
         </shape>
     </item>
 </selector>

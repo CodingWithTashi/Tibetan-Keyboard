@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Raised key cap: gradient brown cap above a darker bottom edge (the sh-key shadow). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:bottom="2dp">
+    <!-- bottom shadow edge -->
+    <item android:left="3dp" android:right="3dp" android:top="5dp" android:bottom="2dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/keyboard_background_color"/>
+            <corners android:radius="10dp" />
+            <solid android:color="#FF241808" />
+        </shape>
+    </item>
+
+    <!-- raised cap -->
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#FF7A5C1F"
+                android:endColor="#FF463110" />
+            <stroke android:width="0.6dp" android:color="#1FFCF5E8" />
         </shape>
     </item>
 
 </layer-list>
-

@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Tibetan Keyboard</string>
+    <string name="ime_subtype_tibetan">Tibetan (Lhasa)</string>
     <string name="author_name">by Kharag Edition</string>
     <string name="question_mark">\u003F</string>
     <string name="at_rate">\u0040</string>
@@ -70,6 +71,17 @@
     <string name="default_web_client_id">116616062750-5kt7phap4d1o0vcusigk3ttg3dlcijfd.apps.googleusercontent.com</string>
     <string name="fix">Fix</string>
     <string name="translate">Translate</string>
+    <string name="pro_badge">PRO</string>
+    <string name="unlock_pro">Unlock PRO</string>
+    <string name="cd_ai_chat">AI Chat</string>
+    <string name="cd_autocomplete">Autocomplete</string>
+    <string name="translate_original">ORIGINAL</string>
+    <string name="translate_suggested">✦ SUGGESTED</string>
+    <string name="translate_summary">SUMMARY</string>
+    <string name="translate_engine_label">ENGINE</string>
+    <string name="engine_azure">Azure</string>
+    <string name="engine_haiku">Haiku</string>
+    <string name="engine_sonnet">Sonnet</string>
     <string name="rephrase">Rephrase</string>
     <string name="retry">Retry</string>
     <string name="use_translation">Use Translation</string>
@@ -143,9 +155,7 @@
 
     <!-- Premium Features -->
     <string name="premium_feature">Premium Feature</string>
-    <string name="premium_required">This feature is available only for Premium users.\n\nUpgrade now to unlock all features!\n1. AI Chat\n2. Google Translate\n3. Ad-free Experience\n4. Priority Support</string>
     <string name="upgrade">Upgrade</string>
-    <string name="maybe_later">Maybe Later</string>
     <string name="daily_limit_exceeded">Daily limit exceeded.\n\nUpgrade to Premium for unlimited access!</string>
     <string name="remaining_uses">You have %d uses remaining today.\n\nUpgrade to Premium for unlimited access!</string>
 
@@ -157,6 +167,7 @@
     <string name="error_message_required">Message is required</string>
     <string name="text_required">Text is required</string>
     <string name="message_too_long_or_short">Message too long or short</string>
+    <string name="input_too_long">Maximum %1$d characters allowed.</string>
     <string name="analysis_complete">Analysis complete</string>
     <string name="please_enter_text">Please enter text to analyze</string>
 
@@ -182,5 +193,86 @@
 
     <!-- Time Formats -->
     <string name="time_format">MMM dd, HH:mm</string>
+
+    <!-- Auth / dialogs -->
+    <string name="sign_out_confirm">Are you sure you want to sign out?</string>
+    <string name="signed_out">Signed out successfully</string>
+    <string name="purchases_restored">Purchases restored</string>
+
+    <!-- Chat -->
+    <string name="message_invalid">Message too long or short</string>
+    <string name="copied">Copied</string>
+    <string name="clear_chat_confirm">Are you sure you want to clear all messages?</string>
+    <string name="clear">Clear</string>
+    <string name="chat_cleared">Chat cleared</string>
+
+    <!-- Compose UI chrome -->
+    <string name="bo_app_name">བོད་ཡིག་མཐེབ་གཞོང་</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_menu">Menu</string>
+    <string name="cd_send">Send</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="action_themes">Themes</string>
+    <string name="action_about">About</string>
+    <string name="go_pro">Go Pro</string>
+    <string name="go_pro_subtitle">No ads · AI · word suggestions</string>
+    <string name="how_to_set_up">How to set up</string>
+    <string name="try_keyboard_here">Try your keyboard here</string>
+    <string name="setup_enable_keyboard">Enable Tibetan Keyboard</string>
+    <string name="setup_choose_input">Choose input method</string>
+    <string name="setup_progress">%1$d of 2</string>
+    <!-- Tap-target coach marks guiding first-time keyboard setup -->
+    <string name="setup_coach_step1_title">Turn on Tibetan Keyboard</string>
+    <string name="setup_coach_step1_desc">Tap here to open your phone\'s keyboard settings, then switch on Tibetan Keyboard in the list.</string>
+    <string name="setup_coach_step2_title">Switch to Tibetan Keyboard</string>
+    <string name="setup_coach_step2_desc">Tap here, then pick Tibetan Keyboard from the popup to start typing.</string>
+    <string name="setup_coach_got_it">Got it</string>
+    <string name="setup_coach_hint">Tap the highlighted step to continue</string>
+    <string name="cd_setup_coach">Setup guide overlay</string>
+    <string name="design_and_ui">Design &amp; UI</string>
+    <string name="sound_and_control">Sound &amp; Control</string>
+    <string name="title_notification">Notification</string>
+    <string name="title_account">Account</string>
+    <string name="keyboard_background_title">Keyboard Background</string>
+    <string name="keyboard_layout_title">Keyboard Layout</string>
+    <string name="vibrate_on_tap">Vibrate on tap</string>
+    <string name="sound_on_tap">Sound on tap</string>
+    <string name="event_notifications">Event notifications</string>
+    <string name="subscription">Subscription</string>
+    <string name="premium_plan">Premium plan</string>
+    <string name="free_plan">Free plan</string>
+    <string name="logout">Logout</string>
+    <string name="done">Done</string>
+    <string name="ai_assistant">AI Assistant</string>
+    <string name="online_tibetan">Online · Tibetan</string>
+    <string name="clear_chat_action">Clear chat</string>
+    <string name="copy">Copy</string>
+    <string name="premium_title">Tibetan Keyboard Pro</string>
+    <string name="unlock_everything">Unlock everything</string>
+    <string name="monthly">Monthly</string>
+    <string name="cancel_anytime">Cancel anytime</string>
+    <string name="start_subscription">Start subscription</string>
+    <string name="restore_purchase">Restore purchase</string>
+    <string name="terms_privacy">Terms · Privacy</string>
+    <string name="about_this_app">About this app</string>
+    <string name="more_from_kharag">MORE FROM KHARAGEDITION</string>
+    <string name="github">GitHub</string>
+    <string name="contact">Contact</string>
+    <string name="get">Get</string>
+    <string name="welcome">Welcome</string>
+    <string name="by_signing_in">By signing in, you agree to our</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="and_word"> and </string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="version_label">Version %1$s</string>
+
+    <!-- AI Translate -->
+    <string name="ai_translate">AI Translate</string>
+    <string name="translate_input_hint">Enter text to translate…</string>
+    <string name="translate_empty_hint">The translation will appear here.</string>
+    <string name="cd_swap_languages">Swap languages</string>
+    <string name="lang_tibetan">Tibetan</string>
+    <string name="lang_english">English</string>
+    <string name="lang_chinese">Chinese</string>
 
 </resources>

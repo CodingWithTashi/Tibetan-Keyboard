@@ -5,7 +5,7 @@ export interface ApiResponse<T = any> {
   message?: string;
   usage?: {
     charactersUsed: number;
-    remainingCharacters: number;
+    remainingCharacters?: number;
   };
 }
 
@@ -42,6 +42,7 @@ export interface GeminiChatRequest {
   message: string;
   sessionId?: string;
   resetChat?: boolean;
+  model?: string;
 }
 
 export interface GeminiChatResponse {
@@ -49,11 +50,12 @@ export interface GeminiChatResponse {
   data?: {
     response: string;
     sessionId: string;
+    messageId?: string;
   };
   error?: string;
   message?: string;
   usage?: {
     charactersUsed: number;
-    remainingCharacters: number;
+    remainingCharacters?: number;
   };
 }

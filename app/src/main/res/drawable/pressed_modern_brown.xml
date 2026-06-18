@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Flat modern key, pressed: gold-tinted highlight fill. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Pressed key background -->
-    <item
-        android:left="2dp"
-        android:right="2dp"
-        android:top="2dp"
-        android:bottom="6dp">
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
-            <corners android:radius="8dp"/>
-            <solid android:color="@color/keyboard_pressed"/>
-            <stroke android:width="0.5dp" android:color="#60FFFFFF"/>
+            <corners android:radius="10dp" />
+            <solid android:color="#40F2C264" />
+            <stroke android:width="0.6dp" android:color="#55F2C264" />
         </shape>
     </item>
-
 </layer-list>
-

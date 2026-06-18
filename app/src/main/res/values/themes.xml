@@ -34,10 +34,25 @@
         <item name="android:stateListAnimator">@null</item>
     </style>
 
-    <style name="CustomAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:background">@color/brown_500</item>
-        <item name="android:textColorPrimary">@color/white</item>
-        <item name="android:textColorSecondary">@color/white</item>
+    <!-- Warm dark-warm Material alert dialog used by showConfirmationDialog. -->
+    <style name="CustomAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorSurface">@color/tk_brown_700</item>
+        <item name="colorOnSurface">@color/tk_cream</item>
+        <item name="colorPrimary">@color/tk_gold</item>
+        <item name="android:textColorPrimary">@color/tk_cream</item>
+        <item name="android:textColorSecondary">@color/tk_cream_dim</item>
+        <item name="shapeAppearanceMediumComponent">@style/TkDialogShape</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TkDialogTitle</item>
+    </style>
+
+    <style name="TkDialogShape" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="TkDialogTitle" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/tk_cream</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
         <style name="SearchKeyStyle">

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gold "monk-robe" upsell pill: warm gradient + soft border, fully rounded. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#FFF2C264"
+        android:centerColor="#FFE7B14E"
+        android:endColor="#FFCF9A2A"
+        android:angle="270" />
+    <corners android:radius="18dp" />
+    <stroke
+        android:width="0.5dp"
+        android:color="#66FFE9B8" />
+</shape>

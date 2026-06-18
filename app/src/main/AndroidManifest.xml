@@ -11,7 +11,7 @@
 
 
     <application
-        android:name=".TibetanKeyboardApp"
+        android:name=".app.TibetanKeyboardApp"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,27 +20,40 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TibetanKeyboard">
         <service
-            android:name=".MyFirebaseMessagingService"
+            android:name=".service.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
         <activity
-            android:name=".LoginActivity"
+            android:name=".ui.login.LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.ChatActivity"
+            android:name=".ui.chat.ChatActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.translate.TranslateActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.settings.SettingsActivity"
             android:exported="true"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".ui.HomeActivity" />
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.subscription.PremiumActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.about.AboutActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.home.HomeActivity" />
 
         <service
-            android:name=".TibetanKeyboard"
+            android:name=".service.TibetanKeyboard"
             android:exported="true"
             android:label="Tibetan Keyboard"
             android:permission="android.permission.BIND_INPUT_METHOD">
@@ -54,7 +67,7 @@
         </service>
 
         <activity
-            android:name=".ui.SplashScreenActivity"
+            android:name=".ui.splash.SplashScreenActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -63,7 +76,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.HomeActivity"
+            android:name=".ui.home.HomeActivity"
             android:hardwareAccelerated="true" />
 
         <meta-data

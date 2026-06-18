@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Neutral dark-warm card (Original / Summary) — espresso surface + hairline cream border. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/tk_brown_700" />
+    <corners android:radius="14dp" />
+    <stroke android:width="1dp" android:color="#1FFCF5E8" />
+</shape>

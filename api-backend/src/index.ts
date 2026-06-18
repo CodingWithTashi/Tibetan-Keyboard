@@ -5,35 +5,35 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { checkGrammar } from "./services/grammarService";
 import advancedGrammarService from "./services/advancedGrammarService";
 import transliterationService from "./services/transliterationService";
 import {
-  validateApiKey,
-  checkUserLimits,
-  updateUserUsage,
-} from "./middleware/auth";
-import {
   validateTranslateRequest,
-  validateGrammarRequest,
   validateChatRequest,
+  enforceGlobalCharLimit,
 } from "./middleware/validation";
 import { errorHandler } from "./middleware/errorHandler";
 import {
   ApiResponse,
   TranslateRequest,
-  GrammarRequest,
   GeminiChatRequest,
   GeminiChatResponse,
 } from "./types";
-import { translateText } from "./services/translationService";
-import { freeTranslateText } from "./services/freeTranslationService";
 import { log } from "console";
 import {
   ChatSessionManager,
   generateSessionId,
 } from "./manager/ChatSessionManager";
-import { user } from "firebase-functions/v1/auth";
+import { resolveModel } from "./services/anthropicService";
+import { resolveEngine, translate } from "./services/translateProvider";
+import { cachedCompute, makeCacheKey } from "./services/cacheService";
+import { attachProStatus, enforceFreeLimit } from "./middleware/proStatus";
+import { enforceGlobalDailyBudget } from "./middleware/globalBudget";
+import { sendFailure, USER_MESSAGES } from "./middleware/responses";
+import { RATE } from "./config/constants";
+import { revenueCatWebhook } from "./webhooks/revenueCatWebhook";
+import { defineSecret } from "firebase-functions/params";
+import * as logger from "firebase-functions/logger";
 
 // Set global options for all functions
 setGlobalOptions({
@@ -46,7 +46,40 @@ setGlobalOptions({
 // Initialize Firebase Admin
 admin.initializeApp();
 
+// Anthropic API key — set with: firebase functions:secrets:set ANTHROPIC_API_KEY
+const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
+
+// Azure Translator subscription key — powers the "azure" translation engine.
+// Set with: firebase functions:secrets:set AZURE_TRANSLATOR_KEY
+// Region/endpoint are non-secret and read from env (see .env), defaulting to
+// eastus + the global text endpoint when unset.
+const azureTranslatorKey = defineSecret("AZURE_TRANSLATOR_KEY");
+
+// RevenueCat secrets:
+// - REVENUECAT_WEBHOOK_SECRET: the "Authorization header value" you set in the
+//   RevenueCat dashboard webhook config; we reject any webhook call that doesn't
+//   send exactly this value in its Authorization header.
+// - REVENUECAT_API_KEY: a RevenueCat *secret* REST key (sk_...) used only as a
+//   live fallback when the Firestore pro mirror says "not pro".
+// Set both with: firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET
+//                firebase functions:secrets:set REVENUECAT_API_KEY
+const revenueCatWebhookSecret = defineSecret("REVENUECAT_WEBHOOK_SECRET");
+const revenueCatApiKey = defineSecret("REVENUECAT_API_KEY");
+
+// Reusable middleware that sets req.isPro (Firestore mirror + RC REST fallback).
+const attachPro = attachProStatus(() => {
+  try {
+    return revenueCatApiKey.value();
+  } catch {
+    return undefined;
+  }
+});
+
 const app = express();
+
+// Behind the Cloud Functions / Hosting proxy, trust the first forwarded hop so
+// express-rate-limit sees the real client IP.
+app.set("trust proxy", 1);
 
 // Security middleware
 app.use(helmet());
@@ -56,6 +89,22 @@ app.use(
       "http://localhost:3000",
     ],
     credentials: true,
+  })
+);
+
+// RevenueCat webhook — registered BEFORE the global IP rate limiter (it's
+// authenticated by a shared secret, and renewal spikes shouldn't be throttled)
+// and with its own JSON parser (RevenueCat payloads can exceed the 10kb cap we
+// apply to the AI endpoints).
+app.post(
+  "/revenuecat-webhook",
+  express.json({ limit: "64kb" }),
+  revenueCatWebhook(() => {
+    try {
+      return revenueCatWebhookSecret.value();
+    } catch {
+      return undefined;
+    }
   })
 );
 
@@ -71,94 +120,163 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(express.json({ limit: "10kb" }));
 
+// Global hard cap on user-typed input (text / message / query / documentContext)
+// for EVERY endpoint — the front-line guard against pasting a whole document
+// into one call to burn paid AI tokens. Runs after JSON parsing, before routes.
+app.use(enforceGlobalCharLimit);
+
+// Stricter per-IP limiter for the AI (Claude/Azure) endpoints — protects spend
+// and blocks burst abuse on the paid provider calls.
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: RATE.AI_PER_MINUTE,
+  message: {
+    success: false,
+    error: "rate_limited",
+    message:
+      "You're sending requests too quickly. Please slow down and try again in a moment.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Per-IP DAILY ceiling on the AI endpoints. The per-minute limiter stops bursts;
+// this bounds a single IP that drips requests all day (e.g. rotating the
+// `userid` header to dodge the per-user free caps).
+const aiDailyLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: RATE.AI_PER_DAY_PER_IP,
+  message: {
+    success: false,
+    error: "rate_limited",
+    message:
+      "You've reached the daily request limit for this device. Please try again tomorrow.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
-// Translation endpoint
+// Translation endpoint — Claude-powered, cached (memory -> Firestore -> Claude).
 app.post(
   "/translate",
-  //validateApiKey,
+  aiLimiter,
+  aiDailyLimiter,
   validateTranslateRequest,
-  //checkUserLimits("translation"),
+  attachPro,
+  enforceFreeLimit("translation"),
+  enforceGlobalDailyBudget,
   async (req, res) => {
     try {
-      console.log("Received translation request:", req.body);
-
       const { text, sourceLang, targetLang }: TranslateRequest = req.body;
-      //const userId = (req as any).userId;
-      const userId = req.headers["userid"] as string;
-
-      console.log(
-        `Translating text for user ${userId} from ${sourceLang} to ${targetLang}`
+      const userId = (req.headers["userid"] as string) || "anonymous";
+      // The client sends the chosen translation engine in `model` (azure /
+      // claude-haiku-4-5 / claude-sonnet-4-6); x-model header is a fallback.
+      const engine = resolveEngine(
+        (req.body.model as string) || (req.headers["x-model"] as string)
       );
 
-      //const translatedText = await translateText(text, from, to);
-      const translatedText = await freeTranslateText(
+      logger.info("Translate request", {
+        userId,
+        isPro: (req as any).isPro === true,
+        engine,
+        sourceLang,
+        targetLang,
+        chars: text.length,
+      });
+
+      const cacheKey = makeCacheKey("translate", {
+        engine,
         text,
         sourceLang,
-        targetLang
-      );
-      console.log("Translation successful:", translatedText);
+        targetLang,
+      });
 
-      // Update user usage
-      //await updateUserUsage(userId, "translation", text.length);
+      const { value: translatedText, source } = await cachedCompute(
+        cacheKey,
+        async () =>
+          (await translate(engine, text, sourceLang, targetLang)).text,
+        { type: "translate", engine, sourceLang, targetLang }
+      );
+
+      logger.info("Translate success", { userId, engine, source });
+
+      // `remainingCredits` is only set for tracked (non-pro, identified/anon)
+      // users; pro users are unmetered. Report it only when we actually have it.
+      const remainingCredits = (req as any).remainingCredits;
+      const usage =
+        typeof remainingCredits === "number"
+          ? {
+              charactersUsed: text.length,
+              remainingCharacters: Math.max(0, remainingCredits),
+            }
+          : { charactersUsed: text.length };
 
       const response: ApiResponse<{ translatedText: string }> = {
         success: true,
         data: { translatedText },
-        usage: {
-          charactersUsed: text.length,
-          remainingCharacters: (req as any).remainingCredits - text.length,
-        },
+        usage,
       };
 
       res.json(response);
     } catch (error) {
-      console.error("Translation error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Translation failed",
-        message: error instanceof Error ? error.message : "Unknown error",
+      // Log the real error; return only a clean, user-facing message.
+      sendFailure(res, 500, {
+        error: "translation_failed",
+        message: USER_MESSAGES.TRANSLATE_FAILED,
+        cause: error,
+        logContext: { path: "/translate" },
       });
     }
   }
 );
 
-// Chat with gemini
-
+// Chat with Claude (Tibetan assistant). Model is user-switchable per request.
 app.post(
   "/chat",
-  //validateApiKey,
+  aiLimiter,
+  aiDailyLimiter,
   validateChatRequest,
-  //checkUserLimits("translation"),
+  attachPro,
+  enforceFreeLimit("chat"),
+  enforceGlobalDailyBudget,
   async (req, res) => {
     try {
-      console.log("Received chat request:", req.body);
-
       const { message, sessionId, resetChat }: GeminiChatRequest = req.body;
       const userId = req.headers["userid"] as string;
+      const model = resolveModel(
+        (req.body.model as string) || (req.headers["x-model"] as string)
+      );
 
       // Generate or use provided session ID
       //const currentSessionId = sessionId || generateSessionId();
       const currentSessionId = userId;
-      console.log(
-        `Processing chat for user ${userId}, session: ${currentSessionId}`
-      );
+      logger.info("Chat request", {
+        userId,
+        isPro: (req as any).isPro === true,
+        sessionId: currentSessionId,
+        model,
+        chars: message.length,
+        resetChat: !!resetChat,
+      });
 
       // Reset chat session if requested
       if (resetChat) {
         ChatSessionManager.resetSession(currentSessionId);
       }
 
-      // Send message to Gemini and get Tibetan response
+      // Send message to Claude and get a Tibetan response
       const tibetanResponse = await ChatSessionManager.sendMessage(
         currentSessionId,
-        message
+        message,
+        { model }
       );
 
-      console.log("Chat response generated successfully");
+      logger.info("Chat success", { userId, model });
 
       // Calculate usage
       const charactersUsed = message.length + tibetanResponse.length;
@@ -181,13 +299,12 @@ app.post(
 
       res.json(response);
     } catch (error) {
-      console.error("Chat error:", error);
-
-      res.status(500).json({
-        success: false,
-        error: "Chat failed",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
+      // Log the real error; return only a clean, user-facing message.
+      sendFailure(res, 500, {
+        error: "chat_failed",
+        message: USER_MESSAGES.CHAT_FAILED,
+        cause: error,
+        logContext: { path: "/chat" },
       });
     }
   }
@@ -220,49 +337,12 @@ app.post("/chat/reset", async (req, res) => {
   }
 });
 
-// Grammar check endpoint
-app.post(
-  "/grammar",
-  //validateApiKey,
-  validateGrammarRequest,
-  checkUserLimits("grammar"),
-  async (req, res) => {
-    try {
-      const { text }: GrammarRequest = req.body;
-      const userId = (req as any).userId;
-
-      const grammarResult = await checkGrammar(text);
-
-      // Update user usage
-      //await updateUserUsage(userId, "grammar", text.length);
-
-      const response: ApiResponse<typeof grammarResult> = {
-        success: true,
-        data: grammarResult,
-        usage: {
-          charactersUsed: text.length,
-          remainingCharacters: (req as any).remainingCredits - text.length,
-        },
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error("Grammar check error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Grammar check failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  }
-);
-
 // ============================================
 // NEW PREMIUM FEATURE ENDPOINTS
 // ============================================
 
 // Advanced Tibetan Grammar Analysis Endpoint
-app.post("/api/grammar/analyze", async (req, res) => {
+app.post("/api/grammar/analyze", aiLimiter, async (req, res) => {
   try {
     const { text, mode = "realtime", style = "formal", contextualInfo } = req.body;
     const userId = req.headers["userid"] as string;
@@ -320,7 +400,7 @@ app.post("/api/grammar/analyze", async (req, res) => {
 });
 
 // Tone Alternatives Endpoint
-app.post("/api/grammar/suggestions", async (req, res) => {
+app.post("/api/grammar/suggestions", aiLimiter, async (req, res) => {
   try {
     const { text, correctionId, type } = req.body;
 
@@ -458,7 +538,7 @@ app.post("/api/transliterate/database/lookup", async (req, res) => {
 });
 
 // Enhanced Chat with Tutoring Support
-app.post("/api/chat/message", async (req, res) => {
+app.post("/api/chat/message", aiLimiter, async (req, res) => {
   try {
     const {
       sessionId,
@@ -487,11 +567,14 @@ app.post("/api/chat/message", async (req, res) => {
       documentContext
     );
 
-    // Send message to Gemini
+    // Send message to Claude
+    const model = resolveModel(
+      (req.body.model as string) || (req.headers["x-model"] as string)
+    );
     const tibetanResponse = await ChatSessionManager.sendMessage(
       currentSessionId,
       message,
-      conversationMode as any
+      { model, mode: conversationMode as any }
     );
 
     // Save message to Firestore
@@ -578,7 +661,7 @@ app.get("/api/chat/history", async (req, res) => {
     }
 
     const snapshot = await query.get();
-    const conversations = snapshot.docs.map((doc) => ({
+    const conversations = snapshot.docs.map((doc: any) => ({
       conversationId: doc.id,
       ...doc.data(),
     }));
@@ -644,6 +727,12 @@ export const api = onRequest(
     maxInstances: 10,
     timeoutSeconds: 60,
     memory: "256MiB",
+    secrets: [
+      anthropicApiKey,
+      azureTranslatorKey,
+      revenueCatWebhookSecret,
+      revenueCatApiKey,
+    ],
     // Add additional options if needed
     // invoker: 'public', // Makes function publicly accessible
     // secrets: [], // Add secrets if needed

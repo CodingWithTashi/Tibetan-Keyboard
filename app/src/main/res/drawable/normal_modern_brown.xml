@@ -1,30 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Flat modern key: subtle rounded cap, no drop shadow, faint border. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Shadow layer -->
-    <item
-        android:left="2dp"
-        android:right="2dp"
-        android:top="2dp"
-        android:bottom="4dp">
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
-            <corners android:radius="8dp"/>
-            <solid android:color="#30000000"/>
+            <corners android:radius="10dp" />
+            <solid android:color="#FF3C2B0E" />
+            <stroke android:width="0.6dp" android:color="#1FFCF5E8" />
         </shape>
     </item>
-
-    <!-- Main key background -->
-    <item
-        android:left="2dp"
-        android:right="2dp"
-        android:top="2dp"
-        android:bottom="6dp">
-        <shape android:shape="rectangle">
-            <corners android:radius="8dp"/>
-            <solid android:color="@color/keyboard_background_color"/>
-            <stroke android:width="0.5dp" android:color="#40FFFFFF"/>
-        </shape>
-    </item>
-
 </layer-list>
-

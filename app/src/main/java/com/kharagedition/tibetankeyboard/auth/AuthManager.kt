@@ -4,13 +4,18 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.kharagedition.tibetankeyboard.LoginActivity
-import com.kharagedition.tibetankeyboard.UserPreferences
-import com.kharagedition.tibetankeyboard.subscription.RevenueCatManager
+import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
+import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
+import com.kharagedition.tibetankeyboard.data.local.UserPreferences
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 
 /**
  * Manages authentication state and user session
@@ -49,14 +54,12 @@ class AuthManager(private val context: Context) {
 
         revenueCatManager.logout(object : RevenueCatManager.SubscriptionCallback {
             override fun onSuccess(message: String) {
-                auth.signOut()
-                userPreferences.clearUserData()
+                finishSignOut()
                 onComplete()
             }
 
             override fun onError(error: String) {
-                auth.signOut()
-                userPreferences.clearUserData()
+                finishSignOut()
                 onComplete()
             }
 
@@ -67,12 +70,38 @@ class AuthManager(private val context: Context) {
     }
 
     /**
+     * Tear down every cached session. Firebase's signOut alone leaves Google's last-used account
+     * cached on the device, so the next sign-in silently re-picks it; signing out of the
+     * GoogleSignInClient too forces the account chooser to reappear on the next login.
+     */
+    private fun finishSignOut() {
+        auth.signOut()
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(context, gso).signOut()
+        userPreferences.clearUserData()
+        AppAnalytics.logLogout()
+        AppAnalytics.setUser(null)
+    }
+
+    /**
      * Redirect to login activity
      */
-    fun redirectToLogin() {
-
-
+    fun redirectToLogin(
+        openPremiumAfter: Boolean = false,
+        finishCaller: Boolean = true,
+        target: Class<*>? = null,
+    ) {
         val intent = Intent(context, LoginActivity::class.java)
+
+        if (openPremiumAfter) {
+            intent.putExtra(LoginActivity.EXTRA_OPEN_PREMIUM_AFTER_LOGIN, true)
+        }
+        if (target != null) {
+            intent.putExtra(LoginActivity.EXTRA_POST_LOGIN_TARGET, target.name)
+        }
 
         if (context !is Activity) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -80,7 +109,23 @@ class AuthManager(private val context: Context) {
 
         context.startActivity(intent)
 
-        (context as? Activity)?.finish()
+        // Keep the caller alive when asked (e.g. Home stays beneath the paywall so
+        // closing the paywall never leaves an empty back stack).
+        if (finishCaller) (context as? Activity)?.finish()
+    }
+
+    /**
+     * Open the premium paywall directly (used for already-signed-in free users tapping a
+     * PRO feature). Safe to call from a non-Activity context such as the IME service.
+     */
+    fun openPremium() {
+        val intent = Intent(context, PremiumActivity::class.java)
+
+        if (context !is Activity) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        context.startActivity(intent)
     }
 
     /**
