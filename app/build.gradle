@@ -14,8 +14,8 @@ android {
         applicationId "com.kharagedition.tibetankeyboard"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 48
-        versionName "2.2.6"
+        versionCode 52
+        versionName "2.2.10"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -94,6 +94,7 @@ dependencies {
     implementation 'com.airbnb.android:lottie:6.6.2'
 
 
+    implementation 'com.google.android.play:app-update-ktx:2.1.0'
     implementation 'com.revenuecat.purchases:purchases:9.2.0'
     implementation project(':botok')
 

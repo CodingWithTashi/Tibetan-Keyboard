@@ -42,6 +42,7 @@ import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.service.MyFirebaseMessagingService
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
+
 import com.kharagedition.tibetankeyboard.ui.compose.components.BoText
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
@@ -73,7 +74,10 @@ class SplashScreenActivity : AppCompatActivity() {
         }
 
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, HomeActivity::class.java))
+            val forceUpdate = intent?.getBooleanExtra(MyFirebaseMessagingService.EXTRA_FORCE_UPDATE, false) == true
+            startActivity(Intent(this, HomeActivity::class.java).apply {
+                if (forceUpdate) putExtra(MyFirebaseMessagingService.EXTRA_FORCE_UPDATE, true)
+            })
             finish()
         }, splashDelayMs)
     }

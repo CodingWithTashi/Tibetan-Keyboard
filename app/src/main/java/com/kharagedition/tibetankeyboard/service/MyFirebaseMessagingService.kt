@@ -3,11 +3,9 @@ package com.kharagedition.tibetankeyboard.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -15,6 +13,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.ui.home.HomeActivity
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -25,6 +24,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         /** Set on the tap intent so the launched screen can report a [AppAnalytics.logNotificationOpened]. */
         const val EXTRA_FROM_NOTIFICATION = "from_notification"
+
+        /** Set on the tap intent so [HomeActivity] immediately triggers an in-app update check. */
+        const val EXTRA_FORCE_UPDATE = "force_update"
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -97,47 +99,40 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         title: String,
         message: String,
         version: String,
-        customUrl: String? = null
+        customUrl: String? = null,
     ) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         createNotificationChannel(notificationManager)
 
-        // Create intent to open Play Store or custom URL
+        // Tap opens HomeActivity → in-app update dialog triggers immediately.
+        // customUrl is kept for override cases (e.g. beta / side-load links).
         val intent = if (customUrl != null) {
             createCustomUrlIntent(customUrl)
         } else {
-            createPlayStoreIntent()
+            Intent(this, HomeActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(EXTRA_FROM_NOTIFICATION, true)
+                putExtra(EXTRA_FORCE_UPDATE, true)
+            }
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        // Build notification with full details
-        val fullMessage = if (version.isNotEmpty()) {
-            "$message\nVersion: $version"
-        } else {
-            message
-        }
+        val body = if (version.isNotEmpty()) "$message (v$version)" else message
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_update)
             .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(fullMessage))
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
-            .addAction(
-                R.drawable.ic_download,
-                "Update Now",
-                pendingIntent
-            )
+            .addAction(R.drawable.ic_download, "Update Now", pendingIntent)
             .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
@@ -192,22 +187,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun createPlayStoreIntent(): Intent {
-        val packageName = packageName
-
-        return try {
-            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        } catch (e: ActivityNotFoundException) {
-            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        }
-    }
-
     private fun createCustomUrlIntent(url: String): Intent {
-        return Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        return Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
     }

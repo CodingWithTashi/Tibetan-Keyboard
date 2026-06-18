@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,13 +32,14 @@ import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.BuildConfig
+import com.kharagedition.tibetankeyboard.InAppUpdateManager
 import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.UpdateNotificationManager
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
 import com.kharagedition.tibetankeyboard.ads.TemplateView
 import com.kharagedition.tibetankeyboard.app.InputMethodActivity
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
+import com.kharagedition.tibetankeyboard.service.MyFirebaseMessagingService
 import com.kharagedition.tibetankeyboard.ui.about.AboutActivity
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
@@ -56,11 +58,22 @@ class HomeActivity : InputMethodActivity() {
 
     private val viewModel: HomeViewModel by viewModels()
     private var nativeAd by mutableStateOf<NativeAd?>(null)
-    private lateinit var updateManager: UpdateNotificationManager
+    private var showUpdateBanner by mutableStateOf(false)
+
+    private lateinit var inAppUpdateManager: InAppUpdateManager
+
+    // Registered before onCreate — handles both flexible and immediate update flow results.
+    private val updateLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) {
+            Log.w(TAG, "In-app update flow ended with result: ${result.resultCode}")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        updateManager = UpdateNotificationManager(this)
+        inAppUpdateManager = InAppUpdateManager(this)
 
         if (viewModel.isUserAuthenticated()) {
             viewModel.initializeUserSession(subscriptionCallback(
@@ -76,9 +89,18 @@ class HomeActivity : InputMethodActivity() {
                 HomeScreen(
                     state = state,
                     actions = homeActions(),
-                    adSlot = if (ad != null) {
-                        { NativeAdCard(ad) }
-                    } else null,
+                    adSlot = if (ad != null) { { NativeAdCard(ad) } } else null,
+                    showUpdateBanner = showUpdateBanner,
+                    onInstallUpdate = {
+                        Log.d(UPDATE_TAG, "onInstallUpdate: user tapped install banner → completing update")
+                        showUpdateBanner = false
+                        if (BuildConfig.DEBUG) {
+                            Log.d(UPDATE_TAG, "onInstallUpdate: DEBUG — no real APK downloaded, skipping completeUpdate(). Production would restart the app here.")
+                            android.widget.Toast.makeText(this, "DEBUG: Update flow OK — production would restart & install here", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            inAppUpdateManager.completeFlexibleUpdate()
+                        }
+                    },
                 )
             }
         }
@@ -88,7 +110,17 @@ class HomeActivity : InputMethodActivity() {
         requestNotificationPermission()
         subscribeToAllUsersTopic()
         initializeFirebase()
-        updateManager.checkForUpdates()
+
+        val forceImmediate = intent?.getBooleanExtra(MyFirebaseMessagingService.EXTRA_FORCE_UPDATE, false) == true
+        triggerUpdateCheck(forceImmediate)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(MyFirebaseMessagingService.EXTRA_FORCE_UPDATE, false)) {
+            triggerUpdateCheck(forceImmediate = true)
+        }
     }
 
     override fun onResume() {
@@ -102,9 +134,27 @@ class HomeActivity : InputMethodActivity() {
             ))
         }
         viewModel.refreshPremium()
+        // Show the install banner if a flexible update finished downloading while we were away.
+        Log.d(UPDATE_TAG, "onResume: checking if flexible update already downloaded")
+        inAppUpdateManager.checkIfUpdateDownloaded {
+            Log.d(UPDATE_TAG, "onResume: update already downloaded → showing install banner")
+            showUpdateBanner = true
+        }
     }
 
     override fun onInputMethodPicked() = refreshSetupState()
+
+    private fun triggerUpdateCheck(forceImmediate: Boolean = false) {
+        Log.d(UPDATE_TAG, "triggerUpdateCheck: forceImmediate=$forceImmediate")
+        inAppUpdateManager.checkForUpdate(
+            launcher = updateLauncher,
+            forceImmediate = forceImmediate,
+            onFlexibleDownloadComplete = {
+                Log.d(UPDATE_TAG, "onFlexibleDownloadComplete → showing install banner")
+                showUpdateBanner = true
+            },
+        )
+    }
 
     private fun homeActions() = HomeActions(
         onEnableKeyboard = {
@@ -258,11 +308,13 @@ class HomeActivity : InputMethodActivity() {
 
     override fun onDestroy() {
         nativeAd?.destroy()
+        inAppUpdateManager.unregisterListener()
         super.onDestroy()
     }
 
     companion object {
         private const val TAG = "HomeActivity"
+        private const val UPDATE_TAG = "InAppUpdate"
         private const val PACKAGE = "com.kharagedition.tibetankeyboard"
     }
 }

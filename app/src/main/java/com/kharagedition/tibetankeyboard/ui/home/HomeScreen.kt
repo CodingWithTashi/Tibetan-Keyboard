@@ -85,6 +85,8 @@ fun HomeScreen(
     state: HomeUiState,
     actions: HomeActions,
     adSlot: (@Composable () -> Unit)? = null,
+    showUpdateBanner: Boolean = false,
+    onInstallUpdate: () -> Unit = {},
 ) {
     // On-screen bounds of each setup step, captured for the tap-target spotlight.
     var step1Bounds by remember { mutableStateOf<Rect?>(null) }
@@ -166,6 +168,50 @@ fun HomeScreen(
                 },
                 onDismiss = { dismissed = dismissed + activeStep },
             )
+        }
+
+        if (showUpdateBanner) {
+            UpdateReadyBanner(
+                onInstall = onInstallUpdate,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+    }
+}
+
+@Composable
+private fun UpdateReadyBanner(onInstall: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(TibetanTokens.GoldVertical)
+            .clickable(onClick = onInstall)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(TibetanColors.Espresso.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(AppIcons.Download, null, tint = TibetanColors.Espresso, modifier = Modifier.size(20.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text("Update Ready to Install", color = TibetanColors.Espresso, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("Tap here to apply the latest update", color = TibetanColors.Espresso.copy(alpha = 0.72f), fontSize = 12.sp)
+        }
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(99.dp))
+                .background(TibetanColors.Espresso.copy(alpha = 0.15f))
+                .padding(horizontal = 14.dp, vertical = 7.dp),
+        ) {
+            Text("Install", color = TibetanColors.Espresso, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
