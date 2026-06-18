@@ -1,0 +1,104 @@
+workflows:
+
+  # ── Release workflow ────────────────────────────────────────────────────────
+  # Triggers on every push to main. Builds a signed AAB and uploads it to the
+  # Google Play internal track as a draft for your review before promoting.
+  android-release:
+    name: Android Release (AAB → Play Store)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    environment:
+      # Upload your keystore under Teams → Code signing identities and give
+      # it the reference name "keystore_reference" (matches the name below).
+      android_signing:
+        - keystore_reference
+      # Create an environment variable group called "google_play" and add
+      # GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS (the JSON key file content).
+      groups:
+        - google_play
+      vars:
+        PACKAGE_NAME: "com.kharagedition.tibetankeyboard"
+      java: 17
+
+    scripts:
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Build release AAB
+        script: |
+          # Auto-increment version code based on what's already on the Play Store.
+          LATEST=$(google-play get-latest-build-number --package-name "$PACKAGE_NAME" 2>/dev/null || echo "")
+          if [ -z "$LATEST" ]; then
+            VERSION_CODE=$BUILD_NUMBER
+          else
+            VERSION_CODE=$(($LATEST + 1))
+          fi
+          echo "Building versionCode=$VERSION_CODE"
+          ./gradlew bundleRelease -PversionCode=$VERSION_CODE
+
+    artifacts:
+      - app/build/outputs/**/*.aab
+      - app/build/outputs/**/mapping.txt
+
+    publishing:
+      email:
+        recipients:
+          - developer.kharag@gmail.com
+        notify:
+          success: true
+          failure: true
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+
+  # ── Debug / PR workflow ─────────────────────────────────────────────────────
+  # Runs on every pull request. Builds the debug APK and runs unit tests.
+  # No signing or publishing needed here.
+  android-debug:
+    name: Android Debug (PR checks)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    triggering:
+      events:
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+
+    environment:
+      java: 17
+
+    scripts:
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Build debug APK
+        script: |
+          ./gradlew assembleDebug
+
+      - name: Run unit tests
+        script: |
+          ./gradlew :botok:test :app:testDebugUnitTest
+
+    artifacts:
+      - app/build/outputs/**/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - developer.kharag@gmail.com
+        notify:
+          success: false
+          failure: true
