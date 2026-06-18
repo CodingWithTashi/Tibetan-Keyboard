@@ -33,6 +33,10 @@ workflows:
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
 
+      - name: Write google-services.json
+        script: |
+          echo $GOOGLE_SERVICES_JSON > app/google-services.json
+
       - name: Build release AAB
         script: |
           # Auto-increment version code based on what's already on the Play Store.
@@ -83,6 +87,10 @@ workflows:
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Write google-services.json
+        script: |
+          echo $GOOGLE_SERVICES_JSON > app/google-services.json
 
       - name: Build debug APK
         script: |
