@@ -110,6 +110,10 @@ class TypingStatsStore private constructor(context: Context) {
 
     fun wordsThisWeek(today: Long = todayEpochDay()): Int = weekWords(today).sum()
 
+    /** Tibetan characters typed in the last 7 days — feeds the PRO-autocomplete value teaser. */
+    fun charsThisWeek(today: Long = todayEpochDay()): Int =
+        (6 downTo 0).sumOf { charsOn(today - it) }
+
     fun totalWords(): Long = prefs.getLong(KEY_TOTAL_WORDS, 0L)
 
     /** Distinct Tibetan words ever typed (counted via one-way hashes — see privacy contract). */

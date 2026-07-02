@@ -292,9 +292,14 @@
     <string name="journey_words_total">Total words</string>
     <string name="journey_vocabulary">Vocabulary</string>
     <string name="journey_week_chart_title">Your week</string>
-    <string name="journey_insights_locked_title">Weekly insights</string>
-    <string name="journey_insights_locked_desc">Vocabulary growth, weekly charts and the community comparison are part of PRO.</string>
     <string name="journey_unlock_pro">Unlock PRO</string>
+    <string name="journey_milestone_title">🎉 %1$d-day milestone!</string>
+    <string name="journey_milestone_sub_pro">An incredible commitment to Tibetan. Keep going!</string>
+    <string name="journey_milestone_sub_free">Celebrate it — unlock autocomplete, AI chat &amp; full insights with PRO.</string>
+    <string name="journey_teaser_title">Your insights are ready</string>
+    <string name="journey_teaser_week">You typed %1$d words (%2$d characters) this week.</string>
+    <string name="journey_teaser_savings">PRO autocomplete could have typed ~%1$d of those characters for you.</string>
+    <string name="journey_teaser_locked">Vocabulary size · Weekly chart · Community rank</string>
     <string name="journey_community_title">Community comparison</string>
     <string name="journey_community_desc">Optional. Shares only two numbers — your weekly word count and streak — never anything you type.</string>
     <string name="journey_community_result">You typed more than %1$d%% of the community this week 🎉</string>

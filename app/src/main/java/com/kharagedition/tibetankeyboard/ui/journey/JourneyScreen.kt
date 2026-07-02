@@ -51,6 +51,13 @@ fun JourneyScreen(state: JourneyUiState, actions: JourneyActions) {
         Column(Modifier.padding(horizontal = 18.dp)) {
             StreakHero(state)
 
+            // Milestone day: celebrate at the emotional high point — and for free users,
+            // that's exactly the moment to pitch PRO (reward-moment conversion).
+            if (state.milestone != null) {
+                Spacer(Modifier.height(14.dp))
+                MilestoneBanner(state.milestone, state.isPremium, onUpgrade = actions.onUpgrade)
+            }
+
             Spacer(Modifier.height(14.dp))
             StatsGrid(state, onUpgrade = actions.onUpgrade)
 
@@ -62,7 +69,7 @@ fun JourneyScreen(state: JourneyUiState, actions: JourneyActions) {
                 Spacer(Modifier.height(12.dp))
                 CommunityCard(state, actions.onToggleSync)
             } else {
-                LockedInsightsCard(onUpgrade = actions.onUpgrade)
+                TeaserInsightsCard(state, onUpgrade = actions.onUpgrade)
             }
 
             Spacer(Modifier.height(12.dp))
@@ -296,9 +303,41 @@ private fun CommunityCard(state: JourneyUiState, onToggleSync: (Boolean) -> Unit
     }
 }
 
-/** What free users see instead of the chart + community comparison. */
+/** Milestone celebration. Free users get the upsell exactly at the reward moment. */
 @Composable
-private fun LockedInsightsCard(onUpgrade: () -> Unit) {
+private fun MilestoneBanner(milestone: Int, isPremium: Boolean, onUpgrade: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(TibetanTokens.GoldVertical)
+            .then(if (isPremium) Modifier else Modifier.clickable(onClick = onUpgrade))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Text(
+            stringResource(R.string.journey_milestone_title, milestone),
+            color = TibetanColors.Espresso, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            stringResource(
+                if (isPremium) R.string.journey_milestone_sub_pro
+                else R.string.journey_milestone_sub_free
+            ),
+            color = TibetanColors.Espresso.copy(alpha = 0.75f), fontSize = 12.5.sp,
+        )
+    }
+}
+
+/**
+ * What free users see instead of the chart + community comparison: their REAL numbers with
+ * the PRO value spelled out against them (Grammarly-style tease), not a generic lock.
+ */
+@Composable
+private fun TeaserInsightsCard(state: JourneyUiState, onUpgrade: () -> Unit) {
+    // Honest, conservative estimate: Botok autocomplete typically completes a word after
+    // its first syllable, saving very roughly a third of the keystrokes.
+    val savableChars = state.charsThisWeek / 3
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -306,19 +345,31 @@ private fun LockedInsightsCard(onUpgrade: () -> Unit) {
             .background(TibetanColors.Brown700)
             .border(1.dp, TibetanColors.Line, RoundedCornerShape(16.dp))
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(AppIcons.Lock, null, tint = TibetanColors.Gold300, modifier = Modifier.size(26.dp))
-        Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.journey_insights_locked_title),
+            stringResource(R.string.journey_teaser_title),
             color = TibetanColors.Cream, fontSize = 14.5.sp, fontWeight = FontWeight.Bold,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
         Text(
-            stringResource(R.string.journey_insights_locked_desc),
-            color = TibetanColors.CreamDim, fontSize = 12.5.sp, textAlign = TextAlign.Center,
+            stringResource(R.string.journey_teaser_week, state.wordsThisWeek, state.charsThisWeek),
+            color = TibetanColors.CreamDim, fontSize = 12.5.sp,
         )
+        if (savableChars > 0) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.journey_teaser_savings, savableChars),
+                color = TibetanColors.Gold300, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            Icon(AppIcons.Lock, null, tint = TibetanColors.Gold300, modifier = Modifier.size(15.dp))
+            Text(
+                stringResource(R.string.journey_teaser_locked),
+                color = TibetanColors.CreamDim, fontSize = 12.sp,
+            )
+        }
         Spacer(Modifier.height(12.dp))
         GoldButton(stringResource(R.string.journey_unlock_pro), onClick = onUpgrade, fontSize = 14.sp)
     }

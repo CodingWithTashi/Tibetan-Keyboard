@@ -22,11 +22,14 @@ data class JourneyUiState(
     val typedToday: Boolean = false,
     val wordsToday: Int = 0,
     val wordsThisWeek: Int = 0,
+    val charsThisWeek: Int = 0,
     val totalWords: Long = 0L,
     val vocabularySize: Int = 0,
     /** Words per day for the last 7 days, oldest first (today last). */
     val weekWords: List<Int> = List(7) { 0 },
     val nextMilestone: Int? = StreakLogic.MILESTONES.first(),
+    /** Set when the current streak sits exactly on a milestone — drives the celebration banner. */
+    val milestone: Int? = null,
     val isPremium: Boolean = false,
     val syncEnabled: Boolean = false,
     /** Community percentile (0–100) once the opt-in comparison has run; null otherwise. */
@@ -68,10 +71,12 @@ class JourneyViewModel(app: Application) : AndroidViewModel(app) {
                 typedToday = stats.streak().lastActiveEpochDay == today,
                 wordsToday = stats.wordsToday(),
                 wordsThisWeek = stats.wordsThisWeek(today),
+                charsThisWeek = stats.charsThisWeek(today),
                 totalWords = stats.totalWords(),
                 vocabularySize = stats.vocabularySize(),
                 weekWords = stats.weekWords(today),
                 nextMilestone = StreakLogic.nextMilestone(streakDays),
+                milestone = streakDays.takeIf { it in StreakLogic.MILESTONES },
                 syncEnabled = stats.isSyncEnabled(),
             )
         }
