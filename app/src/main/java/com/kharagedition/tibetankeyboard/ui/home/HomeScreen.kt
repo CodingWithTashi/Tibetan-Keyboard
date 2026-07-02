@@ -58,6 +58,8 @@ data class HomeUiState(
     val keyboardEnabled: Boolean = false,
     val inputMethodSelected: Boolean = false,
     val isPremium: Boolean = false,
+    val streakDays: Int = 0,
+    val wordsToday: Int = 0,
 )
 
 /** Callbacks for Home actions, owned by the Activity. */
@@ -71,6 +73,7 @@ class HomeActions(
     val onRate: () -> Unit,
     val onAbout: () -> Unit,
     val onUpgrade: () -> Unit,
+    val onJourney: () -> Unit,
 )
 
 private data class QuickAction(
@@ -134,6 +137,13 @@ fun HomeScreen(
                 TestKeyboardField()
             } else {
                // SetupDemo(if (!state.keyboardEnabled) R.drawable.keyboard else R.drawable.input)
+            }
+
+            // The streak banner is the Journey's Home-screen trigger — always present once
+            // setup is done, whether the flame is lit (celebrate) or not (invite).
+            if (state.keyboardEnabled && state.inputMethodSelected) {
+                Spacer(Modifier.height(14.dp))
+                JourneyCard(state, onClick = actions.onJourney)
             }
 
             Spacer(Modifier.height(22.dp))
@@ -410,6 +420,45 @@ private fun QuickActionCard(item: QuickAction, modifier: Modifier = Modifier) {
         if (item.tag != null) {
             PillBadge(item.tag, modifier = Modifier.align(Alignment.TopEnd))
         }
+    }
+}
+
+/** Streak banner — tap-through to the Journey (streak & insights) screen. */
+@Composable
+private fun JourneyCard(state: HomeUiState, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(TibetanColors.Brown700)
+            .border(1.dp, TibetanColors.Line, RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(TibetanColors.Brown600),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("🔥", fontSize = 22.sp)
+        }
+        Column(Modifier.weight(1f)) {
+            Text(
+                if (state.streakDays > 0) stringResource(R.string.home_journey_streak, state.streakDays)
+                else stringResource(R.string.home_journey_start),
+                color = TibetanColors.Cream, fontSize = 14.5.sp, fontWeight = FontWeight.Bold,
+            )
+            Text(
+                if (state.streakDays > 0) stringResource(R.string.home_journey_subtitle_active, state.wordsToday)
+                else stringResource(R.string.home_journey_subtitle_idle),
+                color = TibetanColors.CreamDim, fontSize = 12.sp,
+            )
+        }
+        Icon(AppIcons.Chevron, null, tint = TibetanColors.CreamDim, modifier = Modifier.size(20.dp))
     }
 }
 

@@ -26,6 +26,7 @@ import com.kharagedition.tibetankeyboard.data.repository.AIService
 import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
+import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import kotlinx.coroutines.*
@@ -38,6 +39,7 @@ class AIKeyboardView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     private lateinit var aiToolbar: LinearLayout
+    private lateinit var streakChip: TextView
     private lateinit var proPill: View
     private lateinit var proChatBtn: ImageView
     private lateinit var proAutoBtn: ImageView
@@ -103,6 +105,22 @@ class AIKeyboardView @JvmOverloads constructor(
         loadSuggestionEngine()
         applyBottomInsetPadding()
         applyPremiumState()
+        refreshStreakChip()
+    }
+
+    /**
+     * Show the current typing streak on the toolbar (the Journey feature's always-visible
+     * trigger). The IME rebuilds this view on every keyboard open, so the number stays fresh
+     * without any observer plumbing. Hidden until the user has a streak at all.
+     */
+    fun refreshStreakChip() {
+        val days = TypingStatsStore.getInstance(context).displayStreak()
+        if (days > 0) {
+            streakChip.text = context.getString(R.string.journey_streak_chip, days)
+            streakChip.visibility = View.VISIBLE
+        } else {
+            streakChip.visibility = View.GONE
+        }
     }
 
     /**
@@ -163,6 +181,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun initializeViews() {
         aiToolbar = findViewById(R.id.ai_toolbar)
+        streakChip = findViewById(R.id.streak_chip)
         proPill = findViewById(R.id.pro_pill)
         proChatBtn = findViewById(R.id.pro_chat_btn)
         proAutoBtn = findViewById(R.id.pro_auto_btn)
@@ -192,6 +211,9 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun setupClickListeners() {
+        // Streak flame → the Journey screen (available to everyone; streak is the free hook).
+        streakChip.setOnClickListener { aiKeyboardInterface?.onOpenJourney() }
+
         // Gold upsell pill — free users only (hidden for PRO).
         proPill.setOnClickListener { aiKeyboardInterface?.onUnlockPro() }
 

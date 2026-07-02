@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
 import com.kharagedition.tibetankeyboard.auth.AuthManager
+import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +36,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     /** Called by the Activity after it reads keyboard-enabled / default-IME status. */
     fun refreshSetup(keyboardEnabled: Boolean, inputMethodSelected: Boolean) {
         _uiState.update { it.copy(keyboardEnabled = keyboardEnabled, inputMethodSelected = inputMethodSelected) }
+    }
+
+    /** Re-read the on-device streak numbers for the Journey banner (cheap; every resume). */
+    fun refreshJourney() {
+        val stats = TypingStatsStore.getInstance(getApplication())
+        _uiState.update { it.copy(streakDays = stats.displayStreak(), wordsToday = stats.wordsToday()) }
     }
 
     fun isUserAuthenticated(): Boolean = authManager.isUserAuthenticated()

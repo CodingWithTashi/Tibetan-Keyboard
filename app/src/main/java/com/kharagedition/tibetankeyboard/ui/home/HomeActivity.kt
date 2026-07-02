@@ -43,6 +43,7 @@ import com.kharagedition.tibetankeyboard.service.MyFirebaseMessagingService
 import com.kharagedition.tibetankeyboard.ui.about.AboutActivity
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
+import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
 import com.kharagedition.tibetankeyboard.ui.translate.TranslateActivity
 import com.kharagedition.tibetankeyboard.util.AppConstant
@@ -126,6 +127,7 @@ class HomeActivity : InputMethodActivity() {
     override fun onResume() {
         super.onResume()
         refreshSetupState()
+        viewModel.refreshJourney()
         // CRITICAL: sync purchases on resume to acknowledge pending subscriptions
         // (prevents Google Play auto-cancelling after 3 days).
         if (viewModel.isUserAuthenticated()) {
@@ -195,6 +197,11 @@ class HomeActivity : InputMethodActivity() {
         onUpgrade = {
             AppAnalytics.logHomeAction(AppAnalytics.HomeAction.UPGRADE)
             openPremiumUpgrade(AppAnalytics.UpgradeSource.HOME)
+        },
+        onJourney = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.JOURNEY)
+            AppAnalytics.logJourneyOpened(AppAnalytics.JourneySource.HOME)
+            startActivity(Intent(this, JourneyActivity::class.java))
         },
     )
 

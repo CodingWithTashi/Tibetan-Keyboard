@@ -28,12 +28,14 @@ import androidx.preference.PreferenceManager
 import com.google.firebase.auth.FirebaseAuth
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.analytics.UserActivityTracker
+import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
+import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
@@ -68,6 +70,10 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     // Resets on: shad (།), space, newline, or suggestion commit.
     // Tshek (་) is NOT a boundary — it is part of the Tibetan word.
     private var currentWordLength = 0
+
+    // Journey streak/stats. PRIVACY: the store only ever receives counts and one-way word
+    // hashes — no typed text is persisted or transmitted (see TypingStatsStore's contract).
+    private val typingStats by lazy { TypingStatsStore.getInstance(this) }
 
     enum class KeyboardMode {
         NORMAL,
@@ -311,11 +317,22 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 // Shad (།) and space are sentence/word boundaries — reset the word tracker.
                 // Tshek (་) is a syllable separator WITHIN a word, so it increments the counter.
                 if (code == '།' || code == '༎' || code == ' ' || code == '\n') {
+                    // A word just finished: fold it into the Journey stats before the tracker
+                    // resets. Only its one-way hash survives (vocabulary size), never the text.
+                    if (currentWordLength > 0) {
+                        typingStats.recordWordTyped(currentPrefix(inputConnection))
+                    }
                     currentWordLength = 0
                 } else {
                     currentWordLength++
                 }
                 inputConnection.commitText(code.toString(), 1)
+                // Journey streak: count Tibetan code points typed (a number, nothing else).
+                if (TypingStatsStore.isTibetanCodePoint(code.code)) {
+                    typingStats.recordTibetanChars(1)?.let { milestone ->
+                        AppAnalytics.logStreakMilestone(milestone)
+                    }
+                }
                 aiKeyboardView?.updateSuggestions(currentPrefix(inputConnection))
             }
         }
@@ -503,6 +520,10 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         if (currentWordLength > 0) ic.deleteSurroundingText(currentWordLength, 0)
         ic.commitText(word, 1)
         currentWordLength = 0
+        // Journey stats: an accepted suggestion completes a word (hash-only, see store contract).
+        typingStats.recordWordTyped(word)?.let { milestone ->
+            AppAnalytics.logStreakMilestone(milestone)
+        }
         aiKeyboardView?.updateSuggestions("")
     }
 
@@ -515,6 +536,13 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     override fun onUnlockPro() {
         // Single source of truth for the upgrade flow (login-then-paywall if needed).
         openPremiumUpgrade(AppAnalytics.UpgradeSource.KEYBOARD)
+    }
+
+    override fun onOpenJourney() {
+        AppAnalytics.logJourneyOpened(AppAnalytics.JourneySource.KEYBOARD)
+        startActivity(
+            Intent(this, JourneyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 
     // Returns the Unicode code points the user has typed since the last word boundary,

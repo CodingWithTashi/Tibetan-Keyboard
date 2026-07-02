@@ -10,6 +10,7 @@ import androidx.preference.PreferenceManager
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.analytics.UserActivityTracker
+import com.kharagedition.tibetankeyboard.ui.journey.StreakReminderWorker
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.revenuecat.purchases.LogLevel
 import com.revenuecat.purchases.Purchases
@@ -49,6 +50,10 @@ class TibetanKeyboardApp : Application() {
         }else{
             FirebaseMessaging.getInstance().unsubscribeFromTopic(AppConstant.TIBETAN_KEYBOARD_APP)
         }
+        // Journey streak reminder — daily on-device check (~7pm). Idempotent (KEEP), and this
+        // runs on every process start, so keyboard-only users get it too (the IME shares this
+        // Application). The worker honours the Settings toggle and never touches the network.
+        StreakReminderWorker.schedule(this)
 
         super.onCreate()
     }

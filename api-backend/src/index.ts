@@ -716,6 +716,72 @@ app.post("/api/chat/tutoring/mode", async (req, res) => {
   }
 });
 
+// ============================================
+// JOURNEY (typing streak) — community comparison
+// ============================================
+
+// Numbers-only, opt-in weekly sync for the app's typing-streak feature.
+// PRIVACY: the request carries exactly two aggregate integers (words typed this
+// week + streak length). No typed content ever reaches this endpoint, and the
+// stored doc holds only those numbers. Percentile = share of other participants
+// with a lower weekly word count, computed with cheap aggregate count queries.
+app.post("/journey/weekly", async (req, res) => {
+  try {
+    const userId = req.headers["userid"] as string;
+    if (!userId || typeof userId !== "string" || userId.length > 128) {
+      return res.status(400).json({
+        success: false,
+        error: "userid header required",
+      });
+    }
+
+    const wordsThisWeek = Number(req.body?.wordsThisWeek);
+    const streakDays = Number(req.body?.streakDays);
+    const validCount = (n: number, max: number) =>
+      Number.isInteger(n) && n >= 0 && n <= max;
+    if (!validCount(wordsThisWeek, 1_000_000) || !validCount(streakDays, 36_500)) {
+      return res.status(400).json({
+        success: false,
+        error: "wordsThisWeek and streakDays must be non-negative integers",
+      });
+    }
+
+    const db = admin.firestore();
+    const col = db.collection("journey_stats");
+    await col.doc(userId).set(
+      {
+        wordsThisWeek,
+        streakDays,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const [totalSnap, belowSnap] = await Promise.all([
+      col.count().get(),
+      col.where("wordsThisWeek", "<", wordsThisWeek).count().get(),
+    ]);
+    const totalUsers = totalSnap.data().count;
+    const below = belowSnap.data().count;
+    // Share of *other* participants this user out-typed. A lone first user beats 100%.
+    const percentile =
+      totalUsers <= 1 ? 100 : Math.round((below / (totalUsers - 1)) * 100);
+
+    logger.info("Journey weekly sync", { userId, wordsThisWeek, streakDays, percentile });
+
+    return res.json({
+      success: true,
+      data: { percentile, totalUsers },
+    });
+  } catch (error) {
+    console.error("Journey weekly sync error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to record weekly stats",
+    });
+  }
+});
+
 // Error handling middleware
 app.use(errorHandler);
 

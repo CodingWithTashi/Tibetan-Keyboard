@@ -51,6 +51,10 @@
             android:name=".ui.about.AboutActivity"
             android:exported="false"
             android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.journey.JourneyActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.home.HomeActivity" />
 
         <service
             android:name=".service.TibetanKeyboard"

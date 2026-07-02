@@ -17,6 +17,7 @@ object SettingsPrefs {
     const val KEY_VIBRATE = "vibrate"
     const val KEY_SOUND = "sound"
     const val KEY_NOTIFICATION = "event_notification"
+    const val KEY_STREAK_REMINDER = "streak_reminder"
     const val KEY_AI_MODEL = "ai_model"
     const val KEY_TRANSLATE_ENGINE = "translate_engine"
 
@@ -95,6 +96,7 @@ object SettingsPrefs {
             vibrate = p.getBoolean(KEY_VIBRATE, false),
             sound = p.getBoolean(KEY_SOUND, true),
             eventNotification = p.getBoolean(KEY_NOTIFICATION, true),
+            streakReminder = p.getBoolean(KEY_STREAK_REMINDER, true),
         )
     }
 
