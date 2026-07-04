@@ -36,6 +36,7 @@ import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
+import com.kharagedition.tibetankeyboard.ui.journey.WordSegmenter
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
@@ -317,10 +318,12 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 // Shad (།) and space are sentence/word boundaries — reset the word tracker.
                 // Tshek (་) is a syllable separator WITHIN a word, so it increments the counter.
                 if (code == '།' || code == '༎' || code == ' ' || code == '\n') {
-                    // A word just finished: fold it into the Journey stats before the tracker
-                    // resets. Only its one-way hash survives (vocabulary size), never the text.
+                    // A chunk just finished: segment it into real dictionary words (Tibetan has
+                    // no spaces between words, so the whole chunk can be a full clause) and fold
+                    // each into the Journey stats. Only one-way hashes survive (vocabulary size),
+                    // never the text.
                     if (currentWordLength > 0) {
-                        typingStats.recordWordTyped(currentPrefix(inputConnection))
+                        recordChunkAsWords(currentPrefix(inputConnection))
                     }
                     currentWordLength = 0
                 } else {
@@ -543,6 +546,19 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         startActivity(
             Intent(this, JourneyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
+    }
+
+    /**
+     * Segments a completed chunk into real dictionary words (see [WordSegmenter]) and folds
+     * each into Journey stats, rather than counting the whole space/shad-delimited chunk as a
+     * single "word".
+     */
+    private fun recordChunkAsWords(chunk: String) {
+        WordSegmenter.segment(chunk, AIKeyboardView.dictionaryOrNull()).forEach { word ->
+            typingStats.recordWordTyped(word)?.let { milestone ->
+                AppAnalytics.logStreakMilestone(milestone)
+            }
+        }
     }
 
     // Returns the Unicode code points the user has typed since the last word boundary,

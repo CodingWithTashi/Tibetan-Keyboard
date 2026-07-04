@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
@@ -36,6 +37,12 @@ class JourneyActivity : AppCompatActivity() {
                         onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.JOURNEY) },
                         onShare = { shareStreak() },
                         onToggleSync = { viewModel.setSyncEnabled(it) },
+                        onSignIn = {
+                            AuthManager(this).redirectToLogin(
+                                target = JourneyActivity::class.java,
+                                finishCaller = false,
+                            )
+                        },
                     ),
                 )
             }

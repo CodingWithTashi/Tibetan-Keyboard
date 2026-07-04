@@ -302,9 +302,13 @@
     <string name="journey_teaser_locked">Vocabulary size · Weekly chart · Community rank</string>
     <string name="journey_community_title">Community comparison</string>
     <string name="journey_community_desc">Optional. Shares only two numbers — your weekly word count and streak — never anything you type.</string>
-    <string name="journey_community_result">You typed more than %1$d%% of the community this week 🎉</string>
     <string name="journey_community_comparing">Comparing…</string>
     <string name="journey_community_signin">Sign in to compare with the community.</string>
+    <string name="journey_community_sync_failed">Couldn\'t sync just now — we\'ll retry the next time you open this screen.</string>
+    <string name="journey_community_tier_elite">🏆 Elite typist — top 5% this week</string>
+    <string name="journey_community_tier_top">🔥 Top 20% this week</string>
+    <string name="journey_community_tier_above">📈 Above average this week</string>
+    <string name="journey_community_tier_building">🌱 Keep building momentum</string>
     <string name="journey_privacy_title">Private by design</string>
     <string name="journey_privacy_desc">Your streak and stats are counted on this device only. Words are never stored or sent — the app keeps just the totals, and vocabulary is tracked as unreadable fingerprints. Nothing leaves your phone unless you turn on the community comparison (numbers only).</string>
     <string name="journey_share">Share my streak</string>

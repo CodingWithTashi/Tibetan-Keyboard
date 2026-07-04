@@ -650,5 +650,12 @@ class AIKeyboardView @JvmOverloads constructor(
         /** Last real navigation-bar inset, remembered across IME view rebuilds. -1 = unknown. */
         @Volatile
         private var cachedNavInset = -1
+
+        /**
+         * Read-only access to the process-wide dictionary for callers outside the suggestion
+         * strip (Journey stats word segmentation) — null until the background asset load
+         * finishes, same as [suggestionEngine] here.
+         */
+        fun dictionaryOrNull(): SuggestionEngine? = sharedEngine?.takeIf { it.isReady }
     }
 }

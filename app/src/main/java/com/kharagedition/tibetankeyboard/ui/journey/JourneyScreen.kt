@@ -41,6 +41,7 @@ class JourneyActions(
     val onUpgrade: () -> Unit,
     val onShare: () -> Unit,
     val onToggleSync: (Boolean) -> Unit,
+    val onSignIn: () -> Unit,
 )
 
 @Composable
@@ -65,9 +66,9 @@ fun JourneyScreen(state: JourneyUiState, actions: JourneyActions) {
             SectionLabel(stringResource(R.string.journey_insights_label), color = TibetanColors.CreamDim)
             Spacer(Modifier.height(10.dp))
             if (state.isPremium) {
-                WeekChart(state.weekWords)
+                WeekChart(state.weekWords, state.weekDayLabels)
                 Spacer(Modifier.height(12.dp))
-                CommunityCard(state, actions.onToggleSync)
+                CommunityCard(state, actions.onToggleSync, actions.onSignIn)
             } else {
                 TeaserInsightsCard(state, onUpgrade = actions.onUpgrade)
             }
@@ -171,7 +172,7 @@ private fun StatsGrid(state: JourneyUiState, onUpgrade: () -> Unit) {
                 value = state.totalWords.toString(),
                 modifier = Modifier.weight(1f),
             )
-            // Vocabulary size comes from Botok-tokenized unique words — a PRO insight.
+            // Vocabulary size counts unique dictionary words (see WordSegmenter) — a PRO insight.
             if (state.isPremium) {
                 StatTile(
                     label = stringResource(R.string.journey_vocabulary),
@@ -225,7 +226,7 @@ private fun LockedStatTile(label: String, onClick: () -> Unit, modifier: Modifie
 
 /** Last-7-days bar chart. Pure Compose boxes — no chart library needed for 7 bars. */
 @Composable
-private fun WeekChart(weekWords: List<Int>) {
+private fun WeekChart(weekWords: List<Int>, weekDayLabels: List<String>) {
     val max = (weekWords.maxOrNull() ?: 0).coerceAtLeast(1)
     Column(
         modifier = Modifier
@@ -259,12 +260,33 @@ private fun WeekChart(weekWords: List<Int>) {
                 )
             }
         }
+        Spacer(Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            weekDayLabels.forEachIndexed { index, label ->
+                val isToday = index == weekDayLabels.lastIndex
+                Text(
+                    label,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    color = if (isToday) TibetanColors.Gold300 else TibetanColors.CreamDim,
+                    fontSize = 11.sp,
+                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                )
+            }
+        }
     }
 }
 
 /** Opt-in, numbers-only community comparison (PRO). */
 @Composable
-private fun CommunityCard(state: JourneyUiState, onToggleSync: (Boolean) -> Unit) {
+private fun CommunityCard(
+    state: JourneyUiState,
+    onToggleSync: (Boolean) -> Unit,
+    onSignIn: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,17 +312,46 @@ private fun CommunityCard(state: JourneyUiState, onToggleSync: (Boolean) -> Unit
         }
         if (state.syncEnabled) {
             Spacer(Modifier.height(10.dp))
-            Text(
-                when {
-                    state.comparing -> stringResource(R.string.journey_community_comparing)
-                    state.percentile != null ->
-                        stringResource(R.string.journey_community_result, state.percentile)
-                    else -> stringResource(R.string.journey_community_signin)
-                },
-                color = TibetanColors.Gold300, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-            )
+            if (state.percentile != null) {
+                // A percentile from an earlier successful sync stays on screen (stale-while-
+                // revalidate) even if a later background retry fails — no flicker back to an
+                // error state once the user has seen a real result.
+                CommunityResult(state.percentile)
+            } else {
+                Text(
+                    when {
+                        // Ground truth is the actual auth session, not just "no percentile yet" —
+                        // a signed-in user whose sync failed must never see "sign in" again.
+                        !state.isSignedIn -> stringResource(R.string.journey_community_signin)
+                        state.comparing -> stringResource(R.string.journey_community_comparing)
+                        else -> stringResource(R.string.journey_community_sync_failed)
+                    },
+                    color = TibetanColors.Gold300, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    modifier = if (!state.isSignedIn) Modifier.clickable(onClick = onSignIn) else Modifier,
+                )
+            }
         }
     }
+}
+
+/**
+ * Tiered, aspirational headline only — deliberately no raw "N of M" counts. With a small early
+ * user base, an exact denominator advertises how few people are in the comparison pool, which
+ * undercuts the "join a thriving community" pitch this card exists to make.
+ */
+@Composable
+private fun CommunityResult(percentile: Int) {
+    Text(
+        stringResource(
+            when (CommunityInsight.tierFor(percentile)) {
+                CommunityTier.ELITE -> R.string.journey_community_tier_elite
+                CommunityTier.TOP -> R.string.journey_community_tier_top
+                CommunityTier.ABOVE_AVERAGE -> R.string.journey_community_tier_above
+                CommunityTier.BUILDING -> R.string.journey_community_tier_building
+            }
+        ),
+        color = TibetanColors.Gold300, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+    )
 }
 
 /** Milestone celebration. Free users get the upsell exactly at the reward moment. */

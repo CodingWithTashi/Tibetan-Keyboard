@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.JourneyRepository
@@ -27,14 +28,19 @@ data class JourneyUiState(
     val vocabularySize: Int = 0,
     /** Words per day for the last 7 days, oldest first (today last). */
     val weekWords: List<Int> = List(7) { 0 },
+    /** Single-letter weekday labels matching [weekWords]'s order. */
+    val weekDayLabels: List<String> = WeekLabels.lastSevenDays(),
     val nextMilestone: Int? = StreakLogic.MILESTONES.first(),
     /** Set when the current streak sits exactly on a milestone — drives the celebration banner. */
     val milestone: Int? = null,
     val isPremium: Boolean = false,
+    val isSignedIn: Boolean = false,
     val syncEnabled: Boolean = false,
     /** Community percentile (0–100) once the opt-in comparison has run; null otherwise. */
     val percentile: Int? = null,
     val comparing: Boolean = false,
+    /** True when a signed-in sync attempt came back empty — distinct from "not signed in". */
+    val syncFailed: Boolean = false,
 )
 
 /**
@@ -45,6 +51,7 @@ class JourneyViewModel(app: Application) : AndroidViewModel(app) {
 
     private val stats = TypingStatsStore.getInstance(app)
     private val repository = JourneyRepository()
+    private val authManager = AuthManager(app)
     private val premiumLiveData = RevenueCatManager.getInstance().isPremiumUser
 
     private val _uiState = MutableStateFlow(JourneyUiState())
@@ -75,9 +82,11 @@ class JourneyViewModel(app: Application) : AndroidViewModel(app) {
                 totalWords = stats.totalWords(),
                 vocabularySize = stats.vocabularySize(),
                 weekWords = stats.weekWords(today),
+                weekDayLabels = WeekLabels.lastSevenDays(),
                 nextMilestone = StreakLogic.nextMilestone(streakDays),
                 milestone = streakDays.takeIf { it in StreakLogic.MILESTONES },
                 syncEnabled = stats.isSyncEnabled(),
+                isSignedIn = authManager.isUserAuthenticated(),
             )
         }
         if (stats.isSyncEnabled()) compare()
@@ -97,11 +106,17 @@ class JourneyViewModel(app: Application) : AndroidViewModel(app) {
     private fun compare() {
         val userId = UserPreferences(getApplication()).getUserId()
         if (userId.isBlank() || _uiState.value.comparing) return
-        _uiState.update { it.copy(comparing = true) }
+        _uiState.update { it.copy(comparing = true, syncFailed = false) }
         viewModelScope.launch {
             val state = _uiState.value
             val result = repository.submitWeekly(userId, state.wordsThisWeek, state.streakDays)
-            _uiState.update { it.copy(comparing = false, percentile = result?.percentile) }
+            _uiState.update {
+                it.copy(
+                    comparing = false,
+                    percentile = result?.percentile ?: it.percentile,
+                    syncFailed = result == null,
+                )
+            }
         }
     }
 
