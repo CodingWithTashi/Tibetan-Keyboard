@@ -153,6 +153,23 @@ object AppAnalytics {
     fun logKeyboardAiApplied(feature: String) = log(EVENT_KEYBOARD_AI_APPLIED, PARAM_FEATURE to feature)
 
     // ----------------------------------------------------------------------------------------
+    // Journey (typing streak & insights) — events carry ONLY counts, never typed content
+    // ----------------------------------------------------------------------------------------
+
+    /** The Journey screen was opened. [source] is one of [JourneySource]. */
+    fun logJourneyOpened(source: String) = log(EVENT_JOURNEY_OPENED, PARAM_SOURCE to source)
+
+    /** The user's typing streak crossed a milestone (3/7/14/30/60/108/365 days). */
+    fun logStreakMilestone(days: Int) = log(EVENT_STREAK_MILESTONE, PARAM_DAYS to days)
+
+    /** The numbers-only community comparison was switched on/off on the Journey screen. */
+    fun logJourneySyncToggled(enabled: Boolean) =
+        log(EVENT_JOURNEY_SYNC_TOGGLED, PARAM_VALUE to enabled.toString())
+
+    /** The user shared their streak (the Journey screen's share action). */
+    fun logJourneyShared(days: Int) = log(EVENT_JOURNEY_SHARED, PARAM_DAYS to days)
+
+    // ----------------------------------------------------------------------------------------
     // Settings
     // ----------------------------------------------------------------------------------------
 
@@ -224,6 +241,11 @@ object AppAnalytics {
     private const val EVENT_KEYBOARD_AI_USED = "keyboard_ai_used"
     private const val EVENT_KEYBOARD_AI_APPLIED = "keyboard_ai_applied"
 
+    private const val EVENT_JOURNEY_OPENED = "journey_opened"
+    private const val EVENT_STREAK_MILESTONE = "streak_milestone"
+    private const val EVENT_JOURNEY_SYNC_TOGGLED = "journey_sync_toggled"
+    private const val EVENT_JOURNEY_SHARED = "journey_shared"
+
     private const val EVENT_SETTING_CHANGED = "setting_changed"
 
     private const val EVENT_NOTIFICATION_RECEIVED = "notification_received"
@@ -243,6 +265,7 @@ object AppAnalytics {
     private const val PARAM_VALUE = "value"
     private const val PARAM_SOURCE = "source"
     private const val PARAM_TYPE = "type"
+    private const val PARAM_DAYS = "days"
 
     // User properties
     private const val USER_PROP_KB_ENABLED = "kb_enabled"
@@ -275,6 +298,14 @@ object AppAnalytics {
         const val RATE = "rate"
         const val ABOUT = "about"
         const val UPGRADE = "upgrade"
+        const val JOURNEY = "journey"
+    }
+
+    /** Stable source labels for [logJourneyOpened] (where the Journey screen was opened from). */
+    object JourneySource {
+        const val KEYBOARD = "keyboard"
+        const val HOME = "home"
+        const val NOTIFICATION = "notification"
     }
 
     /** Stable setting labels for [logSettingChanged]. */
@@ -284,6 +315,7 @@ object AppAnalytics {
         const val VIBRATE = "vibrate"
         const val SOUND = "sound"
         const val NOTIFICATION = "notification"
+        const val STREAK_REMINDER = "streak_reminder"
     }
 
     /** Stable source labels for [logUpgradeClicked] (where the upgrade intent originated). */
@@ -294,6 +326,7 @@ object AppAnalytics {
         const val TRANSLATE = "translate"
         const val SETTINGS = "settings"
         const val KEYBOARD = "keyboard"
+        const val JOURNEY = "journey"
         const val UNKNOWN = "unknown"
     }
 }

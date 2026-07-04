@@ -43,6 +43,15 @@ object RetrofitClient {
             .build()
             .create(YigChikTranslateAPI::class.java)
     }
+    val journeyAPI: JourneyAPI by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://asia-south1-tibetan-keyboard.cloudfunctions.net/api/")
+            .client(httpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(JourneyAPI::class.java)
+    }
+
     val aiAPI: YigChikAIAPI by lazy {
         Retrofit.Builder()
             .baseUrl("https://yig-chik-gfg2cdb5a3dycvh8.centralindia-01.azurewebsites.net/")

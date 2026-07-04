@@ -13,4 +13,7 @@ interface AIKeyboardInterface {
 
     /** Route a free user to the unlock flow (login if signed out, else the premium paywall). */
     fun onUnlockPro()
+
+    /** Open the Tibetan Journey (streak & typing insights) screen. */
+    fun onOpenJourney()
 }

@@ -44,6 +44,8 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.SOUND, on.toString()) }
     fun setNotification(on: Boolean) = write(SettingsPrefs.KEY_NOTIFICATION, on) { it.copy(eventNotification = on) }
         .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.NOTIFICATION, on.toString()) }
+    fun setStreakReminder(on: Boolean) = write(SettingsPrefs.KEY_STREAK_REMINDER, on) { it.copy(streakReminder = on) }
+        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.STREAK_REMINDER, on.toString()) }
 
     private fun write(key: String, value: String, reduce: (SettingsState) -> SettingsState) {
         SettingsPrefs.putString(getApplication(), key, value)

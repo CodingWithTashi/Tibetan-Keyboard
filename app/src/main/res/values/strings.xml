@@ -275,4 +275,55 @@
     <string name="lang_english">English</string>
     <string name="lang_chinese">Chinese</string>
 
+    <!-- Journey (typing streak & insights) -->
+    <string name="journey_title">Your Tibetan Journey</string>
+    <string name="journey_streak_chip">🔥 %1$d</string>
+    <string name="journey_streak_chip_cd">Typing streak</string>
+    <string name="journey_streak_days">%1$d-day streak</string>
+    <string name="journey_streak_none_title">Light your flame</string>
+    <string name="journey_streak_none_subtitle">Type a little Tibetan today to start your streak</string>
+    <string name="journey_streak_done_today">You\'ve typed Tibetan today — streak safe 🎉</string>
+    <string name="journey_streak_at_risk">Type some Tibetan today to keep your streak alive</string>
+    <string name="journey_best_streak">Best: %1$d days</string>
+    <string name="journey_next_milestone">Next milestone: %1$d days</string>
+    <string name="journey_insights_label">Insights</string>
+    <string name="journey_words_today">Words today</string>
+    <string name="journey_words_week">This week</string>
+    <string name="journey_words_total">Total words</string>
+    <string name="journey_vocabulary">Vocabulary</string>
+    <string name="journey_week_chart_title">Your week</string>
+    <string name="journey_unlock_pro">Unlock PRO</string>
+    <string name="journey_milestone_title">🎉 %1$d-day milestone!</string>
+    <string name="journey_milestone_sub_pro">An incredible commitment to Tibetan. Keep going!</string>
+    <string name="journey_milestone_sub_free">Celebrate it — unlock autocomplete, AI chat &amp; full insights with PRO.</string>
+    <string name="journey_teaser_title">Your insights are ready</string>
+    <string name="journey_teaser_week">You typed %1$d words (%2$d characters) this week.</string>
+    <string name="journey_teaser_savings">PRO autocomplete could have typed ~%1$d of those characters for you.</string>
+    <string name="journey_teaser_locked">Vocabulary size · Weekly chart · Community rank</string>
+    <string name="journey_community_title">Community comparison</string>
+    <string name="journey_community_desc">Optional. Shares only two numbers — your weekly word count and streak — never anything you type.</string>
+    <string name="journey_community_comparing">Comparing…</string>
+    <string name="journey_community_signin">Sign in to compare with the community.</string>
+    <string name="journey_community_sync_failed">Couldn\'t sync just now — we\'ll retry the next time you open this screen.</string>
+    <string name="journey_community_tier_elite">🏆 Elite typist — top 5% this week</string>
+    <string name="journey_community_tier_top">🔥 Top 20% this week</string>
+    <string name="journey_community_tier_above">📈 Above average this week</string>
+    <string name="journey_community_tier_building">🌱 Keep building momentum</string>
+    <string name="journey_privacy_title">Private by design</string>
+    <string name="journey_privacy_desc">Your streak and stats are counted on this device only. Words are never stored or sent — the app keeps just the totals, and vocabulary is tracked as unreadable fingerprints. Nothing leaves your phone unless you turn on the community comparison (numbers only).</string>
+    <string name="journey_share">Share my streak</string>
+    <string name="journey_share_text">🔥 I\'m on a %1$d-day streak writing in Tibetan with %2$s! Keep the language alive: %3$s</string>
+    <string name="home_journey_streak">%1$d-day streak 🔥</string>
+    <string name="home_journey_start">Start your Tibetan streak</string>
+    <string name="home_journey_subtitle_active">%1$d words today — keep it going</string>
+    <string name="home_journey_subtitle_idle">Type in Tibetan today to light your flame</string>
+    <string name="journey_reminder_setting">Streak reminders</string>
+    <string name="journey_reminder_setting_desc">A nudge in the evening when your streak is at risk</string>
+    <string name="journey_channel_name">Tibetan Journey</string>
+    <string name="journey_channel_desc">Streak reminders and weekly typing insights</string>
+    <string name="journey_reminder_title">🔥 Your %1$d-day streak is at risk</string>
+    <string name="journey_reminder_body">Type a little Tibetan before midnight to keep it alive.</string>
+    <string name="journey_weekly_title">Your week in Tibetan</string>
+    <string name="journey_weekly_body">You typed %1$d Tibetan words this week. See your journey →</string>
+
 </resources>

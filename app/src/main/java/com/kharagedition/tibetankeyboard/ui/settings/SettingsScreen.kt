@@ -57,6 +57,7 @@ data class SettingsState(
     val vibrate: Boolean = false,
     val sound: Boolean = true,
     val eventNotification: Boolean = true,
+    val streakReminder: Boolean = true,
     val isPremium: Boolean = false,
     val isAuthenticated: Boolean = false,
 )
@@ -68,6 +69,7 @@ class SettingsActions(
     val onVibrate: (Boolean) -> Unit,
     val onSound: (Boolean) -> Unit,
     val onNotification: (Boolean) -> Unit,
+    val onStreakReminder: (Boolean) -> Unit,
     val onUpgrade: () -> Unit,
     val onLogout: () -> Unit,
 )
@@ -129,6 +131,13 @@ fun SettingsScreen(
                         icon = AppIcons.Bell,
                         title = stringResource(R.string.event_notifications),
                         trailing = { GoldToggle(state.eventNotification, actions.onNotification) },
+                    )
+                    Divider()
+                    SettingsRow(
+                        icon = AppIcons.Star,
+                        title = stringResource(R.string.journey_reminder_setting),
+                        subtitle = stringResource(R.string.journey_reminder_setting_desc),
+                        trailing = { GoldToggle(state.streakReminder, actions.onStreakReminder) },
                     )
                 }
 

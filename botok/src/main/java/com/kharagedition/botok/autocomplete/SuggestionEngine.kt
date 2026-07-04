@@ -54,6 +54,18 @@ class SuggestionEngine {
         return emptyList()
     }
 
+    /** True if [word] is an exact dictionary entry (used for greedy word-boundary segmentation). */
+    fun containsExact(word: String): Boolean {
+        if (!isReady || word.isEmpty()) return false
+        var lo = 0
+        var hi = words.size
+        while (lo < hi) {
+            val mid = (lo + hi).ushr(1)
+            if (words[mid].form < word) lo = mid + 1 else hi = mid
+        }
+        return lo < words.size && words[lo].form == word
+    }
+
     private fun lookup(prefix: String, max: Int): List<String> {
         var lo = 0
         var hi = words.size

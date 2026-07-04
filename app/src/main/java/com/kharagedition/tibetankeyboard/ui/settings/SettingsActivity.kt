@@ -47,6 +47,7 @@ class SettingsActivity : AppCompatActivity() {
         onVibrate = viewModel::setVibrate,
         onSound = viewModel::setSound,
         onNotification = viewModel::setNotification,
+        onStreakReminder = viewModel::setStreakReminder,
         onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.SETTINGS) },
         onLogout = {
             showConfirmationDialog(
