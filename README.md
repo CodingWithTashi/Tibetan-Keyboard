@@ -1,5 +1,7 @@
 # Tibetan-Keyboard
 Tibetan Keyboard application for daily use case
+## Applciation
+Checkout [kharagedition.com/tibetan-keyboard](https://kharagedition.com/tibetan-keyboard/) or [Download](https://play.google.com/store/apps/details?id=com.kharagedition.tibetankeyboard) from Playstore
 
 ## First released is published in play store...   
 
@@ -14,4 +16,4 @@ Tibetan-Keyboard
 | <img src="https://github.com/CodingWithTashi/Tibetan-Keyboard/blob/main/app/demo/inputmethod.jpeg?raw=true" width="300" height="600" /> | <img src="https://github.com/CodingWithTashi/Tibetan-Keyboard/blob/main/app/demo/ready.jpeg?raw=true" width="300" height="600" /> |
 | **Set up input Method** | **Use case** |
 
-[Download App](https://play.google.com/store/apps/details?id=com.kharagedition.tibetankeyboard)
+
