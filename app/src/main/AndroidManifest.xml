@@ -78,6 +78,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Deep link for marketing pages: tibetankeyboard://open launches the app when it is
+                 installed (Chrome intent:// URLs fall back to the Play Store otherwise). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="open"
+                    android:scheme="tibetankeyboard" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".ui.home.HomeActivity"

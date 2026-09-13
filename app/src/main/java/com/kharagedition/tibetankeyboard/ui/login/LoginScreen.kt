@@ -88,11 +88,11 @@ fun LoginScreen(
                 Text(stringResource(R.string.by_signing_in), color = TibetanColors.CreamFaint, fontSize = 12.sp)
                 Row(horizontalArrangement = Arrangement.Center) {
                     Text(
-                        stringResource(R.string.terms_of_service),
+                        stringResource(R.string.terms_of_service)+" ",
                         color = TibetanColors.Gold300, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.clickable(onClick = onTerms),
                     )
-                    Text(stringResource(R.string.and_word), color = TibetanColors.CreamFaint, fontSize = 12.sp)
+                    Text(stringResource(R.string.and_word)+" ", color = TibetanColors.CreamFaint, fontSize = 12.sp)
                     Text(
                         stringResource(R.string.privacy_policy),
                         color = TibetanColors.Gold300, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,

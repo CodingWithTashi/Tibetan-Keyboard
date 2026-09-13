@@ -24,9 +24,9 @@ android {
         applicationId "com.kharagedition.tibetankeyboard"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 53
+        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 54
 
-        versionName "2.2.10"
+        versionName "2.2.11"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
