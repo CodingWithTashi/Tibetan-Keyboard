@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dzongkha Keyboard</string>
+    <string name="bo_app_name">རྫོང་ཁ་མཐེབ་གཞོང་</string>
+    <string name="ime_subtype_tibetan">Dzongkha</string>
+    <string name="chat_assistant">Dzongkha Assistant</string>
+    <string name="ask_in_english">Ask in English/Dzongkha</string>
+    <string name="login_subtitle">Your AI Assistant for Dzongkha Language</string>
+    <string name="grammar_analyzer_hint">Enter Dzongkha text to analyze</string>
+    <string name="analyze_your_tibetan">Analyze your Dzongkha text for grammar, spelling, and style</string>
+    <string name="enter_tibetan_text">Enter text to transliterate&#8230;</string>
+    <string name="tibetan">Dzongkha</string>
+    <string name="setup_enable_keyboard">Enable Dzongkha Keyboard</string>
+    <string name="setup_coach_step1_title">Turn on Dzongkha Keyboard</string>
+    <string name="setup_coach_step1_desc">Tap here to open your phone\'s keyboard settings, then switch on Dzongkha Keyboard in the list.</string>
+    <string name="setup_coach_step2_title">Switch to Dzongkha Keyboard</string>
+    <string name="setup_coach_step2_desc">Tap here, then pick Dzongkha Keyboard from the popup to start typing.</string>
+    <string name="online_tibetan">Online · Dzongkha</string>
+    <string name="premium_title">Dzongkha Keyboard Pro</string>
+    <string name="lang_tibetan">Dzongkha</string>
+    <string name="journey_title">Your Dzongkha Journey</string>
+    <string name="journey_streak_none_subtitle">Type a little Dzongkha today to start your streak</string>
+    <string name="journey_streak_done_today">You\'ve typed Dzongkha today — streak safe 🎉</string>
+    <string name="journey_streak_at_risk">Type some Dzongkha today to keep your streak alive</string>
+    <string name="journey_milestone_sub_pro">An incredible commitment to Dzongkha. Keep going!</string>
+    <string name="journey_share_text">🔥 I\'m on a %1$d-day streak writing in Dzongkha with %2$s! Keep the language alive: %3$s</string>
+    <string name="home_journey_start">Start your Dzongkha streak</string>
+    <string name="home_journey_subtitle_idle">Type in Dzongkha today to light your flame</string>
+    <string name="journey_channel_name">Dzongkha Journey</string>
+    <string name="journey_reminder_body">Type a little Dzongkha before midnight to keep it alive.</string>
+    <string name="journey_weekly_title">Your week in Dzongkha</string>
+    <string name="journey_weekly_body">You typed %1$d Dzongkha words this week. See your journey →</string>
+</resources>
