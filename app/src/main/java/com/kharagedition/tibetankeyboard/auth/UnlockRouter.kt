@@ -1,19 +1,20 @@
 package com.kharagedition.tibetankeyboard.auth
 
-/** Where a free user tapping a PRO control should be sent. */
+/** Where a user tapping a PRO control should be sent. */
 enum class UnlockDestination {
-    /** Not signed in: go to login first (login then forwards to the paywall). */
+    /** No longer used by the unlock flow; kept for the "sign in to use AI" prompt. */
     LOGIN_THEN_PREMIUM,
 
-    /** Signed in but not subscribed: go straight to the premium paywall. */
+    /** Go straight to the premium paywall, signed in or not. */
     PREMIUM,
 }
 
 /**
- * Pure routing decision for the "unlock PRO" flow, separated from Activity/IME plumbing so the
- * conversion-critical branch is unit-testable.
+ * Pure routing decision for the "unlock PRO" flow, kept out of Activity/IME plumbing so the
+ * conversion-critical branch is unit-testable. Everyone goes straight to the paywall — Play needs
+ * no account to take a payment, and sign-in is asked for afterwards.
  */
 object UnlockRouter {
-    fun destinationFor(isAuthenticated: Boolean): UnlockDestination =
-        if (isAuthenticated) UnlockDestination.PREMIUM else UnlockDestination.LOGIN_THEN_PREMIUM
+    @Suppress("UNUSED_PARAMETER")
+    fun destinationFor(isAuthenticated: Boolean): UnlockDestination = UnlockDestination.PREMIUM
 }

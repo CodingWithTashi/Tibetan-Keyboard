@@ -5,6 +5,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -12,6 +14,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.kharagedition.tibetankeyboard.BuildConfig
+import com.kharagedition.tibetankeyboard.ui.subscription.ManageSubscriptionActivity
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
@@ -29,7 +32,13 @@ class SettingsActivity : AppCompatActivity() {
         setContent {
             TibetanKeyboardTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                SettingsScreen(state = state, actions = settingsActions(), adSlot = { BannerAd() })
+                SettingsScreen(
+                    state = state,
+                    actions = settingsActions(),
+                    // Null for subscribers so the AdView is never built; hiding it in the
+                    // composable still called loadAd. Mirrors HomeActivity.observeAdGating().
+                    adSlot = if (state.isPremium) null else ({ BannerAd() }),
+                )
             }
         }
     }
@@ -49,6 +58,7 @@ class SettingsActivity : AppCompatActivity() {
         onNotification = viewModel::setNotification,
         onStreakReminder = viewModel::setStreakReminder,
         onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.SETTINGS) },
+        onManageSubscription = { ManageSubscriptionActivity.open(this) },
         onLogout = {
             showConfirmationDialog(
                 title = getString(R.string.sign_out),
@@ -68,17 +78,22 @@ class SettingsActivity : AppCompatActivity() {
 
     @Composable
     private fun BannerAd() {
-        AndroidView(factory = { ctx ->
-            AdView(ctx).apply {
+        // AdView holds a WebView and timers, so it must be paused/resumed and destroyed.
+        val adView = remember {
+            AdView(this).apply {
                 setAdSize(AdSize.BANNER)
-                adUnitId = if (BuildConfig.DEBUG) {
-                    TEST_BANNER_AD_UNIT
-                } else {
-                    PROD_BANNER_AD_UNIT
-                }
+                adUnitId = if (BuildConfig.DEBUG) TEST_BANNER_AD_UNIT else PROD_BANNER_AD_UNIT
                 loadAd(AdRequest.Builder().build())
             }
-        })
+        }
+        DisposableEffect(adView) {
+            adView.resume()
+            onDispose {
+                adView.pause()
+                adView.destroy()
+            }
+        }
+        AndroidView(factory = { adView })
     }
 
     companion object {

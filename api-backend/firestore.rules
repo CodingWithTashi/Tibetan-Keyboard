@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Replaces an unversioned wide-open ruleset (`allow read: if true` / `allow write: if request.auth
+// != null`) under which any signed-in user could set users/{anyone}.isPro and every document was
+// world-readable. The backend uses the Admin SDK and bypasses these rules, so anything only it
+// touches gets no client rule and is denied.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedInAs(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Webhook/REST-backfill only: a client that could set these owns the entitlement.
+    function proFields() {
+      return ['isPro', 'proExpiresAt', 'proUpdatedAt'].toSet();
+    }
+
+    function keepsProFieldsOut() {
+      return !request.resource.data.keys().toSet().hasAny(proFields());
+    }
+
+    function leavesProFieldsAlone() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(proFields());
+    }
+
+    // Profile, device info and the daily activity ping. Own document only — nothing in the app
+    // reads another user's record (the Journey community comparison is computed server-side).
+    match /users/{uid} {
+      allow get: if signedInAs(uid);
+      allow list: if false;
+      allow create: if signedInAs(uid) && keepsProFieldsOut();
+      allow update: if signedInAs(uid) && leavesProFieldsAlone();
+      allow delete: if false;
+    }
+
+    // Append-only product analytics. Clients add events and never read them back.
+    match /user_analytics/{event} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;
+    }
+
+    // Everything else — anon_usage, system_usage, journey_stats, conversations, messages,
+    // grammar_history, transliteration_history — is Admin SDK only. Spelled out rather than left
+    // implicit so the intent survives the next person reading this file.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

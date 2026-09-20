@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +72,7 @@ class SettingsActions(
     val onNotification: (Boolean) -> Unit,
     val onStreakReminder: (Boolean) -> Unit,
     val onUpgrade: () -> Unit,
+    val onManageSubscription: () -> Unit,
     val onLogout: () -> Unit,
 )
 
@@ -149,17 +151,31 @@ fun SettingsScreen(
                         icon = AppIcons.Crown,
                         title = stringResource(R.string.subscription),
                         subtitle = stringResource(if (state.isPremium) R.string.premium_plan else R.string.free_plan),
+                        // "Upgrade" for free users, Customer Center for subscribers — who
+                        // previously had no in-app route to cancel or restore.
                         trailing = {
-                            if (!state.isPremium) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(TibetanTokens.Pill)
-                                        .background(TibetanTokens.GoldVertical)
-                                        .clickable(onClick = actions.onUpgrade)
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                ) {
-                                    Text(stringResource(R.string.upgrade), color = TibetanColors.Espresso, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
-                                }
+                            Box(
+                                modifier = Modifier
+                                    .clip(TibetanTokens.Pill)
+                                    .background(
+                                        if (state.isPremium) SolidColor(TibetanColors.Brown600)
+                                        else TibetanTokens.GoldVertical
+                                    )
+                                    .clickable(
+                                        onClick = if (state.isPremium) actions.onManageSubscription
+                                        else actions.onUpgrade
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                            ) {
+                                Text(
+                                    stringResource(
+                                        if (state.isPremium) R.string.manage_subscription
+                                        else R.string.upgrade
+                                    ),
+                                    color = if (state.isPremium) TibetanColors.Gold300 else TibetanColors.Espresso,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
                             }
                         },
                     )

@@ -34,10 +34,18 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         RevenueCatManager.getInstance().refreshCustomerInfo()
     }
 
-    fun setColor(value: String) = write(SettingsPrefs.KEY_COLOR, value) { it.copy(color = value) }
-        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.COLOR, value) }
-    fun setStyle(value: String) = write(SettingsPrefs.KEY_STYLE, value) { it.copy(style = value) }
-        .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.STYLE, value) }
+    // The picker disabling PRO rows was the only check; the IME reads this store directly.
+    fun setColor(value: String) {
+        if (!_uiState.value.isPremium && SettingsPrefs.isColorPremium(value)) return
+        write(SettingsPrefs.KEY_COLOR, value) { it.copy(color = value) }
+        AppAnalytics.logSettingChanged(AppAnalytics.Setting.COLOR, value)
+    }
+
+    fun setStyle(value: String) {
+        if (!_uiState.value.isPremium && SettingsPrefs.isStylePremium(value)) return
+        write(SettingsPrefs.KEY_STYLE, value) { it.copy(style = value) }
+        AppAnalytics.logSettingChanged(AppAnalytics.Setting.STYLE, value)
+    }
     fun setVibrate(on: Boolean) = write(SettingsPrefs.KEY_VIBRATE, on) { it.copy(vibrate = on) }
         .also { AppAnalytics.logSettingChanged(AppAnalytics.Setting.VIBRATE, on.toString()) }
     fun setSound(on: Boolean) = write(SettingsPrefs.KEY_SOUND, on) { it.copy(sound = on) }

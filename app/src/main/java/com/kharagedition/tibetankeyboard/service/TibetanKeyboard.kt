@@ -32,6 +32,7 @@ import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.data.repository.subscriptionCallback
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardType
+import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
@@ -46,7 +47,6 @@ import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardCodes
 import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiItemList
 import com.kharagedition.tibetankeyboard.ui.keyboard.StickerItem
 import com.kharagedition.tibetankeyboard.R
-import com.kharagedition.tibetankeyboard.FontsOverride
 
 
 class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboardInterface {
@@ -141,7 +141,6 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        setKeyBoardLanguage()
 
         // Create the main container with AI toolbar
         val mainContainer = createMainKeyboardView()
@@ -170,8 +169,20 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         return mainContainer
     }
 
+    /** Colour the user is entitled to; cached entitlement keeps this synchronous on the hot path. */
+    private fun entitledColor(): String = SettingsPrefs.effectiveColor(
+        prefs.getString(SettingsPrefs.KEY_COLOR, SettingsPrefs.DEFAULT_COLOR) ?: SettingsPrefs.DEFAULT_COLOR,
+        RevenueCatManager.getInstance().isPremiumUserCached(),
+    )
+
+    /** Layout the user is entitled to. See [entitledColor]. */
+    private fun entitledStyle(): String = SettingsPrefs.effectiveStyle(
+        prefs.getString(SettingsPrefs.KEY_STYLE, SettingsPrefs.DEFAULT_STYLE) ?: SettingsPrefs.DEFAULT_STYLE,
+        RevenueCatManager.getInstance().isPremiumUserCached(),
+    )
+
     private fun createMainKeyboardView(): View {
-        val color = prefs.getString("colors", "#FF704C04")
+        val color = entitledColor()
 
         // Create AIKeyboardView directly
         aiKeyboardView = AIKeyboardView(this)
@@ -181,15 +192,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         return aiKeyboardView!!
     }
 
-    private fun setKeyBoardLanguage() {
-        // Uchen only — never the cursive Ume/Tsutong face. Use the system Tibetan
-        // font (renders Uchen) so Latin UI text stays clean too.
-        FontsOverride.setDefaultFont(this, "DEFAULT", null)
-    }
-
     private fun setKeyBoardView() {
-        val color = prefs.getString("colors", "#FF704C04")
-        val keyboardStyle = prefs.getString("keyboard_style", "borderless")
+        val color = entitledColor()
+        val keyboardStyle = entitledStyle()
 
         if (keyboardStyle == "borderless") {
             // Borderless is colour-agnostic: one transparent-key layout, surface tint
@@ -353,7 +358,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         AppAnalytics.logKeyboardEmojiOpened()
         if (emojiKeyboardView == null) {
             emojiKeyboardView = EmojiKeyboardView(this)
-            val themeColor = prefs.getString("colors", "#FF704C04") ?: "#FF704C04"
+            val themeColor = entitledColor()
             emojiKeyboardView?.setThemeColor(themeColor)
 
 

@@ -85,6 +85,17 @@ object SettingsPrefs {
     /** True when [value] is a PRO-only keyboard layout. */
     fun isStylePremium(value: String) = styleOptions.firstOrNull { it.value == value }?.premium == true
 
+    /**
+     * The colour to actually apply. Never rewrites the saved preference, so resubscribing restores
+     * the choice; the IME reads this store directly, so the check cannot live in the UI alone.
+     */
+    fun effectiveColor(value: String, isPremium: Boolean): String =
+        if (!isPremium && isColorPremium(value)) DEFAULT_COLOR else value
+
+    /** The keyboard layout to actually apply. See [effectiveColor]. */
+    fun effectiveStyle(value: String, isPremium: Boolean): String =
+        if (!isPremium && isStylePremium(value)) DEFAULT_STYLE else value
+
     private fun prefs(context: Context): SharedPreferences =
         PreferenceManager.getDefaultSharedPreferences(context)
 

@@ -66,6 +66,13 @@ const azureTranslatorKey = defineSecret("AZURE_TRANSLATOR_KEY");
 const revenueCatWebhookSecret = defineSecret("REVENUECAT_WEBHOOK_SECRET");
 const revenueCatApiKey = defineSecret("REVENUECAT_API_KEY");
 
+/** A safe Firestore doc id, or null. `.doc("")` throws, turning a missing header into a 500. */
+function firestoreUserId(raw: unknown): string | null {
+  const id = typeof raw === "string" ? raw.trim() : "";
+  if (!id || id === "anonymous" || id.includes("/")) return null;
+  return id;
+}
+
 // Reusable middleware that sets req.isPro (Firestore mirror + RC REST fallback).
 const attachPro = attachProStatus(() => {
   try {
@@ -342,108 +349,129 @@ app.post("/chat/reset", async (req, res) => {
 // ============================================
 
 // Advanced Tibetan Grammar Analysis Endpoint
-app.post("/api/grammar/analyze", aiLimiter, async (req, res) => {
-  try {
-    const { text, mode = "realtime", style = "formal", contextualInfo } = req.body;
-    const userId = req.headers["userid"] as string;
-
-    if (!text || text.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Text is required",
-      });
-    }
-
-    const userLevel = contextualInfo?.userLevel || "intermediate";
-    const documentType = contextualInfo?.documentType || "casual";
-
-    const result = await advancedGrammarService.analyzeTibetanGrammar(
-      text,
-      userLevel,
-      documentType
-    );
-
-    // Save to Firestore history
+// Metered like /chat — reaches Claude, so it needs the pro check, free-tier cap and budget.
+app.post(
+  "/api/grammar/analyze",
+  aiLimiter,
+  aiDailyLimiter,
+  attachPro,
+  enforceFreeLimit("chat"),
+  enforceGlobalDailyBudget,
+  async (req, res) => {
     try {
-      const db = admin.firestore();
-      const userRef = db.collection("users").doc(userId);
-      const historyRef = userRef.collection("grammar_history").doc();
+      const { text, mode = "realtime", style = "formal", contextualInfo } = req.body;
+      const userId = req.headers["userid"] as string;
 
-      await historyRef.set({
-        text,
-        corrections: result.corrections,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        documentType,
-        savedByUser: false,
-        mode,
-      });
-    } catch (dbError) {
-      console.error("Error saving to Firestore:", dbError);
-      // Don't fail the request if Firestore fails
-    }
-
-    return res.json({
-      success: true,
-      data: result,
-      usage: {
-        charactersUsed: text.length,
-      },
-    });
-  } catch (error) {
-    console.error("Grammar analysis error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Grammar analysis failed",
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
-  }
-});
-
-// Tone Alternatives Endpoint
-app.post("/api/grammar/suggestions", aiLimiter, async (req, res) => {
-  try {
-    const { text, correctionId, type } = req.body;
-
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: "Text is required",
-      });
-    }
-
-    let result: any = {
-      alternatives: [],
-      examples: [],
-      culturalNotes: "",
-    };
-
-    if (type === "alternatives") {
-      const tones: Array<"formal" | "casual" | "poetic" | "religious" | "modern"> = [
-        "formal",
-        "casual",
-        "poetic",
-      ];
-      for (const tone of tones) {
-        const alternatives = await advancedGrammarService.getToneAlternatives(text, tone);
-        result.alternatives.push({
-          tone,
-          suggestions: alternatives,
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Text is required",
         });
       }
-    }
 
-    return res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    console.error("Grammar suggestions error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to get suggestions",
-    });
+      const userLevel = contextualInfo?.userLevel || "intermediate";
+      const documentType = contextualInfo?.documentType || "casual";
+
+      const result = await advancedGrammarService.analyzeTibetanGrammar(
+        text,
+        userLevel,
+        documentType
+      );
+
+      // Save to Firestore history. Skipped without a usable id — `.doc("")` throws.
+      const historyUserId = firestoreUserId(userId);
+      if (historyUserId) {
+        try {
+          const db = admin.firestore();
+          const userRef = db.collection("users").doc(historyUserId);
+          const historyRef = userRef.collection("grammar_history").doc();
+
+          await historyRef.set({
+            text,
+            corrections: result.corrections,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            documentType,
+            savedByUser: false,
+            mode,
+          });
+        } catch (dbError) {
+          console.error("Error saving to Firestore:", dbError);
+          // Don't fail the request if Firestore fails
+        }
+      }
+
+      return res.json({
+        success: true,
+        data: result,
+        usage: {
+          charactersUsed: text.length,
+        },
+      });
+    } catch (error) {
+      console.error("Grammar analysis error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Grammar analysis failed",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   }
-});
+);
+
+// Tone Alternatives Endpoint
+// Metered like /chat — see /api/grammar/analyze above.
+app.post(
+  "/api/grammar/suggestions",
+  aiLimiter,
+  aiDailyLimiter,
+  attachPro,
+  enforceFreeLimit("chat"),
+  enforceGlobalDailyBudget,
+  async (req, res) => {
+    try {
+      const { text, correctionId, type } = req.body;
+
+      if (!text) {
+        return res.status(400).json({
+          success: false,
+          error: "Text is required",
+        });
+      }
+
+      let result: any = {
+        alternatives: [],
+        examples: [],
+        culturalNotes: "",
+      };
+
+      if (type === "alternatives") {
+        const tones: Array<"formal" | "casual" | "poetic" | "religious" | "modern"> = [
+          "formal",
+          "casual",
+          "poetic",
+        ];
+        for (const tone of tones) {
+          const alternatives = await advancedGrammarService.getToneAlternatives(text, tone);
+          result.alternatives.push({
+            tone,
+            suggestions: alternatives,
+          });
+        }
+      }
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error("Grammar suggestions error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to get suggestions",
+      });
+    }
+  }
+);
 
 // Transliteration Endpoints
 app.post("/api/transliterate/convert", async (req, res) => {
@@ -476,22 +504,25 @@ app.post("/api/transliterate/convert", async (req, res) => {
       };
     }
 
-    // Save to Firestore history
-    try {
-      const db = admin.firestore();
-      const userRef = db.collection("users").doc(userId);
-      const historyRef = userRef.collection("transliteration_history").doc();
+    // Save to Firestore history. Skipped without a usable id — `.doc("")` throws.
+    const historyUserId = firestoreUserId(userId);
+    if (historyUserId) {
+      try {
+        const db = admin.firestore();
+        const userRef = db.collection("users").doc(historyUserId);
+        const historyRef = userRef.collection("transliteration_history").doc();
 
-      await historyRef.set({
-        sourceText: text,
-        sourceSystem,
-        targetSystem,
-        result: result.result,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        savedByUser: false,
-      });
-    } catch (dbError) {
-      console.error("Error saving transliteration to Firestore:", dbError);
+        await historyRef.set({
+          sourceText: text,
+          sourceSystem,
+          targetSystem,
+          result: result.result,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          savedByUser: false,
+        });
+      } catch (dbError) {
+        console.error("Error saving transliteration to Firestore:", dbError);
+      }
     }
 
     return res.json({
@@ -538,111 +569,120 @@ app.post("/api/transliterate/database/lookup", async (req, res) => {
 });
 
 // Enhanced Chat with Tutoring Support
-app.post("/api/chat/message", aiLimiter, async (req, res) => {
-  try {
-    const {
-      sessionId,
-      message,
-      conversationMode = "general",
-      tutoringLevel = "intermediate",
-      documentContext,
-      includeExplanation = false,
-    } = req.body;
-    const userId = req.headers["userid"] as string;
-
-    if (!message) {
-      return res.status(400).json({
-        success: false,
-        error: "Message is required",
-      });
-    }
-
-    const currentSessionId = sessionId || userId;
-
-    // Create or update session with mode
-    const chat = await ChatSessionManager.getOrCreateSession(
-      currentSessionId,
-      conversationMode as any,
-      tutoringLevel as any,
-      documentContext
-    );
-
-    // Send message to Claude
-    const model = resolveModel(
-      (req.body.model as string) || (req.headers["x-model"] as string)
-    );
-    const tibetanResponse = await ChatSessionManager.sendMessage(
-      currentSessionId,
-      message,
-      { model, mode: conversationMode as any }
-    );
-
-    // Save message to Firestore
+// Metered like /chat — see /api/grammar/analyze above.
+app.post(
+  "/api/chat/message",
+  aiLimiter,
+  aiDailyLimiter,
+  attachPro,
+  enforceFreeLimit("chat"),
+  enforceGlobalDailyBudget,
+  async (req, res) => {
     try {
-      const db = admin.firestore();
-      const conversationRef = db
-        .collection("users")
-        .doc(userId)
-        .collection("conversations")
-        .doc(currentSessionId);
+      const {
+        sessionId,
+        message,
+        conversationMode = "general",
+        tutoringLevel = "intermediate",
+        documentContext,
+        includeExplanation = false,
+      } = req.body;
+      const userId = req.headers["userid"] as string;
 
-      // Create or update conversation document
-      await conversationRef.set(
-        {
-          mode: conversationMode,
-          tutoringLevel: conversationMode === "tutoring" ? tutoringLevel : null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          messageCount: admin.firestore.FieldValue.increment(1),
-          preview: message.substring(0, 100),
-          lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
+      if (!message) {
+        return res.status(400).json({
+          success: false,
+          error: "Message is required",
+        });
+      }
+
+      const currentSessionId = sessionId || userId;
+
+      // Create or update session with mode
+      const chat = await ChatSessionManager.getOrCreateSession(
+        currentSessionId,
+        conversationMode as any,
+        tutoringLevel as any,
+        documentContext
       );
 
-      // Add message to subcollection
-      const messagesRef = conversationRef.collection("messages").doc();
-      await messagesRef.set({
-        sender: "user",
-        content: message,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        mode: conversationMode,
-      });
+      // Send message to Claude
+      const model = resolveModel(
+        (req.body.model as string) || (req.headers["x-model"] as string)
+      );
+      const tibetanResponse = await ChatSessionManager.sendMessage(
+        currentSessionId,
+        message,
+        { model, mode: conversationMode as any }
+      );
 
-      // Add response
-      const responseRef = conversationRef.collection("messages").doc();
-      await responseRef.set({
-        sender: "assistant",
-        content: tibetanResponse,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        mode: conversationMode,
-        confidence: 0.92,
+      // Save message to Firestore
+      try {
+        const db = admin.firestore();
+        const conversationRef = db
+          .collection("users")
+          .doc(userId)
+          .collection("conversations")
+          .doc(currentSessionId);
+
+        // Create or update conversation document
+        await conversationRef.set(
+          {
+            mode: conversationMode,
+            tutoringLevel: conversationMode === "tutoring" ? tutoringLevel : null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            messageCount: admin.firestore.FieldValue.increment(1),
+            preview: message.substring(0, 100),
+            lastMessageTime: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        // Add message to subcollection
+        const messagesRef = conversationRef.collection("messages").doc();
+        await messagesRef.set({
+          sender: "user",
+          content: message,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          mode: conversationMode,
+        });
+
+        // Add response
+        const responseRef = conversationRef.collection("messages").doc();
+        await responseRef.set({
+          sender: "assistant",
+          content: tibetanResponse,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          mode: conversationMode,
+          confidence: 0.92,
+        });
+      } catch (dbError) {
+        console.error("Error saving chat to Firestore:", dbError);
+      }
+
+      const response: GeminiChatResponse = {
+        success: true,
+        data: {
+          response: tibetanResponse,
+          sessionId: currentSessionId,
+          messageId: `msg_${Date.now()}`,
+        },
+        usage: {
+          charactersUsed: message.length + tibetanResponse.length,
+        },
+      };
+
+      return res.json(response);
+    } catch (error) {
+      console.error("Enhanced chat error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Chat failed",
+        message: error instanceof Error ? error.message : "Unknown error",
       });
-    } catch (dbError) {
-      console.error("Error saving chat to Firestore:", dbError);
     }
-
-    const response: GeminiChatResponse = {
-      success: true,
-      data: {
-        response: tibetanResponse,
-        sessionId: currentSessionId,
-        messageId: `msg_${Date.now()}`,
-      },
-      usage: {
-        charactersUsed: message.length + tibetanResponse.length,
-      },
-    };
-
-    return res.json(response);
-  } catch (error) {
-    console.error("Enhanced chat error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Chat failed",
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
   }
-});
+);
 
 // Chat History Endpoint
 app.get("/api/chat/history", async (req, res) => {
@@ -651,8 +691,14 @@ app.get("/api/chat/history", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
 
+    const historyUserId = firestoreUserId(userId);
+    if (!historyUserId) {
+      res.status(400).json({ error: "Missing or invalid userid header" });
+      return;
+    }
+
     const db = admin.firestore();
-    const conversationsRef = db.collection("users").doc(userId).collection("conversations");
+    const conversationsRef = db.collection("users").doc(historyUserId).collection("conversations");
 
     let query: any = conversationsRef.orderBy("updatedAt", "desc").limit(limit);
 

@@ -29,7 +29,7 @@ fun Context.openPremiumUpgrade(source: String = AppAnalytics.UpgradeSource.UNKNO
     AppAnalytics.logUpgradeClicked(source)
     val authManager = AuthManager(this)
     when (UnlockRouter.destinationFor(authManager.isUserAuthenticated())) {
-        UnlockDestination.PREMIUM -> authManager.openPremium()
+        UnlockDestination.PREMIUM -> authManager.openPremium(source)
         // Keep the caller (Home/Settings) beneath so closing the paywall after login
         // can never leave an empty back stack and close the app.
         UnlockDestination.LOGIN_THEN_PREMIUM ->
