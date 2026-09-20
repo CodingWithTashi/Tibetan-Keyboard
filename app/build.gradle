@@ -26,14 +26,13 @@ android {
         // installed devices on API 23 (0.03%).
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 54
+        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 55
 
-        versionName "2.2.11"
+        versionName "2.2.12"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
-
         // Overridable from CI (-PrevenuecatApiKey=...) so a sandbox project can be swapped in.
         buildConfigField "String", "REVENUECAT_API_KEY",
                 "\"${project.findProperty('revenuecatApiKey') ?: 'goog_HqifnUJxdgpKcyrUFhRfJfAYIap'}\""

@@ -25,3 +25,7 @@ local.properties
 
 /docs/
 /docs/
+
+# Python tooling (tools/)
+__pycache__/
+*.pyc

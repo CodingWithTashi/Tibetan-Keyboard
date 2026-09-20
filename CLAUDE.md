@@ -55,7 +55,7 @@ com.kharagedition.tibetankeyboard/
 │   ├── login/         # LoginActivity + LoginViewModel + LoginScreen
 │   └── splash/        # SplashScreenActivity (Compose)
 ├── data/
-│   ├── repository/    # ChatRepository, UserRepository, RevenueCatManager, PremiumFeatureManager,
+│   ├── repository/    # ChatRepository, UserRepository, RevenueCatManager,
 │   │                  #   subscriptionCallback() helper
 │   ├── remote/        # RetrofitClient singleton + API interfaces
 │   ├── local/         # UserPreferences (SharedPreferences wrapper)
@@ -150,10 +150,13 @@ never price one plan by converting another plan's price from a different currenc
 
 ### Backend (`api-backend/`)
 
-Node.js/TypeScript Express on Firebase Functions. AI: Gemini 2.0 Flash. Translation: Google
-Translate. Auth middleware: API key + per-user Firestore usage limits.
-Endpoints: `POST /chat`, `POST /translate` (grammar/transliterate endpoints exist server-side but
-the in-app Grammar/Transliteration screens were removed as dead code).
+Node.js/TypeScript Express on Firebase Functions. AI: **Claude** via `anthropicService`
+(`claude-haiku-4-5` / `claude-sonnet-4-6`, user-switchable per request). Translation: **Azure**,
+falling back to Claude server-side. Auth middleware: API key + `attachPro` + per-user Firestore
+usage limits + a project-wide daily budget.
+The app calls `POST /chat` and `POST /translate`. The `/api/grammar/*`, `/api/transliterate/*` and
+`/api/chat/message` routes have no client call sites (their screens were removed) but still reach
+Claude, so they carry the same middleware chain.
 
 ### Key Libraries
 
@@ -170,7 +173,7 @@ the in-app Grammar/Transliteration screens were removed as dead code).
 
 ### Build Configuration
 
-- **App ID**: `com.kharagedition.tibetankeyboard` · **Min SDK** 23 · **Target/Compile SDK** 36
+- **App ID**: `com.kharagedition.tibetankeyboard` · **Min SDK** 24 (RevenueCatUI) · **Target/Compile SDK** 36
 - **Kotlin** 2.0.0 · **Java** 17 · **AGP** 8.3.2 · **Gradle** 8.6
 - `buildFeatures { compose = true; viewBinding = true; buildConfig = true }`
 - Release: ProGuard + resource shrinking; `app/lint-baseline.xml` suppresses known lint issues.
