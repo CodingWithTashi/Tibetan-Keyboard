@@ -44,6 +44,11 @@
             android:label="@string/title_activity_settings"
             android:parentActivityName=".ui.home.HomeActivity" />
         <activity
+            android:name=".ui.subscription.ManageSubscriptionActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.settings.SettingsActivity" />
+
+        <activity
             android:name=".ui.subscription.PremiumActivity"
             android:exported="false"
             android:parentActivityName=".ui.home.HomeActivity" />

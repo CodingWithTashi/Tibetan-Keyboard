@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.kharagedition.tibetankeyboard.BuildConfig
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.revenuecat.purchases.*
 import com.revenuecat.purchases.interfaces.*
 import com.revenuecat.purchases.models.StoreTransaction
@@ -24,6 +25,15 @@ class RevenueCatManager private constructor() {
         private const val PREMIUM_ENTITLEMENT_ID = "pro"
         private const val TAG = "RevenueCatManager"
 
+        /** Read by identifier, not `offerings.current`, so shipped clients keep the `sale` offering. */
+        private const val OFFERING_ID = "pro_v2"
+
+        // Stable codes for failures RevenueCat does not raise as a PurchasesErrorCode.
+        const val ERROR_NOT_CONFIGURED = "SDK_NOT_CONFIGURED"
+        const val ERROR_NO_OFFERING = "OFFERING_UNAVAILABLE"
+        const val ERROR_NO_PACKAGE = "PACKAGE_UNAVAILABLE"
+        const val ERROR_UNKNOWN = "UNKNOWN"
+
         fun getInstance(): RevenueCatManager {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: RevenueCatManager().also { INSTANCE = it }
@@ -31,9 +41,12 @@ class RevenueCatManager private constructor() {
         }
     }
 
+    /** Mirrors [Purchases.isConfigured]. */
     private var isConfigured = false
+        get() = field || Purchases.isConfigured
 
-    private val _isPremiumUser = MutableLiveData<Boolean>()
+    // Seeded false so observers never see null before the first callback.
+    private val _isPremiumUser = MutableLiveData<Boolean>(false)
     val isPremiumUser: LiveData<Boolean> = _isPremiumUser
 
     private val _isLoading = MutableLiveData<Boolean>()
@@ -43,23 +56,75 @@ class RevenueCatManager private constructor() {
     val error: LiveData<String?> = _error
 
     private var currentOffering: Offering? = null
-    private var premiumPackage: Package? = null
+
+    /** Every plan the paywall can offer, ordered annual → monthly → lifetime. */
+    private val _plans = MutableLiveData<List<PremiumPlan>>(emptyList())
+    val plans: LiveData<List<PremiumPlan>> = _plans
+
+    /** The plan the paywall pre-selects. Annual when present — it is the one we want bought. */
+    val defaultPlan: PremiumPlan? get() = _plans.value?.firstOrNull { it.isRecommended } ?: _plans.value?.firstOrNull()
+
+    /** One purchasable plan, flattened out of a [Package] so the UI never touches SDK types. */
+    data class PremiumPlan(
+        val id: String,
+        val analyticsPlan: String,
+        val title: String,
+        val price: String,
+        val pricePerMonth: String?,
+        val savingPercent: Int?,
+        val isRecommended: Boolean,
+        val priceAmount: Double?,
+        val currencyCode: String?,
+        internal val rcPackage: Package,
+    )
 
     interface SubscriptionCallback {
         fun onSuccess(message: String)
         fun onError(error: String)
         fun onUserCancelled()
+
+        /** [onError] with a stable error code; the localized message alone is useless as a GA4 dimension. */
+        fun onError(code: String, message: String) = onError(message)
     }
 
     /**
-     * Initialize RevenueCat SDK with Firebase user ID
-     * This must be called BEFORE any purchase operations
+     * Configure for a signed-OUT user so the paywall works before anyone logs in; the anonymous
+     * customer is merged into the Firebase UID by [initialize]'s `logIn()` on the next sign-in.
      */
+    fun configureAnonymous(context: Context) {
+        if (isConfigured) return
+        try {
+            Purchases.configure(
+                PurchasesConfiguration.Builder(context, apiKey())
+                    .purchasesAreCompletedBy(PurchasesAreCompletedBy.REVENUECAT)
+                    .build()
+            )
+            attachCustomerInfoListener()
+            isConfigured = true
+            Log.i(TAG, "subs-flow: RevenueCat configured anonymously (no Firebase user yet)")
+            fetchCustomerInfoAndOfferings(null)
+        } catch (e: Exception) {
+            Log.e(TAG, "subs-flow: anonymous configure failed: ${e.message}", e)
+        }
+    }
+
+    private fun apiKey(): String = BuildConfig.REVENUECAT_API_KEY
+
+    private fun attachCustomerInfoListener() {
+        Purchases.sharedInstance.updatedCustomerInfoListener =
+            UpdatedCustomerInfoListener { customerInfo ->
+                Log.d(TAG, "Customer Info Updated: ${customerInfo.originalAppUserId}")
+                updatePremiumStatus(customerInfo)
+            }
+    }
+
+    /** Identify the signed-in user; with no Firebase user this falls through to [configureAnonymous]. */
     fun initialize(context: Context, firebaseAuth: FirebaseAuth, callback: SubscriptionCallback? = null) {
         val currentUser = firebaseAuth.currentUser
         if (currentUser == null) {
-            Log.e(TAG, "Cannot initialize RevenueCat: User not authenticated")
-            callback?.onError("User not authenticated")
+            Log.d(TAG, "subs-flow: no Firebase user — configuring RevenueCat anonymously")
+            configureAnonymous(context)
+            callback?.onSuccess("Premium services initialized")
             return
         }
 
@@ -71,11 +136,7 @@ class RevenueCatManager private constructor() {
         // Configure RevenueCat SDK with the Firebase user ID
         if (!isConfigured) {
             try {
-                val apiKey = if (BuildConfig.DEBUG) {
-                    "goog_HqifnUJxdgpKcyrUFhRfJfAYIap"
-                } else {
-                    "goog_HqifnUJxdgpKcyrUFhRfJfAYIap"
-                }
+                val apiKey = apiKey()
 
                 Purchases.configure(
                     PurchasesConfiguration.Builder(context, apiKey)
@@ -85,11 +146,7 @@ class RevenueCatManager private constructor() {
                 )
 
                 // Setup customer info update listener
-                Purchases.sharedInstance.updatedCustomerInfoListener =
-                    UpdatedCustomerInfoListener { customerInfo ->
-                        Log.d(TAG, "Customer Info Updated: ${customerInfo.originalAppUserId}")
-                        updatePremiumStatus(customerInfo)
-                    }
+                attachCustomerInfoListener()
 
                 isConfigured = true
                 Log.d(TAG, "RevenueCat SDK configured successfully with user: $userId")
@@ -188,25 +245,26 @@ class RevenueCatManager private constructor() {
         Purchases.sharedInstance.getOfferings(object : ReceiveOfferingsCallback {
             override fun onReceived(offerings: Offerings) {
                 _isLoading.value = false
-                currentOffering = offerings.current
+                // Fall back to `current` so a build shipped before pro_v2 is promoted still sells.
+                val offering = offerings.getOffering(OFFERING_ID) ?: offerings.current
+                currentOffering = offering
 
-                if (currentOffering == null) {
-                    val errorMsg = "Premium subscription not available"
-                    _error.value = errorMsg
-                    callback?.onError(errorMsg)
+                if (offering == null) {
+                    _error.value = "Premium subscription not available"
+                    callback?.onError(ERROR_NO_OFFERING, "Premium subscription not available")
                     return
                 }
 
-                // Look for monthly premium package
-                premiumPackage = currentOffering?.monthly ?: currentOffering?.availablePackages?.firstOrNull()
+                val built = buildPlans(offering)
+                _plans.value = built
 
-                if (premiumPackage != null) {
-                    println("RevenueCat: Premium package loaded - ${premiumPackage?.product?.title}")
+                if (built.isNotEmpty()) {
+                    Log.i(TAG, "subs-flow: ${built.size} plan(s) from '${offering.identifier}': " +
+                        built.joinToString { "${it.analyticsPlan}=${it.price}" })
                     callback?.onSuccess("Premium services initialized")
                 } else {
-                    val errorMsg = "Premium subscription not available"
-                    _error.value = errorMsg
-                    callback?.onError(errorMsg)
+                    _error.value = "Premium subscription not available"
+                    callback?.onError(ERROR_NO_PACKAGE, "Premium subscription not available")
                 }
             }
 
@@ -214,9 +272,67 @@ class RevenueCatManager private constructor() {
                 _isLoading.value = false
                 val errorMsg = "Failed to load premium options: ${error.message}"
                 _error.value = errorMsg
-                callback?.onError(errorMsg)
+                callback?.onError(error.code.name, errorMsg)
             }
         })
+    }
+
+    /** Flatten an [Offering] into plans. The saving uses real per-month prices — Play's regional
+     *  tiers are not a constant multiple. */
+    private fun buildPlans(offering: Offering): List<PremiumPlan> {
+        val annual = offering.annual
+        val monthly = offering.monthly
+        val lifetime = offering.lifetime
+
+        val monthlyMicros = monthly?.product?.price?.amountMicros
+        val annualPerMonthMicros = annual?.product?.pricePerMonth()?.amountMicros
+
+        val saving = if (monthlyMicros != null && annualPerMonthMicros != null && monthlyMicros > 0) {
+            (100 - (annualPerMonthMicros * 100 / monthlyMicros)).toInt().takeIf { it > 0 }
+        } else null
+
+        fun plan(pkg: Package?, analytics: String, recommended: Boolean): PremiumPlan? {
+            val p = pkg ?: return null
+            val isLifetime = analytics == AppAnalytics.Plan.LIFETIME
+            return PremiumPlan(
+                id = p.identifier,
+                analyticsPlan = analytics,
+                title = p.product.title,
+                price = p.product.price.formatted,
+                pricePerMonth = if (isLifetime) null else p.product.formattedPricePerMonth(),
+                savingPercent = if (analytics == AppAnalytics.Plan.ANNUAL) saving else null,
+                isRecommended = recommended,
+                priceAmount = p.product.price.amountMicros / 1_000_000.0,
+                currencyCode = p.product.price.currencyCode,
+                rcPackage = p,
+            )
+        }
+
+        val plans = listOfNotNull(
+            plan(annual, AppAnalytics.Plan.ANNUAL, recommended = true),
+            plan(monthly, AppAnalytics.Plan.MONTHLY, recommended = false),
+            plan(lifetime, AppAnalytics.Plan.LIFETIME, recommended = false),
+        )
+
+        // The live `sale` offering types its monthly product as `$rc_weekly`, so no typed
+        // accessor matches it — fall back to whatever is there rather than show nothing.
+        if (plans.isEmpty()) {
+            return offering.availablePackages.map {
+                PremiumPlan(
+                    id = it.identifier,
+                    analyticsPlan = AppAnalytics.Plan.UNKNOWN,
+                    title = it.product.title,
+                    price = it.product.price.formatted,
+                    pricePerMonth = null,
+                    savingPercent = null,
+                    isRecommended = true,
+                    priceAmount = it.product.price.amountMicros / 1_000_000.0,
+                    currencyCode = it.product.price.currencyCode,
+                    rcPackage = it,
+                )
+            }
+        }
+        return plans
     }
 
     /**
@@ -225,8 +341,10 @@ class RevenueCatManager private constructor() {
      */
     fun refreshCustomerInfo(callback: SubscriptionCallback? = null) {
         if (!isConfigured) {
+            // Must fire the callback; returning silently left callers waiting forever.
             Log.w(TAG, "Cannot refresh customer info: RevenueCat not initialized")
             _isPremiumUser.value = false
+            callback?.onError(ERROR_NOT_CONFIGURED, "Premium is still starting up")
             return
         }
 
@@ -262,7 +380,7 @@ class RevenueCatManager private constructor() {
     fun syncPurchases(callback: SubscriptionCallback? = null) {
         if (!isConfigured) {
             Log.w(TAG, "Cannot sync purchases: RevenueCat not initialized")
-            callback?.onError("RevenueCat not initialized")
+            callback?.onError(ERROR_NOT_CONFIGURED, "Premium is still starting up")
             return
         }
 
@@ -281,21 +399,25 @@ class RevenueCatManager private constructor() {
         })
     }
 
-    /**
-     * Purchase premium subscription
-     */
-    fun purchasePremium(activity: Activity, callback: SubscriptionCallback) {
+    /** Buy [plan], or the recommended one. No Firebase user required — see [configureAnonymous]. */
+    @JvmOverloads
+    fun purchasePremium(
+        activity: Activity,
+        plan: PremiumPlan? = null,
+        callback: SubscriptionCallback,
+    ) {
         if (!isConfigured) {
-            val errorMsg = "RevenueCat not initialized. Please login first."
-            Log.e(TAG, errorMsg)
-            callback.onError(errorMsg)
+            // Configured at app start, so this is a genuine failure — never ask the user to log in.
+            val errorMsg = "Premium is still starting up. Please try again in a moment."
+            Log.e(TAG, "subs-flow: purchase blocked — SDK not configured")
+            callback.onError(ERROR_NOT_CONFIGURED, errorMsg)
             return
         }
 
-        val packageToPurchase = premiumPackage
+        val packageToPurchase = (plan ?: defaultPlan)?.rcPackage
         if (packageToPurchase == null) {
             Log.e(TAG, "Premium package not available")
-            callback.onError("Premium subscription not available")
+            callback.onError(ERROR_NO_PACKAGE, "Premium subscription not available")
             return
         }
 
@@ -348,12 +470,12 @@ class RevenueCatManager private constructor() {
                         }
                         error.code == PurchasesErrorCode.ProductAlreadyPurchasedError -> {
                             Log.d(TAG, "Product already purchased, refreshing customer info")
-                            callback.onError("You already own this subscription")
+                            callback.onError(error.code.name, "You already own this subscription")
                             // Refresh customer info to update UI
                             refreshCustomerInfo()
                         }
                         else -> {
-                            callback.onError("Purchase failed: ${error.message}")
+                            callback.onError(error.code.name, "Purchase failed: ${error.message}")
                         }
                     }
                 }
@@ -365,6 +487,12 @@ class RevenueCatManager private constructor() {
      * Logout from RevenueCat
      */
     fun logout(callback: SubscriptionCallback? = null) {
+        // `sharedInstance` throws when never configured, and AuthManager.signOut() calls in here.
+        if (!isConfigured) {
+            _isPremiumUser.value = false
+            callback?.onSuccess("Logged out successfully")
+            return
+        }
         Purchases.sharedInstance.logOut(object : ReceiveCustomerInfoCallback {
             override fun onReceived(customerInfo: CustomerInfo) {
                 _isPremiumUser.value = false
@@ -426,16 +554,6 @@ class RevenueCatManager private constructor() {
      */
     private fun currentAppUserId(customerInfo: CustomerInfo): String =
         runCatching { Purchases.sharedInstance.appUserID }.getOrDefault(customerInfo.originalAppUserId)
-
-    /**
-     * Get premium package details for UI display
-     */
-    fun getPremiumPackageInfo(): Pair<String?, String?> {
-        return Pair(
-            premiumPackage?.product?.title,
-            premiumPackage?.product?.price?.formatted
-        )
-    }
 
     /**
      * Check if user is premium without triggering network call

@@ -22,7 +22,9 @@ android {
     }
     defaultConfig {
         applicationId "com.kharagedition.tibetankeyboard"
-        minSdkVersion 23
+        // 24, not 23: RevenueCatUI (Customer Center) requires it. Play reports 3 of 11,154
+        // installed devices on API 23 (0.03%).
+        minSdkVersion 24
         targetSdkVersion 36
         versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 54
 
@@ -31,6 +33,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
+
+        // Overridable from CI (-PrevenuecatApiKey=...) so a sandbox project can be swapped in.
+        buildConfigField "String", "REVENUECAT_API_KEY",
+                "\"${project.findProperty('revenuecatApiKey') ?: 'goog_HqifnUJxdgpKcyrUFhRfJfAYIap'}\""
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -89,11 +95,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.firebase:firebase-firestore-ktx'
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
-    implementation 'com.airbnb.android:lottie:6.2.0'
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     implementation 'com.google.firebase:firebase-analytics:22.2.0'
     implementation 'com.google.firebase:firebase-messaging-ktx:24.1.0'
-    implementation 'com.github.bumptech.glide:glide:4.15.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
     implementation 'androidx.work:work-runtime:2.10.0'
 
@@ -108,6 +112,8 @@ dependencies {
 
     implementation 'com.google.android.play:app-update-ktx:2.1.0'
     implementation 'com.revenuecat.purchases:purchases:9.2.0'
+    // RevenueCatUI — Customer Center. Must track the same version as `purchases`.
+    implementation 'com.revenuecat.purchases:purchases-ui:9.2.0'
     implementation project(':botok')
 
     // Jetpack Compose

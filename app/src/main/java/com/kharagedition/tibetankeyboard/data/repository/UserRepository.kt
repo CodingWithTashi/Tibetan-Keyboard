@@ -87,56 +87,8 @@ class UserRepository {
         }
     }
 
-    /**
-     * Update user subscription
-     */
-    suspend fun updateSubscription(
-        uid: String,
-        subscriptionType: SubscriptionType,
-        startDate: Long = System.currentTimeMillis(),
-        endDate: Long? = null
-    ): Result<Boolean> {
-        return try {
-            val updates = mapOf(
-                "isSubscribed" to (subscriptionType != SubscriptionType.FREE),
-                "subscriptionType" to subscriptionType,
-                "subscriptionStartDate" to startDate,
-                "subscriptionEndDate" to endDate
-            )
-
-            usersCollection.document(uid)
-                .update(updates)
-                .await()
-
-            // Track subscription event
-            trackUserEvent(uid, "subscription_updated", mapOf(
-                "subscription_type" to subscriptionType.name,
-                "is_subscribed" to (subscriptionType != SubscriptionType.FREE)
-            ))
-
-            Result.success(true)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Check if user has premium access
-     */
-    suspend fun hasePremiumAccess(uid: String): Boolean {
-        return try {
-            val user = getUserById(uid)
-            when {
-                user == null -> false
-                user.subscriptionType == SubscriptionType.LIFETIME -> true
-                user.subscriptionType == SubscriptionType.FREE -> false
-                user.subscriptionEndDate == null -> false
-                else -> System.currentTimeMillis() < user.subscriptionEndDate!!
-            }
-        } catch (e: Exception) {
-            false
-        }
-    }
+    // A dead second entitlement path (updateSubscription / hasePremiumAccess) was removed here:
+    // the backend owns users/{uid}.isPro and the client reads entitlement from RevenueCat.
 
     /**
      * Track user events for analytics

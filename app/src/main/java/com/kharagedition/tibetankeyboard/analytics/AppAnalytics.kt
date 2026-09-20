@@ -105,18 +105,55 @@ object AppAnalytics {
     // Subscription / Paywall
     // ----------------------------------------------------------------------------------------
 
+    /** A PRO lock was shown. Pairs with [logUpgradeClicked] to separate "never saw it" from "passed". */
+    fun logFeatureGateShown(source: String) = log(EVENT_FEATURE_GATE_SHOWN, PARAM_SOURCE to source)
+
     /** An "unlock PRO" intent, before any login/paywall is shown. [source] is one of [UpgradeSource]. */
     fun logUpgradeClicked(source: String) = log(EVENT_UPGRADE_CLICKED, PARAM_SOURCE to source)
 
-    fun logPaywallViewed() = log(EVENT_PAYWALL_VIEWED)
+    // Every event below carries the [UpgradeSource] that opened the paywall, so a sale can be
+    // attributed to the gate that caused it.
 
-    fun logPurchaseStarted() = log(EVENT_PURCHASE_STARTED)
+    fun logPaywallViewed(source: String) = log(EVENT_PAYWALL_VIEWED, PARAM_SOURCE to source)
 
-    fun logPurchaseCompleted() = log(EVENT_PURCHASE_COMPLETED)
+    fun logPurchaseStarted(source: String, plan: String) =
+        log(EVENT_PURCHASE_STARTED, PARAM_SOURCE to source, PARAM_PLAN to plan)
 
-    fun logPurchaseFailed(reason: String) = log(EVENT_PURCHASE_FAILED, PARAM_REASON to reason)
+    fun logPurchaseCompleted(source: String, plan: String, price: Double?, currency: String?) =
+        log(
+            EVENT_PURCHASE_COMPLETED,
+            PARAM_SOURCE to source,
+            PARAM_PLAN to plan,
+            FirebaseAnalytics.Param.VALUE to price,
+            FirebaseAnalytics.Param.CURRENCY to currency,
+        )
+
+    /** [code] is a stable `PurchasesErrorCode`; [reason] is localized and unbounded cardinality. */
+    fun logPurchaseFailed(source: String, plan: String, code: String, reason: String) =
+        log(
+            EVENT_PURCHASE_FAILED,
+            PARAM_SOURCE to source,
+            PARAM_PLAN to plan,
+            PARAM_CODE to code,
+            PARAM_REASON to reason,
+        )
+
+    /** The user dismissed Play's purchase sheet — the largest silent drop in the funnel. */
+    fun logPurchaseCancelled(source: String, plan: String) =
+        log(EVENT_PURCHASE_CANCELLED, PARAM_SOURCE to source, PARAM_PLAN to plan)
 
     fun logPurchaseRestored() = log(EVENT_PURCHASE_RESTORED)
+
+    /** A subscriber opened the Customer Center (cancel / restore / retention offer / survey). */
+    fun logManageSubscriptionOpened() = log(EVENT_MANAGE_SUBSCRIPTION_OPENED)
+
+    fun logRestoreFailed(code: String, reason: String) =
+        log(EVENT_RESTORE_FAILED, PARAM_CODE to code, PARAM_REASON to reason)
+
+    fun logPaywallDismissed(source: String) = log(EVENT_PAYWALL_DISMISSED, PARAM_SOURCE to source)
+
+    fun logPaywallPlanSelected(source: String, plan: String) =
+        log(EVENT_PAYWALL_PLAN_SELECTED, PARAM_SOURCE to source, PARAM_PLAN to plan)
 
     // ----------------------------------------------------------------------------------------
     // Keyboard setup funnel (does the user ever enable / default the IME?)
@@ -125,6 +162,13 @@ object AppAnalytics {
     fun logKeyboardEnableClicked() = log(EVENT_KEYBOARD_ENABLE_CLICKED)
 
     fun logKeyboardPickerOpened() = log(EVENT_KEYBOARD_PICKER_OPENED)
+
+    /** Keyboard enabled AND selected. Once per install — the funnel's missing endpoint. */
+    fun logKeyboardSetupCompleted() = log(EVENT_KEYBOARD_SETUP_COMPLETED)
+
+    /** Typed in the in-app try-it field — first proof the keyboard works. Reports script, not text. */
+    fun logKeyboardTryoutTyped(language: String) =
+        log(EVENT_KEYBOARD_TRYOUT_TYPED, PARAM_LANGUAGE to language)
 
     // ----------------------------------------------------------------------------------------
     // Keyboard usage (the IME itself)
@@ -225,15 +269,23 @@ object AppAnalytics {
     private const val EVENT_TRANSLATE_SWAPPED = "translate_languages_swapped"
     private const val EVENT_TRANSLATE_ENGINE_CHANGED = "translate_engine_changed"
 
+    private const val EVENT_FEATURE_GATE_SHOWN = "feature_gate_shown"
     private const val EVENT_UPGRADE_CLICKED = "upgrade_clicked"
     private const val EVENT_PAYWALL_VIEWED = "paywall_viewed"
+    private const val EVENT_PAYWALL_DISMISSED = "paywall_dismissed"
+    private const val EVENT_PAYWALL_PLAN_SELECTED = "paywall_plan_selected"
     private const val EVENT_PURCHASE_STARTED = "purchase_started"
     private const val EVENT_PURCHASE_COMPLETED = "purchase_completed"
     private const val EVENT_PURCHASE_FAILED = "purchase_failed"
+    private const val EVENT_PURCHASE_CANCELLED = "purchase_cancelled"
     private const val EVENT_PURCHASE_RESTORED = "purchase_restored"
+    private const val EVENT_MANAGE_SUBSCRIPTION_OPENED = "manage_subscription_opened"
+    private const val EVENT_RESTORE_FAILED = "restore_failed"
 
     private const val EVENT_KEYBOARD_ENABLE_CLICKED = "keyboard_enable_clicked"
     private const val EVENT_KEYBOARD_PICKER_OPENED = "keyboard_picker_opened"
+    private const val EVENT_KEYBOARD_SETUP_COMPLETED = "keyboard_setup_completed"
+    private const val EVENT_KEYBOARD_TRYOUT_TYPED = "keyboard_tryout_typed"
     private const val EVENT_KEYBOARD_SHOWN = "keyboard_shown"
     private const val EVENT_KEYBOARD_LANGUAGE_SWITCHED = "keyboard_language_switched"
     private const val EVENT_KEYBOARD_EMOJI_OPENED = "keyboard_emoji_opened"
@@ -266,6 +318,8 @@ object AppAnalytics {
     private const val PARAM_SOURCE = "source"
     private const val PARAM_TYPE = "type"
     private const val PARAM_DAYS = "days"
+    private const val PARAM_PLAN = "plan"
+    private const val PARAM_CODE = "code"
 
     // User properties
     private const val USER_PROP_KB_ENABLED = "kb_enabled"
@@ -316,6 +370,14 @@ object AppAnalytics {
         const val SOUND = "sound"
         const val NOTIFICATION = "notification"
         const val STREAK_REMINDER = "streak_reminder"
+    }
+
+    /** Stable plan labels for the purchase funnel events. Mirrors the RevenueCat package types. */
+    object Plan {
+        const val MONTHLY = "monthly"
+        const val ANNUAL = "annual"
+        const val LIFETIME = "lifetime"
+        const val UNKNOWN = "unknown"
     }
 
     /** Stable source labels for [logUpgradeClicked] (where the upgrade intent originated). */

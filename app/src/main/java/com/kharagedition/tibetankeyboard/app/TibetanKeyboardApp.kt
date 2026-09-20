@@ -7,17 +7,16 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
+import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.analytics.UserActivityTracker
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.ui.journey.StreakReminderWorker
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.revenuecat.purchases.LogLevel
 import com.revenuecat.purchases.Purchases
-import com.revenuecat.purchases.PurchasesAreCompletedBy.MY_APP
-import com.revenuecat.purchases.PurchasesAreCompletedBy.REVENUECAT
-import com.revenuecat.purchases.PurchasesConfiguration
-import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -58,11 +57,19 @@ class TibetanKeyboardApp : Application() {
         super.onCreate()
     }
 
+    /**
+     * Configure RevenueCat at process start, with or without a signed-in user — without this the
+     * paywall failed with "Please login first" for everyone who had not signed in.
+     */
     private fun setUpRevenueCat() {
-        // DO NOT initialize RevenueCat here without a user ID
-        // RevenueCat will be configured in RevenueCatManager when user is authenticated
-        // This ensures purchases are always tied to the Firebase user ID
-        Purchases.logLevel = LogLevel.DEBUG
+        Purchases.logLevel = if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.WARN
+        val manager = RevenueCatManager.getInstance()
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser != null) {
+            manager.initialize(this, auth)
+        } else {
+            manager.configureAnonymous(this)
+        }
     }
 
     /**

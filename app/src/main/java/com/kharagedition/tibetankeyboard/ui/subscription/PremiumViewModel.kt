@@ -1,43 +1,75 @@
 package com.kharagedition.tibetankeyboard.ui.subscription
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
-/** Holds the paywall's display state (price + premium status). Purchasing stays in the
- *  Activity since RevenueCat requires an Activity reference. */
-class PremiumViewModel(app: Application) : AndroidViewModel(app) {
+/** What the paywall renders. */
+data class PremiumUiState(
+    val plans: List<RevenueCatManager.PremiumPlan> = emptyList(),
+    val selectedPlanId: String? = null,
+    val isPremium: Boolean = false,
+    val isLoading: Boolean = true,
+)
 
-    private val premiumLiveData = RevenueCatManager.getInstance().isPremiumUser
+/** Lambdas the paywall can invoke; mirrors the `XxxActions` convention of the other screens. */
+class PremiumActions(
+    val onBack: () -> Unit = {},
+    val onSelectPlan: (RevenueCatManager.PremiumPlan) -> Unit = {},
+    val onPurchase: () -> Unit = {},
+    val onRestore: () -> Unit = {},
+)
 
-    private val _priceLabel = MutableStateFlow(
-        RevenueCatManager.getInstance().getPremiumPackageInfo().second ?: DEFAULT_PRICE
-    )
-    val priceLabel: StateFlow<String> = _priceLabel.asStateFlow()
+/**
+ * Paywall state. Observes plans rather than reading once, so an offering that finishes loading
+ * after `onResume` still appears instead of leaving the screen on its placeholder.
+ */
+class PremiumViewModel : ViewModel() {
 
-    private val _isPremium = MutableStateFlow(false)
-    val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
+    private val revenueCat = RevenueCatManager.getInstance()
 
-    private val premiumObserver = Observer<Boolean> { _isPremium.value = it }
+    private val _uiState = MutableStateFlow(PremiumUiState())
+    val uiState: StateFlow<PremiumUiState> = _uiState.asStateFlow()
 
-    init {
-        premiumLiveData.observeForever(premiumObserver)
-        RevenueCatManager.getInstance().refreshCustomerInfo()
+    private val premiumObserver = Observer<Boolean> { isPremium ->
+        _uiState.update { it.copy(isPremium = isPremium) }
     }
 
-    fun refreshPrice() {
-        _priceLabel.value = RevenueCatManager.getInstance().getPremiumPackageInfo().second ?: DEFAULT_PRICE
+    private val plansObserver = Observer<List<RevenueCatManager.PremiumPlan>> { plans ->
+        _uiState.update { state ->
+            state.copy(
+                plans = plans,
+                // Keep the user's choice across refreshes, else fall back to the recommended plan.
+                selectedPlanId = state.selectedPlanId?.takeIf { id -> plans.any { it.id == id } }
+                    ?: plans.firstOrNull { it.isRecommended }?.id
+                    ?: plans.firstOrNull()?.id,
+                isLoading = plans.isEmpty(),
+            )
+        }
+    }
+
+    init {
+        revenueCat.isPremiumUser.observeForever(premiumObserver)
+        revenueCat.plans.observeForever(plansObserver)
+        revenueCat.refreshCustomerInfo()
+    }
+
+    fun selectPlan(planId: String) {
+        _uiState.update { it.copy(selectedPlanId = planId) }
+    }
+
+    fun selectedPlan(): RevenueCatManager.PremiumPlan? {
+        val s = _uiState.value
+        return s.plans.firstOrNull { it.id == s.selectedPlanId } ?: s.plans.firstOrNull()
     }
 
     override fun onCleared() {
-        premiumLiveData.removeObserver(premiumObserver)
-    }
-
-    companion object {
-        private const val DEFAULT_PRICE = "Premium"
+        revenueCat.isPremiumUser.removeObserver(premiumObserver)
+        revenueCat.plans.removeObserver(plansObserver)
+        super.onCleared()
     }
 }

@@ -23,9 +23,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager.PremiumPlan
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BackHeader
 import com.kharagedition.tibetankeyboard.ui.compose.components.GoldButton
@@ -38,21 +41,41 @@ private data class Feature(val icon: ImageVector, val title: String, val desc: S
 
 @Composable
 fun PremiumScreen(
-    priceLabel: String,
-    onBack: () -> Unit,
-    onPurchase: () -> Unit,
-    onRestore: () -> Unit,
+    state: PremiumUiState,
+    actions: PremiumActions,
 ) {
+    // Ordered by real 28-day usage — keyboard 3,326 users, emoji 1,649, AI toolbar 1 — so ads,
+    // themes and the journey lead and AI is the bonus rather than the headline.
     val features = listOf(
-        Feature(AppIcons.NoAds, "Remove all ads", "A clean, distraction-free keyboard"),
-        Feature(AppIcons.Bot, "AI Chat assistant", "Chat & compose in Tibetan with AI"),
-        Feature(AppIcons.Sparkle, "Next-word suggestions", "Smart Tibetan word prediction"),
-        Feature(AppIcons.Palette, "Premium themes", "Exclusive keyboard layouts & colors"),
-        Feature(AppIcons.Translate, "AI Translate", "Tibetan ⇄ English ⇄ Chinese with AI"),
+        Feature(
+            AppIcons.NoAds,
+            stringResource(R.string.premium_feature_no_ads),
+            stringResource(R.string.premium_feature_no_ads_desc),
+        ),
+        Feature(
+            AppIcons.Palette,
+            stringResource(R.string.premium_feature_themes),
+            stringResource(R.string.premium_feature_themes_desc),
+        ),
+        Feature(
+            AppIcons.Sparkle,
+            stringResource(R.string.premium_feature_suggestions),
+            stringResource(R.string.premium_feature_suggestions_desc),
+        ),
+        Feature(
+            AppIcons.Crown,
+            stringResource(R.string.premium_feature_journey),
+            stringResource(R.string.premium_feature_journey_desc),
+        ),
+        Feature(
+            AppIcons.Bot,
+            stringResource(R.string.premium_feature_ai),
+            stringResource(R.string.premium_feature_ai_desc),
+        ),
     )
 
     ScreenScaffold(bottomPadding = 16.dp) {
-        BackHeader(stringResource(R.string.premium_title), onBack = onBack)
+        BackHeader(stringResource(R.string.premium_title), onBack = actions.onBack)
 
         // hero
         Box(
@@ -80,9 +103,9 @@ fun PremiumScreen(
                 Text(stringResource(R.string.unlock_everything), color = TibetanColors.Cream, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                 Spacer(Modifier.height(5.dp))
                 Text(
-                    "Power up your Tibetan typing with AI,\nsmart suggestions and no ads.",
+                    stringResource(R.string.premium_hero_subtitle),
                     color = TibetanColors.Cream2, fontSize = 13.5.sp, lineHeight = 20.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -104,42 +127,119 @@ fun PremiumScreen(
             }
         }
 
-        // price + cta
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(TibetanColors.Brown600)
-                    .border(1.5.dp, TibetanColors.Gold400, RoundedCornerShape(16.dp))
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.monthly), color = TibetanColors.Cream, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.cancel_anytime), color = TibetanColors.CreamDim, fontSize = 12.sp)
+            if (state.plans.isEmpty()) {
+                Text(
+                    stringResource(R.string.premium_loading_plans),
+                    color = TibetanColors.CreamDim, fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+                    textAlign = TextAlign.Center,
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    state.plans.forEach { plan ->
+                        PlanCard(
+                            plan = plan,
+                            selected = plan.id == state.selectedPlanId,
+                            onClick = { actions.onSelectPlan(plan) },
+                        )
+                    }
                 }
-                Text(priceLabel, color = TibetanColors.Gold300, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             }
-            Spacer(Modifier.height(12.dp))
-            GoldButton(stringResource(R.string.start_subscription), onClick = onPurchase)
+            Spacer(Modifier.height(14.dp))
+            GoldButton(
+                if (state.plans.isEmpty()) stringResource(R.string.premium_continue)
+                else stringResource(R.string.start_subscription),
+                onClick = actions.onPurchase,
+            )
             Spacer(Modifier.height(11.dp))
             Text(
                 stringResource(R.string.restore_purchase),
                 color = TibetanColors.Gold300, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onRestore)
+                    .clickable(onClick = actions.onRestore)
                     .padding(vertical = 4.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 stringResource(R.string.terms_privacy),
                 color = TibetanColors.CreamFaint, fontSize = 11.5.sp,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
             )
+        }
+    }
+}
+
+/** One selectable plan; selection reads from the gold border and fill, not colour alone. */
+@Composable
+private fun PlanCard(
+    plan: PremiumPlan,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    // Keyed on the package type, not on savingPercent — an offering with annual but no monthly
+    // has nothing to compute a saving from and would otherwise label itself "Monthly".
+    val title = when (plan.analyticsPlan) {
+        AppAnalytics.Plan.LIFETIME -> stringResource(R.string.premium_lifetime)
+        AppAnalytics.Plan.ANNUAL -> stringResource(R.string.premium_annual)
+        AppAnalytics.Plan.MONTHLY -> stringResource(R.string.monthly)
+        else -> plan.title
+    }
+    val subtitle = when {
+        plan.analyticsPlan == AppAnalytics.Plan.LIFETIME -> stringResource(R.string.premium_pay_once)
+        plan.analyticsPlan != AppAnalytics.Plan.ANNUAL -> stringResource(R.string.cancel_anytime)
+        plan.pricePerMonth != null -> stringResource(R.string.premium_per_month, plan.pricePerMonth)
+        else -> stringResource(R.string.premium_billed_yearly)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) TibetanColors.Brown600 else TibetanColors.Brown700)
+            .border(
+                if (selected) 1.5.dp else 1.dp,
+                if (selected) TibetanColors.Gold400 else TibetanColors.Gold200.copy(alpha = 0.22f),
+                RoundedCornerShape(16.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(title, color = TibetanColors.Cream, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                plan.savingPercent?.let { pct ->
+                    Text(
+                        stringResource(R.string.premium_save_badge, pct),
+                        color = TibetanColors.Espresso,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(TibetanTokens.GoldVerticalBright)
+                            .padding(horizontal = 7.dp, vertical = 2.dp),
+                    )
+                }
+            }
+            Text(subtitle, color = TibetanColors.CreamDim, fontSize = 12.sp)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                plan.price,
+                color = if (selected) TibetanColors.Gold300 else TibetanColors.Cream2,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+            if (plan.isRecommended) {
+                Text(
+                    stringResource(R.string.premium_best_value),
+                    color = TibetanColors.Gold300, fontSize = 9.5.sp, fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }

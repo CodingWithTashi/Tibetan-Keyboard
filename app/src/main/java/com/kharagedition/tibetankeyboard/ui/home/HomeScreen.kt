@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BoText
 import com.kharagedition.tibetankeyboard.ui.compose.components.IconTile
@@ -133,10 +134,11 @@ fun HomeScreen(
             )
 
             Spacer(Modifier.height(14.dp))
-            if (state.keyboardEnabled && state.inputMethodSelected) {
-                TestKeyboardField()
-            } else {
-               // SetupDemo(if (!state.keyboardEnabled) R.drawable.keyboard else R.drawable.input)
+            if (state.keyboardEnabled) {
+                TestKeyboardField(
+                    inputMethodSelected = state.inputMethodSelected,
+                    onPickInputMethod = actions.onPickInputMethod,
+                )
             }
 
             // The streak banner is the Journey's Home-screen trigger — always present once
@@ -529,8 +531,13 @@ private fun SetupDemo(gifResId: Int) {
 
 /** Inline field so the user can test the keyboard without leaving Home. */
 @Composable
-private fun TestKeyboardField() {
+private fun TestKeyboardField(
+    inputMethodSelected: Boolean,
+    onPickInputMethod: () -> Unit,
+) {
     var text by remember { mutableStateOf("") }
+    var logged by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -559,10 +566,49 @@ private fun TestKeyboardField() {
             }
             BasicTextField(
                 value = text,
-                onValueChange = { text = it },
+                onValueChange = {
+                    text = it
+                    // First keystroke only; reports the script, never the characters.
+                    if (!logged && it.isNotEmpty()) {
+                        logged = true
+                        AppAnalytics.logKeyboardTryoutTyped(
+                            if (it.any { c -> c in '\u0F00'..'\u0FFF' }) AppAnalytics.KeyboardLanguage.TIBETAN
+                            else AppAnalytics.KeyboardLanguage.ENGLISH
+                        )
+                    }
+                },
                 textStyle = TextStyle(color = TibetanColors.Cream, fontSize = 16.sp),
                 cursorBrush = SolidColor(TibetanColors.Gold300),
                 modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        // Enabled but not selected: the field opens whichever keyboard is default, so name the
+        // problem and put the fix directly under it.
+        if (!inputMethodSelected) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                stringResource(R.string.setup_try_wrong_keyboard),
+                color = TibetanColors.CreamDim, fontSize = 12.5.sp, lineHeight = 17.sp,
+            )
+            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .clip(TibetanTokens.Pill)
+                    .background(TibetanTokens.GoldVertical)
+                    .clickable(onClick = onPickInputMethod)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.setup_switch_keyboard),
+                    color = TibetanColors.Espresso, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
+                )
+            }
+        } else if (text.isNotEmpty()) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                stringResource(R.string.setup_try_working),
+                color = TibetanColors.Jade, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
             )
         }
     }

@@ -18,7 +18,7 @@
     <string name="dictionary">Dictionary</string>
     <string name="favourite">Favourite</string>
     <string name="about">About</string>
-    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="title_activity_settings">Settings</string>
 
     <!-- Preference Titles -->
     <string name="control_header">Sound &amp; Control</string>
@@ -227,6 +227,10 @@
     <string name="setup_coach_step2_title">Switch to Tibetan Keyboard</string>
     <string name="setup_coach_step2_desc">Tap here, then pick Tibetan Keyboard from the popup to start typing.</string>
     <string name="setup_coach_got_it">Got it</string>
+    <!-- Try-it field: the only place the user can prove the keyboard works without leaving the app -->
+    <string name="setup_try_working">Working — you\'re typing in Tibetan Keyboard.</string>
+    <string name="setup_try_wrong_keyboard">That\'s a different keyboard. Tap \u201cSwitch keyboard\u201d below to pick Tibetan Keyboard.</string>
+    <string name="setup_switch_keyboard">Switch keyboard</string>
     <string name="setup_coach_hint">Tap the highlighted step to continue</string>
     <string name="cd_setup_coach">Setup guide overlay</string>
     <string name="design_and_ui">Design &amp; UI</string>
@@ -254,6 +258,29 @@
     <string name="start_subscription">Start subscription</string>
     <string name="restore_purchase">Restore purchase</string>
     <string name="terms_privacy">Terms · Privacy</string>
+    <string name="manage_subscription">Manage</string>
+    <!-- Paywall: plans -->
+    <string name="premium_annual">Annual</string>
+    <string name="premium_lifetime">Lifetime</string>
+    <string name="premium_best_value">BEST VALUE</string>
+    <string name="premium_save_badge">SAVE %1$d%%</string>
+    <string name="premium_per_month">%1$s / month</string>
+    <string name="premium_pay_once">Pay once — yours forever</string>
+    <string name="premium_billed_yearly">Billed once a year</string>
+    <string name="premium_loading_plans">Loading plans…</string>
+    <string name="premium_continue">Continue</string>
+    <string name="premium_hero_subtitle">No ads, every theme, your full typing story — plus AI when you want it.</string>
+    <!-- Paywall: what PRO actually unlocks, led by what people use most -->
+    <string name="premium_feature_no_ads">Remove all ads</string>
+    <string name="premium_feature_no_ads_desc">A clean, distraction-free keyboard</string>
+    <string name="premium_feature_themes">Every theme and layout</string>
+    <string name="premium_feature_themes_desc">All keyboard colours and key styles</string>
+    <string name="premium_feature_suggestions">Next-word suggestions</string>
+    <string name="premium_feature_suggestions_desc">Smart Tibetan word prediction as you type</string>
+    <string name="premium_feature_journey">Full typing journey</string>
+    <string name="premium_feature_journey_desc">Streak history, weekly insights and vocabulary</string>
+    <string name="premium_feature_ai">AI chat and translate</string>
+    <string name="premium_feature_ai_desc">Compose and translate Tibetan with AI</string>
     <string name="about_this_app">About this app</string>
     <string name="more_from_kharag">MORE FROM KHARAGEDITION</string>
     <string name="github">GitHub</string>

@@ -11,6 +11,8 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "test:rules": "python3 ../tools/firestore_rules_test.py",
     "logs": "firebase functions:log"
   },
   "engines": {

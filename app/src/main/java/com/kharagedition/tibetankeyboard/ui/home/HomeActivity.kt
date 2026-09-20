@@ -35,6 +35,7 @@ import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.InAppUpdateManager
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.ads.NativeTemplateStyle
 import com.kharagedition.tibetankeyboard.ads.TemplateView
 import com.kharagedition.tibetankeyboard.app.InputMethodActivity
@@ -206,16 +207,21 @@ class HomeActivity : InputMethodActivity() {
     )
 
     /**
-     * PRO feature entry points. Subscribers get the screen. Signed-in free users get the
-     * paywall. Signed-out users can't be classified yet, so we open the screen — it routes
-     * them through login and back, after which a free user is gated on the first action.
+     * PRO entry points (Chat, Translate). Signed-out users are classifiable now that RevenueCat is
+     * configured anonymously; entitled-but-anonymous users sign in here because the server needs a UID.
      */
     private fun openIfPremiumOrUpgrade(target: Class<*>) {
-        if (viewModel.uiState.value.isPremium || !viewModel.isUserAuthenticated()) {
-            startActivity(Intent(this, target))
-        } else {
+        if (!viewModel.uiState.value.isPremium) {
+            AppAnalytics.logFeatureGateShown(AppAnalytics.UpgradeSource.HOME_FEATURE_GATE)
             openPremiumUpgrade(AppAnalytics.UpgradeSource.HOME_FEATURE_GATE)
+            return
         }
+        if (!viewModel.isUserAuthenticated()) {
+            // Link the account first, then return to the screen they asked for.
+            AuthManager(this).redirectToLogin(finishCaller = false, target = target)
+            return
+        }
+        startActivity(Intent(this, target))
     }
 
     /** Loads/destroys the native ad as premium status changes (ad Views can't live in the VM). */

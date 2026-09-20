@@ -115,11 +115,12 @@ class AuthManager(private val context: Context) {
     }
 
     /**
-     * Open the premium paywall directly (used for already-signed-in free users tapping a
-     * PRO feature). Safe to call from a non-Activity context such as the IME service.
+     * Open the paywall. Safe from a non-Activity context such as the IME service. [source] is the
+     * [AppAnalytics.UpgradeSource] that triggered it, carried through every purchase event.
      */
-    fun openPremium() {
+    fun openPremium(source: String = AppAnalytics.UpgradeSource.UNKNOWN) {
         val intent = Intent(context, PremiumActivity::class.java)
+            .putExtra(PremiumActivity.EXTRA_UPGRADE_SOURCE, source)
 
         if (context !is Activity) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

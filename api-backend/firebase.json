@@ -17,5 +17,8 @@
       "region": "asia-south1",
       "runtime": "nodejs22"
     }
-  ]
+  ],
+  "firestore": {
+    "rules": "firestore.rules"
+  }
 }
