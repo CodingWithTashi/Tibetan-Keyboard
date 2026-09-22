@@ -4,10 +4,12 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.job.JobScheduler
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
@@ -106,6 +108,7 @@ class StreakReminderWorker(context: Context, params: WorkerParameters) :
     }
 
     companion object {
+        private const val TAG = "StreakReminder"
         private const val CHANNEL_ID = "journey_channel"
         private const val WORK_NAME = "journey_streak_reminder"
         private const val NOTIFICATION_ID_REMINDER = 4101
@@ -115,16 +118,51 @@ class StreakReminderWorker(context: Context, params: WorkerParameters) :
         /**
          * Schedule the daily evening check. Idempotent (KEEP) — safe to call from
          * Application.onCreate on every process start, including the IME's.
+         *
+         * This is the *only* entry point that touches WorkManager, and WorkManager's
+         * `androidx.startup` auto-initializer is disabled in the manifest, so the whole
+         * library initialises lazily inside this guarded call. That matters: on some
+         * SDK-34 ROMs `JobScheduler.forNamespace` is missing and WorkManager's
+         * `getWmJobScheduler` calls it unguarded (still true as of work-runtime 2.11.2),
+         * throwing NoSuchMethodError. Auto-init ran that from a ContentProvider before
+         * Application.onCreate, so it killed every process launch — including the IME's,
+         * making the keyboard unusable. A reminder is worth less than a working keyboard:
+         * skip it on such devices rather than crash.
          */
         fun schedule(context: Context) {
-            val request = PeriodicWorkRequest.Builder(
-                StreakReminderWorker::class.java, 1, TimeUnit.DAYS,
-            )
-                .setInitialDelay(millisUntilNextTargetHour(), TimeUnit.MILLISECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request,
-            )
+            if (!isJobSchedulerUsable()) {
+                Log.w(TAG, "schedule: JobScheduler.forNamespace missing on this ROM — skipping")
+                return
+            }
+            try {
+                val request = PeriodicWorkRequest.Builder(
+                    StreakReminderWorker::class.java, 1, TimeUnit.DAYS,
+                )
+                    .setInitialDelay(millisUntilNextTargetHour(), TimeUnit.MILLISECONDS)
+                    .build()
+                WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                    WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request,
+                )
+            } catch (t: Throwable) {
+                // Catch Throwable, not Exception: the failure mode above is a
+                // NoSuchMethodError (an Error), and nothing here is worth a crash.
+                Log.w(TAG, "schedule: WorkManager unavailable — reminders disabled", t)
+            }
+        }
+
+        /**
+         * True when it is safe to initialise WorkManager. Below API 34 WorkManager never
+         * reaches `forNamespace`; at or above it we check the method really exists instead
+         * of trusting `Build.VERSION.SDK_INT`.
+         */
+        private fun isJobSchedulerUsable(): Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return true
+            return try {
+                JobScheduler::class.java.getMethod("forNamespace", String::class.java)
+                true
+            } catch (t: Throwable) {
+                false
+            }
         }
 
         private fun millisUntilNextTargetHour(): Long {

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
+import androidx.work.Configuration
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
 import com.kharagedition.tibetankeyboard.BuildConfig
@@ -21,8 +22,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-class TibetanKeyboardApp : Application() {
+class TibetanKeyboardApp : Application(), Configuration.Provider {
     lateinit var prefs: SharedPreferences
+
+    /**
+     * WorkManager's androidx.startup initializer is removed in the manifest, so the library
+     * comes up lazily on the first [androidx.work.WorkManager.getInstance] call — which only
+     * ever happens inside [StreakReminderWorker.schedule], where it is guarded. That method's
+     * KDoc explains why auto-init had to go.
+     */
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(if (BuildConfig.DEBUG) Log.DEBUG else Log.WARN)
+            .build()
 
     /**
      * App-lived coroutine scope for fire-and-forget work that must outlive a single screen
@@ -31,6 +43,7 @@ class TibetanKeyboardApp : Application() {
      */
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     override fun onCreate() {
+        super.onCreate()
         // The app is a single premium dark-warm design; force light mode globally so no
         // activity needs to set it individually.
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -52,9 +65,8 @@ class TibetanKeyboardApp : Application() {
         // Journey streak reminder — daily on-device check (~7pm). Idempotent (KEEP), and this
         // runs on every process start, so keyboard-only users get it too (the IME shares this
         // Application). The worker honours the Settings toggle and never touches the network.
+        // This is also where WorkManager first comes up (auto-init is off), hence last.
         StreakReminderWorker.schedule(this)
-
-        super.onCreate()
     }
 
     /**

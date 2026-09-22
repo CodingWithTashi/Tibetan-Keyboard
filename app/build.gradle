@@ -28,7 +28,7 @@ android {
         targetSdkVersion 36
         versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 55
 
-        versionName "2.2.12"
+        versionName "2.2.13"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true

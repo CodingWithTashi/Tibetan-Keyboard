@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard
 
+import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -25,7 +26,7 @@ import com.google.android.play.core.install.model.UpdateAvailability
  * Debug builds: skips the Play API entirely and simulates a downloaded flexible update
  * after 3 s so the install banner UI can be verified without a Play-signed APK.
  */
-class InAppUpdateManager(context: Context) {
+class InAppUpdateManager(private val context: Context) {
 
     private val appUpdateManager = AppUpdateManagerFactory.create(context)
     private var installStateListener: InstallStateUpdatedListener? = null
@@ -164,10 +165,7 @@ class InAppUpdateManager(context: Context) {
         launcher: ActivityResultLauncher<IntentSenderRequest>,
     ) {
         Log.d(TAG, "startImmediateUpdate: starting full-screen update UI")
-        appUpdateManager.startUpdateFlowForResult(
-            info, launcher,
-            AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
-        )
+        launchUpdateFlow(info, launcher, AppUpdateType.IMMEDIATE)
     }
 
     private fun startFlexibleUpdate(
@@ -175,6 +173,14 @@ class InAppUpdateManager(context: Context) {
         launcher: ActivityResultLauncher<IntentSenderRequest>,
         onDownloadComplete: () -> Unit,
     ) {
+        // Checked before registering: if the host is already gone, unregisterListener()
+        // (driven by HomeActivity.onDestroy) has run for the last time, so a listener added
+        // now would outlive the screen it updates.
+        if (!hostAlive()) {
+            Log.d(TAG, "startFlexibleUpdate: host Activity gone — skipping")
+            return
+        }
+
         Log.d(TAG, "startFlexibleUpdate: registering InstallStateUpdatedListener + showing consent")
         installStateListener = InstallStateUpdatedListener { state ->
             Log.d(TAG, "InstallStateUpdatedListener: installStatus=${state.installStatus()}")
@@ -184,10 +190,41 @@ class InAppUpdateManager(context: Context) {
             }
         }.also { appUpdateManager.registerListener(it) }
 
-        appUpdateManager.startUpdateFlowForResult(
-            info, launcher,
-            AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(),
-        )
+        launchUpdateFlow(info, launcher, AppUpdateType.FLEXIBLE)
+    }
+
+    /**
+     * The Play API call is asynchronous, so its callback can land after the host Activity is
+     * gone. Its ActivityResultRegistry is torn down on destroy, so launching then throws
+     * IllegalStateException("Attempting to launch an unregistered ActivityResultLauncher").
+     * An update prompt for a screen that no longer exists is worth nothing — drop it.
+     */
+    private fun hostAlive(): Boolean {
+        val activity = context as? Activity ?: return true
+        return !activity.isFinishing && !activity.isDestroyed
+    }
+
+    /**
+     * Launches an update flow. [hostAlive] covers the common case; the try/catch still
+     * covers the race where the Activity is destroyed between the check and the launch.
+     */
+    private fun launchUpdateFlow(
+        info: AppUpdateInfo,
+        launcher: ActivityResultLauncher<IntentSenderRequest>,
+        updateType: Int,
+    ) {
+        if (!hostAlive()) {
+            Log.d(TAG, "launchUpdateFlow: host Activity gone — skipping")
+            return
+        }
+        try {
+            appUpdateManager.startUpdateFlowForResult(
+                info, launcher,
+                AppUpdateOptions.newBuilder(updateType).build(),
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "launchUpdateFlow: could not start update flow — $e")
+        }
     }
 
     companion object {

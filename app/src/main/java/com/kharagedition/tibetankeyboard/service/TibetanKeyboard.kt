@@ -242,7 +242,11 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     override fun onRelease(i: Int) {}
 
     override fun onKey(i: Int, ints: IntArray) {
-        val inputConnection = currentInputConnection
+        // currentInputConnection is a platform type: it is null whenever no editor is bound
+        // (the target app went away, or a key lands between onFinishInput and onStartInput),
+        // and Kotlin will not null-check it for us. Every branch below types into it, so
+        // bail out rather than NPE inside the IME.
+        val inputConnection = currentInputConnection ?: return
         Log.i("TAG", "onKey: $i")
         val vibrate = prefs.getBoolean("vibrate", false)
         val sound = prefs.getBoolean("sound", true)
