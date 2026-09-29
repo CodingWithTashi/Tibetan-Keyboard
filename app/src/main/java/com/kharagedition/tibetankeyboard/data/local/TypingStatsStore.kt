@@ -4,8 +4,8 @@ import android.content.Context
 import android.util.Base64
 import com.kharagedition.tibetankeyboard.ui.journey.StreakLogic
 import com.kharagedition.tibetankeyboard.ui.journey.StreakState
+import com.kharagedition.tibetankeyboard.util.localEpochDay
 import java.security.MessageDigest
-import java.util.TimeZone
 
 /**
  * On-device typing statistics behind the "Tibetan Journey" streak feature.
@@ -34,8 +34,7 @@ class TypingStatsStore private constructor(context: Context) {
     // ── time ─────────────────────────────────────────────────────────────────
 
     /** Local-timezone epoch day, so the streak rolls over at the user's midnight. */
-    fun todayEpochDay(now: Long = System.currentTimeMillis()): Long =
-        (now + TimeZone.getDefault().getOffset(now)) / MILLIS_PER_DAY
+    fun todayEpochDay(now: Long = System.currentTimeMillis()): Long = localEpochDay(now)
 
     // ── recording (called from the IME) ──────────────────────────────────────
 
@@ -180,7 +179,6 @@ class TypingStatsStore private constructor(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "typing_stats"
-        private const val MILLIS_PER_DAY = 24L * 60 * 60 * 1000
         private const val KEEP_DAYS = 60L
         private const val MAX_VOCAB_ENTRIES = 20_000
         private const val TSHEK = '་'

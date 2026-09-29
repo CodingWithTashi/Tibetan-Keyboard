@@ -1,5 +1,7 @@
 package com.kharagedition.tibetankeyboard.ui.keyboard
 
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+
 interface AIKeyboardInterface {
     fun getCurrentText(): String
     fun onGrammarReplace(originalText: String, correctedText: String)
@@ -11,8 +13,11 @@ interface AIKeyboardInterface {
     /** Open the AI chat screen (PRO users). */
     fun onOpenChat()
 
-    /** Route a free user to the unlock flow (login if signed out, else the premium paywall). */
-    fun onUnlockPro()
+    /**
+     * Route a free user to the paywall. [source] is the [AppAnalytics.UpgradeSource] of the
+     * control that was tapped, so the sale can be attributed to it.
+     */
+    fun onUnlockPro(source: String = AppAnalytics.UpgradeSource.KEYBOARD)
 
     /** Open the Tibetan Journey (streak & typing insights) screen. */
     fun onOpenJourney()

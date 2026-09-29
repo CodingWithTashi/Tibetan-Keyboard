@@ -545,9 +545,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         )
     }
 
-    override fun onUnlockPro() {
-        // Single source of truth for the upgrade flow (login-then-paywall if needed).
-        openPremiumUpgrade(AppAnalytics.UpgradeSource.KEYBOARD)
+    override fun onUnlockPro(source: String) {
+        // Single source of truth for the upgrade flow.
+        openPremiumUpgrade(source)
     }
 
     override fun onOpenJourney() {

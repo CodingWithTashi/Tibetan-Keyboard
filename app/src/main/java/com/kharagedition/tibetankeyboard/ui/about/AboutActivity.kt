@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.util.CommonUtils
 
@@ -21,7 +22,7 @@ class AboutActivity : AppCompatActivity() {
                         onBack = { finish() },
                         onShare = { shareApp() },
                         onRate = { openUrl(CommonUtils.PLAY_STORE_URL) },
-                        onDictionary = { openUrl(CommonUtils.PLAY_STORE_DICTIONARY_URL) },
+                        onRangjong = { openUrl(CommonUtils.PLAY_STORE_RANGJONG_URL) },
                         onCalendar = { openUrl(CommonUtils.PLAY_STORE_CALENDAR_URL) },
                         onGithub = { openUrl(CommonUtils.GITHUB_URL) },
                         onGmail = { sendEmail() },
@@ -52,7 +53,7 @@ class AboutActivity : AppCompatActivity() {
 
     private fun sendEmail() {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("mailto:developer.kharag@gmail.com")
+            data = Uri.parse("mailto:${AppConstant.SUPPORT_EMAIL}")
         }
         try {
             startActivity(intent)

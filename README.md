@@ -16,4 +16,6 @@ Tibetan-Keyboard
 | <img src="https://github.com/CodingWithTashi/Tibetan-Keyboard/blob/main/app/demo/inputmethod.jpeg?raw=true" width="300" height="600" /> | <img src="https://github.com/CodingWithTashi/Tibetan-Keyboard/blob/main/app/demo/ready.jpeg?raw=true" width="300" height="600" /> |
 | **Set up input Method** | **Use case** |
 
-
+```
+adb shell svc power stayon usb
+```

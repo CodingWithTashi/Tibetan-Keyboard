@@ -43,7 +43,7 @@ class AboutActions(
     val onBack: () -> Unit,
     val onShare: () -> Unit,
     val onRate: () -> Unit,
-    val onDictionary: () -> Unit,
+    val onRangjong: () -> Unit,
     val onCalendar: () -> Unit,
     val onGithub: () -> Unit,
     val onGmail: () -> Unit,
@@ -119,7 +119,7 @@ fun AboutScreen(actions: AboutActions) {
                 modifier = Modifier.padding(start = 2.dp, bottom = 12.dp),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SisterApp("Tb–En Dictionary", "ཚིག་མཛོད", R.drawable.dictionary,Modifier.weight(1f), actions.onDictionary)
+                SisterApp("Language App", "རང་སྦྱོང་", R.drawable.rangjong,Modifier.weight(1f), actions.onRangjong)
                 SisterApp("Tibetan Calendar", "ལོ་ཐོ", R.drawable.calendar,Modifier.weight(1f), actions.onCalendar)
             }
 

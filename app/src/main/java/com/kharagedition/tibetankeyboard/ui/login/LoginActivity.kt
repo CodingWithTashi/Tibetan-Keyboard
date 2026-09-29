@@ -239,6 +239,11 @@ class LoginActivity : AppCompatActivity() {
     private fun hideLoading() = viewModel.setLoading(false)
 
     private fun navigateToChatActivity() {
+        // Signed in on the way to something already open underneath (the card checkout): go back.
+        if (intent?.getBooleanExtra(EXTRA_RETURN_AFTER_LOGIN, false) == true) {
+            finish()
+            return
+        }
         // If the login was launched to reach a specific screen (e.g. the AI Translate
         // screen sends the user through login), return there. Otherwise fall back to the
         // PRO-upsell → paywall vs normal → chat routing.
@@ -257,6 +262,9 @@ class LoginActivity : AppCompatActivity() {
     companion object {
         /** Set true to route to the premium paywall after a successful login. */
         const val EXTRA_OPEN_PREMIUM_AFTER_LOGIN = "open_premium_after_login"
+
+        /** Set true to just close after a successful login, returning to the caller beneath. */
+        const val EXTRA_RETURN_AFTER_LOGIN = "return_after_login"
 
         /** Fully-qualified Activity class name to open after a successful login. */
         const val EXTRA_POST_LOGIN_TARGET = "post_login_target"

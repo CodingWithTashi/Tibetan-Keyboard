@@ -148,6 +148,53 @@ Products live in the RevenueCat `pro_v2` offering (monthly / annual / lifetime),
 identifier rather than `offerings.current`. Regional prices are set with `tools/play_pricing.py`;
 never price one plan by converting another plan's price from a different currency.
 
+**Paywall & upsell flow (2.3.0).** The decisions are pure, unit-tested units in `subscription/`
+and `billing/`; keep new rules there. RevenueCat/Play ids live only in `subscription/BillingCatalog`.
+- `PremiumActivity` asks `RevenueCatManager.resolvePaywall(placement)`. The placement comes from
+  `PaywallPlacements.forSource(UpgradeSource)`, and the choice from `PaywallOfferingResolver`:
+  - the placement's offering, else RevenueCat's `current` offering. A targeting rule or experiment
+    variant without placements sends no placement mapping, so the placement lookup returns null;
+  - an offering with a dashboard paywall → RevenueCat's `Paywall()` composable;
+  - otherwise → our Compose `PremiumScreen`, which reports views with `trackCustomPaywallImpression`
+    so experiments can compare it with dashboard paywalls;
+  - `sale` is never shown.
+  - The GA4 funnel lives in `PremiumViewModel` (the Activity only launches Play, login and the
+    checkout tab); RevenueCat's paywall reports into it through `PaywallListener`.
+  - Paywall screens share `ui/subscription/ProComponents.kt` (hero card, benefits list, 18dp margins).
+- RevenueCat dashboard (all rules gated on App version ≥ 2.3.0; older builds keep `sale`):
+  - Targeting, in order: Nepal → `pro_v2` (our screen with card help), India → `pro_trial_monthly`,
+    everyone else → `pro_trial_annual`. `pro_web_bt` is only for the Bhutan web checkout.
+  - Experiments (new customers): "Paywall design - India" and "Paywall design - Rest of world"
+    (excludes IN/NP/BT), each `pro_v2` (A, control) vs the RevenueCat paywall (B).
+- `DefaultPlanPolicy` pre-selects the plan: monthly for storefront IN, otherwise a plan with a trial.
+- `BillingAvailability` decides Play vs card checkout (`WebCheckoutScreen`, RevenueCat Web Purchase
+  Link `WEB_PURCHASE_LINK`, sandbox in debug). **Policy line:** card checkout only where Google Play
+  can't sell (storefront BT, or MCC 402 + proof Play can't sell). Never in a Play-billing country.
+  - The sandbox link is read from `local.properties` (`webPurchaseLinkSandbox=`), never committed:
+    the repo is public and that page accepts Stripe's test card. Without it a debug build shows
+    "checkout coming soon".
+- `canSellHere()` keeps upsells off where nothing can be bought.
+- `RevenueCatManager.isPremiumKnown` is false until RevenueCat answers; `isPremiumUser` starts as
+  `false`, which must not be read as "free" (no quota, no upsell for an unknown user).
+- The keyboard gives free users `SuggestionQuota` (20/day) live suggestions, then locked chips.
+  The strip re-lays out only when its `ProStripState` changes.
+- Home opens the paywall by itself via `OnboardingPaywallPolicy` (after setup, day 3, once for
+  existing users). It is not an `upgrade_clicked`.
+- Dashboard switches (metadata on `pro_v2`, parsed by `subscription/RemoteConfig`), no release
+  needed: `free_suggestions_per_day`, `onboarding_paywall_enabled`, `web_checkout_countries`.
+  `web_checkout_countries` can only remove countries: it is clamped to Play-unavailable ones.
+- **Manage subscription** is our own Compose flow (`ManageSubscriptionActivity`/`ViewModel`/`Screen`),
+  not RevenueCat's Customer Center, whose layout can't be styled to match the app.
+  - Steps: overview → reason → (retention offer) → hand-off to Google Play. Cancelling always
+    happens in Play; the rules are in `subscription/ManageSubscriptionModel.kt`.
+  - Settings-style rows are shared via `ui/compose/components/SettingsRows.kt`.
+  - Play can't apply a discount offer on the base plan the user is already on. A plain purchase
+    fails with "Account identifiers don't match", and a plan change to the same base plan gets
+    "Server error". So the offer shows only when it sits on another base plan
+    (`ManageSubscriptionPolicy.offerApplies`).
+- Debug builds: `SplashScreenActivity` extras `debug_force_free`, `debug_storefront` (`none` clears),
+  `debug_suggestions_used`, `debug_reset_onboarding` (see `util/DebugOverrides.kt`). Launch with `-f 0x10008000`.
+
 ### Backend (`api-backend/`)
 
 Node.js/TypeScript Express on Firebase Functions. AI: **Claude** via `anthropicService`
@@ -167,7 +214,7 @@ Claude, so they carry the same middleware chain.
 | Images | Coil 2.7.0 (Compose) + Glide 4.16.0 (GIF in `AndroidView`) |
 | HTTP | Retrofit 2 + OkHttp3 |
 | Async | Kotlin Coroutines 1.8.1 |
-| Subscriptions | RevenueCat 9.2.0 |
+| Subscriptions | RevenueCat 9.29.1 (`purchases` + `purchases-ui`, keep in step) |
 | Ads | AdMob 23.6.0 (`TemplateView` native, `AdView` banner via `AndroidView`) |
 | Tokenizer | `:botok` module |
 

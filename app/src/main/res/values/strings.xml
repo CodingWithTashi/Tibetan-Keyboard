@@ -251,7 +251,7 @@
     <string name="online_tibetan">Online · Tibetan</string>
     <string name="clear_chat_action">Clear chat</string>
     <string name="copy">Copy</string>
-    <string name="premium_title">Tibetan Keyboard Pro</string>
+    <string name="premium_title">Tibetan Keyboard PRO</string>
     <string name="unlock_everything">Unlock everything</string>
     <string name="monthly">Monthly</string>
     <string name="cancel_anytime">Cancel anytime</string>
@@ -267,7 +267,6 @@
     <string name="premium_per_month">%1$s / month</string>
     <string name="premium_pay_once">Pay once — yours forever</string>
     <string name="premium_billed_yearly">Billed once a year</string>
-    <string name="premium_loading_plans">Loading plans…</string>
     <string name="premium_continue">Continue</string>
     <string name="premium_hero_subtitle">No ads, every theme, your full typing story — plus AI when you want it.</string>
     <!-- Paywall: what PRO actually unlocks, led by what people use most -->
@@ -281,6 +280,23 @@
     <string name="premium_feature_journey_desc">Streak history, weekly insights and vocabulary</string>
     <string name="premium_feature_ai">AI chat and translate</string>
     <string name="premium_feature_ai_desc">Compose and translate Tibetan with AI</string>
+    <!-- Paywall: states, trial and payment help -->
+    <string name="premium_activated">PRO is active — enjoy!</string>
+    <string name="premium_plans_unavailable">Plans couldn\'t load. Check your connection and try again.</string>
+    <string name="premium_retry">Try again</string>
+    <string name="premium_buy_once">Buy once</string>
+    <string name="premium_card_help">Pay with a Visa or Mastercard that is enabled for international online payments, such as a dollar card.</string>
+    <!-- Card checkout, shown only where Google Play doesn't sell subscriptions (Bhutan) -->
+    <string name="web_checkout_subtitle">Google Play doesn\'t sell subscriptions in Bhutan yet, so you can pay securely by card instead.</string>
+    <string name="web_checkout_cards">Visa and Mastercard accepted, including Bhutanese international debit cards. Secure checkout by RevenueCat and Stripe.</string>
+    <string name="web_checkout_plans">Choose monthly, yearly or lifetime on the next page.</string>
+    <string name="web_checkout_checking">Checking your payment…</string>
+    <string name="web_checkout_not_found">We haven\'t received your payment yet. It can take a minute to arrive.</string>
+    <string name="web_checkout_check_again">I\'ve paid — check again</string>
+    <string name="web_checkout_continue">Continue to secure checkout</string>
+    <string name="web_checkout_sign_in">Sign in to continue</string>
+    <string name="web_checkout_sign_in_why">PRO stays with your Google account on every device.</string>
+    <string name="web_checkout_unavailable">PRO checkout for your country is coming soon.</string>
     <string name="about_this_app">About this app</string>
     <string name="more_from_kharag">MORE FROM KHARAGEDITION</string>
     <string name="github">GitHub</string>
@@ -352,5 +368,107 @@
     <string name="journey_reminder_body">Type a little Tibetan before midnight to keep it alive.</string>
     <string name="journey_weekly_title">Your week in Tibetan</string>
     <string name="journey_weekly_body">You typed %1$d Tibetan words this week. See your journey →</string>
+
+    <!-- Manage subscription (replaces RevenueCat's Customer Center) -->
+    <string name="sub_manage_plan_monthly">Monthly plan</string>
+    <string name="sub_manage_plan_annual">Yearly plan</string>
+    <string name="sub_manage_plan_lifetime">Lifetime access</string>
+    <string name="sub_manage_plan_other">PRO plan</string>
+    <string name="sub_status_active">Active</string>
+    <string name="sub_status_trial">Free trial</string>
+    <string name="sub_status_ending">Cancelled</string>
+    <string name="sub_status_billing">Payment issue</string>
+    <string name="sub_status_lifetime">Lifetime</string>
+    <string name="sub_status_inactive">Not active</string>
+    <string name="sub_manage_price">Price</string>
+    <string name="sub_manage_price_year">%1$s / year</string>
+    <string name="sub_manage_price_once">Paid once</string>
+    <string name="sub_manage_renews_on">Renews on</string>
+    <string name="sub_manage_trial_ends_on">Trial ends on</string>
+    <string name="sub_manage_ends_on">PRO ends on</string>
+    <string name="sub_manage_expires_on">Expires on</string>
+    <string name="sub_manage_billed_via">Billed through</string>
+    <string name="sub_manage_store_play">Google Play</string>
+    <string name="sub_manage_store_web">Card (web)</string>
+    <string name="sub_manage_store_granted">Complimentary</string>
+    <string name="sub_manage_billing_issue">Google Play couldn\'t charge your last payment. Update your payment method to keep PRO.</string>
+    <string name="sub_manage_ending_note">You won\'t be charged again. You can resubscribe any time before then to keep PRO without a gap.</string>
+    <string name="sub_manage_section">Manage</string>
+    <string name="sub_manage_payment">Payment method</string>
+    <string name="sub_manage_payment_desc_play">Change your card in Google Play</string>
+    <string name="sub_manage_payment_desc_web">Change your card in the billing portal</string>
+    <string name="sub_manage_restore">Restore purchases</string>
+    <string name="sub_manage_restore_desc">Bring PRO back on this device</string>
+    <string name="sub_manage_support">Contact support</string>
+    <string name="sub_manage_support_body">\n\n—\nAccount ID: %1$s</string>
+    <string name="sub_manage_support_desc">We usually reply within a day</string>
+    <string name="sub_manage_resubscribe">Resubscribe</string>
+    <string name="sub_manage_resubscribe_desc">Keep PRO after it ends</string>
+    <string name="sub_manage_cancel">Cancel subscription</string>
+    <string name="sub_manage_footer_play">Subscriptions are billed and managed by Google Play. Changes there can take a few minutes to appear here.</string>
+    <string name="sub_manage_footer_web">This subscription was bought by card and is managed in the billing portal.</string>
+    <string name="sub_manage_load_failed">Couldn\'t load your subscription. Check your connection and try again.</string>
+    <string name="sub_manage_portal_unavailable">Couldn\'t open the billing portal. Email us and we\'ll change it for you.</string>
+    <string name="sub_manage_restored">PRO restored</string>
+    <string name="sub_manage_restore_none">No purchases found for this account</string>
+    <string name="sub_manage_restore_failed">Couldn\'t restore right now. Please try again.</string>
+
+    <string name="sub_cancel_title">Cancel subscription</string>
+    <string name="sub_cancel_reason_heading">Why are you cancelling?</string>
+    <string name="sub_cancel_reason_body">Choose the main reason. It helps us make the keyboard better.</string>
+    <string name="sub_cancel_reason_expensive">It\'s too expensive</string>
+    <string name="sub_cancel_reason_not_using">I don\'t use it enough</string>
+    <string name="sub_cancel_reason_missing">It\'s missing something I need</string>
+    <string name="sub_cancel_reason_mistake">I bought it by mistake</string>
+    <string name="sub_cancel_reason_other">Something else</string>
+    <string name="sub_cancel_keep">Keep my subscription</string>
+
+    <string name="sub_offer_badge">%1$d%% OFF</string>
+    <string name="sub_offer_heading">Stay for less</string>
+    <string name="sub_offer_body">Keep every PRO feature at a lower price while you decide.</string>
+    <string name="sub_offer_keep_section">What you keep</string>
+    <string name="sub_offer_accept">Keep PRO for %1$s / month</string>
+    <string name="sub_offer_decline">No thanks, continue cancelling</string>
+    <string name="sub_offer_failed">Google Play couldn\'t apply the offer. Your subscription hasn\'t changed.</string>
+
+    <string name="sub_handoff_heading_play">Finish in Google Play</string>
+    <string name="sub_handoff_heading_web">Finish in the billing portal</string>
+    <string name="sub_handoff_body_play">Google Play manages your subscription, so the last step happens there. You\'ll keep PRO until %1$s.</string>
+    <string name="sub_handoff_body_web">Your card subscription is managed in the billing portal. You\'ll keep PRO until %1$s.</string>
+    <string name="sub_handoff_account_hint">If Google Play can\'t find your subscription, tap your profile picture there and switch to the Google account you subscribed with.</string>
+    <string name="sub_handoff_period_end">the end of this billing period</string>
+    <string name="sub_handoff_lose_section">After that, you\'ll lose</string>
+    <string name="sub_handoff_refund_title">Bought it by mistake?</string>
+    <string name="sub_handoff_refund_body">Google Play usually refunds purchases made in the last 48 hours. You can request one from your order history.</string>
+    <string name="sub_handoff_refund_action">Request a refund</string>
+    <string name="sub_handoff_open_play">Continue to Google Play</string>
+    <string name="sub_handoff_open_web">Continue to billing portal</string>
+    <string name="sub_handoff_keep">Keep PRO</string>
+
+    <!-- Number + noun: plurals, so "1 day" / "3 months" read right in every language. -->
+    <plurals name="premium_trial_then">
+        <item quantity="one">Free for %1$d day, then %2$s</item>
+        <item quantity="other">Free for %1$d days, then %2$s</item>
+    </plurals>
+    <plurals name="premium_trial_then_year">
+        <item quantity="one">Free for %1$d day, then %2$s a year</item>
+        <item quantity="other">Free for %1$d days, then %2$s a year</item>
+    </plurals>
+    <plurals name="premium_trial_then_month">
+        <item quantity="one">Free for %1$d day, then %2$s a month</item>
+        <item quantity="other">Free for %1$d days, then %2$s a month</item>
+    </plurals>
+    <plurals name="premium_start_trial">
+        <item quantity="one">Start %1$d-day free trial</item>
+        <item quantity="other">Start %1$d-day free trial</item>
+    </plurals>
+    <plurals name="sub_offer_terms">
+        <item quantity="one">for the next month, then %2$s / month. Cancel anytime.</item>
+        <item quantity="other">for the next %1$d months, then %2$s / month. Cancel anytime.</item>
+    </plurals>
+    <plurals name="sub_offer_accepted">
+        <item quantity="one">Done. You\'ll pay %1$s / month next month.</item>
+        <item quantity="other">Done. You\'ll pay %1$s / month for the next %2$d months.</item>
+    </plurals>
 
 </resources>

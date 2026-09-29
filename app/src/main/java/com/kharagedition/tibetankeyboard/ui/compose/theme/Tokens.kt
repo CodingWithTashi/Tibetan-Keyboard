@@ -39,6 +39,11 @@ object TibetanTokens {
         listOf(TibetanColors.Gold200, TibetanColors.Gold400)
     )
 
+    // The maroon hero card behind every PRO pitch (paywalls, retention offer).
+    val GradMaroon = Brush.verticalGradient(
+        listOf(TibetanColors.MaroonDeep, TibetanColors.Maroon, TibetanColors.MaroonDeep)
+    )
+
     // --grad-brown: linear-gradient(170deg, brown-600 0%, bg-800 100%)
     val GradBrown = Brush.linearGradient(
         colors = listOf(TibetanColors.Brown600, TibetanColors.Bg800),
