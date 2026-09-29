@@ -1,9 +1,7 @@
 package com.kharagedition.tibetankeyboard.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
@@ -22,14 +19,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,8 +35,11 @@ import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BackHeader
 import com.kharagedition.tibetankeyboard.ui.compose.components.GoldToggle
 import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenScaffold
-import com.kharagedition.tibetankeyboard.ui.compose.components.IconTile
 import com.kharagedition.tibetankeyboard.ui.compose.components.SectionLabel
+import com.kharagedition.tibetankeyboard.ui.compose.components.ChevronIcon
+import com.kharagedition.tibetankeyboard.ui.compose.components.SettingsDivider
+import com.kharagedition.tibetankeyboard.ui.compose.components.SettingsGroup
+import com.kharagedition.tibetankeyboard.ui.compose.components.SettingsRow
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
 
@@ -96,15 +95,15 @@ fun SettingsScreen(
                         title = stringResource(R.string.keyboard_background_title),
                         subtitle = SettingsPrefs.colorLabel(state.color),
                         onClick = { dialog = "color" },
-                        trailing = { Chevron() },
+                        trailing = { ChevronIcon() },
                     )
-                    Divider()
+                    SettingsDivider()
                     SettingsRow(
                         icon = AppIcons.Palette,
                         title = stringResource(R.string.keyboard_layout_title),
                         subtitle = SettingsPrefs.styleLabel(state.style),
                         onClick = { dialog = "style" },
-                        trailing = { Chevron() },
+                        trailing = { ChevronIcon() },
                     )
                 }
 
@@ -117,7 +116,7 @@ fun SettingsScreen(
                         title = stringResource(R.string.vibrate_on_tap),
                         trailing = { GoldToggle(state.vibrate, actions.onVibrate) },
                     )
-                    Divider()
+                    SettingsDivider()
                     SettingsRow(
                         icon = AppIcons.Sound,
                         title = stringResource(R.string.sound_on_tap),
@@ -134,7 +133,7 @@ fun SettingsScreen(
                         title = stringResource(R.string.event_notifications),
                         trailing = { GoldToggle(state.eventNotification, actions.onNotification) },
                     )
-                    Divider()
+                    SettingsDivider()
                     SettingsRow(
                         icon = AppIcons.Star,
                         title = stringResource(R.string.journey_reminder_setting),
@@ -151,7 +150,7 @@ fun SettingsScreen(
                         icon = AppIcons.Crown,
                         title = stringResource(R.string.subscription),
                         subtitle = stringResource(if (state.isPremium) R.string.premium_plan else R.string.free_plan),
-                        // "Upgrade" for free users, Customer Center for subscribers — who
+                        // "Upgrade" for free users, Manage subscription for subscribers — who
                         // previously had no in-app route to cancel or restore.
                         trailing = {
                             Box(
@@ -180,12 +179,12 @@ fun SettingsScreen(
                         },
                     )
                     if (state.isAuthenticated) {
-                        Divider()
+                        SettingsDivider()
                         SettingsRow(
                             icon = AppIcons.Logout,
                             title = stringResource(R.string.logout),
                             onClick = actions.onLogout,
-                            trailing = { Chevron() },
+                            trailing = { ChevronIcon() },
                         )
                     }
                 }
@@ -217,55 +216,6 @@ fun SettingsScreen(
             onDismiss = { dialog = null },
         )
     }
-}
-
-@Composable
-private fun SettingsGroup(content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(TibetanColors.Brown700)
-            .border(1.dp, TibetanColors.Line, RoundedCornerShape(16.dp))
-            .padding(horizontal = 14.dp, vertical = 2.dp),
-    ) { content() }
-}
-
-@Composable
-private fun SettingsRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    onClick: (() -> Unit)? = null,
-    trailing: @Composable () -> Unit = {},
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = 11.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        IconTile(icon, size = 40.dp, iconSize = 20.dp, background = TibetanColors.Brown700)
-        Column(Modifier.weight(1f)) {
-            Text(title, color = TibetanColors.Cream, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold)
-            if (subtitle != null) {
-                Text(subtitle, color = TibetanColors.CreamDim, fontSize = 12.5.sp)
-            }
-        }
-        trailing()
-    }
-}
-
-@Composable
-private fun Divider() {
-    Box(Modifier.fillMaxWidth().height(1.dp).background(TibetanColors.Line))
-}
-
-@Composable
-private fun Chevron() {
-    Icon(AppIcons.Chevron, null, tint = TibetanColors.CreamDim, modifier = Modifier.size(20.dp))
 }
 
 @Composable

@@ -39,4 +39,7 @@ object TibetanColors {
 
     // Success / live
     val Jade = Color(0xFF5BB98C)
+
+    // Warnings on the dark surfaces (payment problems): a soft coral that stays legible
+    val Warning = Color(0xFFE58A7E)
 }

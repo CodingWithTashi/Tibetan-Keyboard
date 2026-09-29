@@ -11,10 +11,12 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.kharagedition.tibetankeyboard.R
 
 /**
- * Even-width suggestion strip — 4 chips always fill the full keyboard width.
- * Extends LinearLayout directly (no HorizontalScrollView) so weight distribution works.
+ * Even-width suggestion strip: the chips (2–4, see `ProStripState.maxSuggestions`) share the
+ * strip's width equally. Extends LinearLayout directly (no HorizontalScrollView) so weight
+ * distribution works.
  */
 class SuggestionStripView @JvmOverloads constructor(
     context: Context,
@@ -23,6 +25,12 @@ class SuggestionStripView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     var onSuggestionClick: ((String) -> Unit)? = null
+    var onLockedSuggestionClick: (() -> Unit)? = null
+
+    /** Inflated once; each locked chip gets a cheap copy of the padlock. */
+    private val lockIcon by lazy {
+        androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_lock_small)?.constantState
+    }
     private var themeColor = Color.parseColor("#FF704C04")
 
     private companion object {
@@ -45,6 +53,23 @@ class SuggestionStripView @JvmOverloads constructor(
         suggestions.forEachIndexed { index, word ->
             if (index > 0) addView(makeDivider())
             addView(makeChip(word, index == 0))
+        }
+    }
+
+    /**
+     * The same chips, dimmed with a padlock: a free user has used today's free suggestions. A tap
+     * goes to [onLockedSuggestionClick] (the paywall) instead of inserting the word.
+     */
+    fun setLockedSuggestions(suggestions: List<String>) {
+        removeAllViews()
+        suggestions.forEachIndexed { index, word ->
+            if (index > 0) addView(makeDivider())
+            addView(makeChip(word, index == 0).apply {
+                alpha = ProStripState.LOCKED_ALPHA
+                setCompoundDrawablesRelativeWithIntrinsicBounds(lockIcon?.newDrawable(), null, null, null)
+                compoundDrawablePadding = dp(4)
+                setOnClickListener { onLockedSuggestionClick?.invoke() }
+            })
         }
     }
 

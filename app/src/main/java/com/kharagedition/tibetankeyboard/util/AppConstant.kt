@@ -17,6 +17,9 @@ class AppConstant {
         var TEST_ADS_NATIVE = "ca-app-pub-3940256099942544/2247696110"
         var PRODUCTION_ADS_NATIVE = "ca-app-pub-8284901143739274/2561880007"
 
+        /** Where "Contact support" and About's email go. */
+        const val SUPPORT_EMAIL = "developer.kharag@gmail.com"
+
         //firebase topic
         var TIBETAN_KEYBOARD_APP = "TibetanKeyboardApp";
 

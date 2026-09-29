@@ -7,6 +7,11 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'
 }
 
+// Machine-local values; local.properties is git-ignored.
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) localPropsFile.withInputStream { localProps.load(it) }
+
 android {
     compileSdk 36
     namespace = "com.kharagedition.tibetankeyboard"
@@ -26,9 +31,10 @@ android {
         // installed devices on API 23 (0.03%).
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 55
+        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 57
 
-        versionName "2.2.13"
+        // RevenueCat targeting rules match on this (App version >= 2.3.0).
+        versionName "2.3.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -42,11 +48,22 @@ android {
     }
 
     buildTypes {
+        // RevenueCat Web Purchase Link ("Bhutan card checkout", offering pro_web_bt) for card
+        // checkout where Google Play can't sell. Debug uses the sandbox link (Stripe test mode, no
+        // real charges), read from local.properties (`webPurchaseLinkSandbox=`): this repo is
+        // public and that page accepts Stripe's test card, so the link must not be committed.
+        // Override with -PwebPurchaseLink=...; empty → "checkout coming soon".
+        debug {
+            buildConfigField "String", "WEB_PURCHASE_LINK",
+                    "\"${project.findProperty('webPurchaseLink') ?: localProps.getProperty('webPurchaseLinkSandbox', '')}\""
+        }
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "WEB_PURCHASE_LINK",
+                    "\"${project.findProperty('webPurchaseLink') ?: 'https://pay.rev.cat/kmmncsfpshnehdiv/'}\""
         }
     }
     compileOptions {
@@ -110,9 +127,11 @@ dependencies {
 
 
     implementation 'com.google.android.play:app-update-ktx:2.1.0'
-    implementation 'com.revenuecat.purchases:purchases:9.2.0'
+    implementation 'com.revenuecat.purchases:purchases:9.29.1'
     // RevenueCatUI — Customer Center. Must track the same version as `purchases`.
-    implementation 'com.revenuecat.purchases:purchases-ui:9.2.0'
+    implementation 'com.revenuecat.purchases:purchases-ui:9.29.1'
+    // Custom Tabs for the card checkout (Bhutan).
+    implementation 'androidx.browser:browser:1.8.0'
     implementation project(':botok')
 
     // Jetpack Compose

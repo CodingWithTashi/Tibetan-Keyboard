@@ -26,8 +26,11 @@ import com.kharagedition.tibetankeyboard.data.repository.AIService
 import com.kharagedition.tibetankeyboard.data.model.GrammarResult
 import com.kharagedition.tibetankeyboard.data.model.RephraseResult
 import com.kharagedition.tibetankeyboard.data.model.TranslationResult
+import com.kharagedition.tibetankeyboard.data.local.SuggestionQuotaStore
 import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
+import com.kharagedition.tibetankeyboard.subscription.SuggestionMode
+import com.kharagedition.tibetankeyboard.subscription.SuggestionQuota
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import kotlinx.coroutines.*
 import com.kharagedition.botok.autocomplete.SuggestionEngine
@@ -76,13 +79,20 @@ class AIKeyboardView @JvmOverloads constructor(
     private var currentEngine = SettingsPrefs.DEFAULT_TRANSLATE_ENGINE
     private val aiService = AIService()
     private var isPremiumUser = false
+    private val suggestionQuota = SuggestionQuotaStore.getInstance(context)
+
+    /** Whether PRO can be bought here; read once per keyboard open (the IME rebuilds this view). */
+    private var canSell = true
+
+    /** The strip last laid out, so an unchanged premium re-post doesn't wipe the chips mid-typing. */
+    private var appliedStrip: ProStripState? = null
 
     // Kept as a field so we can removeObserver() on detach — the IME rebuilds this view on every
     // onStartInputView, and the LiveData lives on a process-wide singleton, so an un-removed
-    // observeForever would leak every previous view (and run applyPremiumState on detached views).
+    // observeForever would leak every previous view (and run refreshStrip on detached views).
     private val premiumObserver = Observer<Boolean> { isPremium ->
         isPremiumUser = isPremium
-        applyPremiumState()
+        refreshStrip()
     }
 
     init {
@@ -98,13 +108,14 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun setupView() {
         LayoutInflater.from(context).inflate(R.layout.ai_keyboard_layout, this, true)
+        canSell = RevenueCatManager.getInstance().canSellHere()
 
         initializeViews()
         setupClickListeners()
         updateLanguageLabels()
         loadSuggestionEngine()
         applyBottomInsetPadding()
-        applyPremiumState()
+        refreshStrip()
         refreshStreakChip()
     }
 
@@ -124,23 +135,31 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     /**
-     * Show/hide and dim the PRO strip controls based on entitlement.
-     *  - Free users: gold "PRO" pill + all three feature icons visible but dimmed (locked);
-     *    tapping any of them routes to the unlock flow.
-     *  - PRO users: the upsell pill and the Autocomplete icon are hidden (autocomplete just
-     *    works while typing); Chat + Translate are full-opacity and functional.
+     * Lay out the PRO strip controls for [s] (see [ProStripState] for the free-vs-PRO rules), but
+     * only when they change: the premium LiveData re-posts unchanged values (log-in, sync), and
+     * each re-layout clears the chips. The next keystroke refills them in the new mode.
      */
-    private fun applyPremiumState() {
-        val s = ProStripState.forPremium(isPremiumUser)
+    private fun applyStrip(s: ProStripState) {
+        if (s == appliedStrip) return
+        appliedStrip = s
         proPill.visibility = if (s.pillVisible) View.VISIBLE else View.GONE
         proAutoBtn.visibility = if (s.autocompleteVisible) View.VISIBLE else View.GONE
         proChatBtn.alpha = s.chatAlpha
         proTranslateBtn.alpha = s.translateAlpha
         proAutoBtn.alpha = s.autocompleteAlpha
-        // Free users never get suggestions, so clear any stale chips — the strip stays present as
-        // the bar's flexible spacer (weight=1), pushing the upsell pill left and the icons right.
-        if (!isPremiumUser) suggestionStrip.setSuggestions(emptyList())
+        // The strip stays present as the bar's flexible spacer (weight=1) either way.
+        suggestionStrip.setSuggestions(emptyList())
     }
+
+    private fun refreshStrip() = applyStrip(ProStripState.forUser(isPremiumUser, suggestionMode()))
+
+    /** PRO status as far as it is known; null until RevenueCat has answered in this process. */
+    private fun premiumOrNull(): Boolean? =
+        if (RevenueCatManager.getInstance().isPremiumKnown) isPremiumUser else null
+
+    private fun dailyLimit(): Int = RevenueCatManager.getInstance().remoteConfig.freeSuggestionsPerDay
+
+    private fun suggestionMode(): SuggestionMode = suggestionQuota.mode(premiumOrNull(), canSell, dailyLimit())
 
     /**
      * Lift the whole keyboard above the system's IME navigation bar (the hide-keyboard
@@ -206,7 +225,15 @@ class AIKeyboardView @JvmOverloads constructor(
         engineChipSonnet = findViewById(R.id.engine_chip_sonnet)
         suggestionStrip = findViewById(R.id.suggestion_strip)
         suggestionStrip.onSuggestionClick = { word ->
+            if (SuggestionQuota.applies(premiumOrNull(), canSell) && suggestionQuota.recordAccept(dailyLimit())) {
+                // That was today's last free one: switch the strip to locked chips.
+                AppAnalytics.logSuggestionQuotaExhausted(dailyLimit())
+                refreshStrip()
+            }
             aiKeyboardInterface?.onSuggestionSelected(word)
+        }
+        suggestionStrip.onLockedSuggestionClick = {
+            aiKeyboardInterface?.onUnlockPro(AppAnalytics.UpgradeSource.KEYBOARD_SUGGESTIONS)
         }
     }
 
@@ -222,8 +249,10 @@ class AIKeyboardView @JvmOverloads constructor(
             if (isPremiumUser) aiKeyboardInterface?.onOpenChat() else aiKeyboardInterface?.onUnlockPro()
         }
 
-        // Autocomplete — shown to free users only as an upsell.
-        proAutoBtn.setOnClickListener { aiKeyboardInterface?.onUnlockPro() }
+        // Autocomplete — shown to free users only, once today's free suggestions are used.
+        proAutoBtn.setOnClickListener {
+            aiKeyboardInterface?.onUnlockPro(AppAnalytics.UpgradeSource.KEYBOARD_SUGGESTIONS)
+        }
 
         // Translate — PRO opens the translate panel; free routes to unlock.
         proTranslateBtn.setOnClickListener {
@@ -590,8 +619,6 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     fun updateSuggestions(prefix: String) {
-        // Free users get no autocomplete; the strip stays empty (it's the bar's spacer).
-        if (!isPremiumUser) return
         val engine = suggestionEngine
         if (engine == null) {
             Log.d(TAG, "updateSuggestions: engine not loaded yet, prefix='$prefix'")
@@ -601,11 +628,23 @@ class AIKeyboardView @JvmOverloads constructor(
             Log.d(TAG, "updateSuggestions: engine not ready yet, prefix='$prefix'")
             return
         }
-        val suggestions = if (prefix.isNotEmpty()) engine.getSuggestions(prefix, 4) else emptyList()
+        // Once per keystroke: the mode can also change here (midnight rollover, PRO resolving).
+        val mode = suggestionMode()
+        val strip = ProStripState.forUser(isPremiumUser, mode)
+        applyStrip(strip)
+        val suggestions = if (prefix.isNotEmpty()) engine.getSuggestions(prefix, strip.maxSuggestions) else emptyList()
         Log.d(TAG, "updateSuggestions: prefix='$prefix' → ${suggestions.size} results: $suggestions")
         // Only swap the chips inside the single top bar — never change its height. Empty list →
         // blank middle; the bar stays one fixed height so the keyboard never jumps (Gboard flow).
-        suggestionStrip.setSuggestions(suggestions)
+        if (mode == SuggestionMode.LIVE) {
+            suggestionStrip.setSuggestions(suggestions)
+        } else {
+            suggestionStrip.setLockedSuggestions(suggestions)
+            // `feature_gate_shown` at most once a day: the locked strip redraws on every keystroke.
+            if (suggestions.isNotEmpty() && suggestionQuota.markLockedShownToday()) {
+                AppAnalytics.logFeatureGateShown(AppAnalytics.UpgradeSource.KEYBOARD_SUGGESTIONS)
+            }
+        }
     }
 
     private fun loadSuggestionEngine() {
@@ -647,6 +686,7 @@ class AIKeyboardView @JvmOverloads constructor(
         private const val TAG = "AIKeyboardView"
         @Volatile
         private var sharedEngine: SuggestionEngine? = null
+
         /** Last real navigation-bar inset, remembered across IME view rebuilds. -1 = unknown. */
         @Volatile
         private var cachedNavInset = -1

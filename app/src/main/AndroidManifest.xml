@@ -52,6 +52,13 @@
             android:name=".ui.subscription.PremiumActivity"
             android:exported="false"
             android:parentActivityName=".ui.home.HomeActivity" />
+        <!-- The paywall opened from the keyboard: its own task, so closing it returns to the
+             app being typed in. -->
+        <activity
+            android:name=".ui.subscription.KeyboardPremiumActivity"
+            android:autoRemoveFromRecents="true"
+            android:exported="false"
+            android:taskAffinity="" />
         <activity
             android:name=".ui.about.AboutActivity"
             android:exported="false"

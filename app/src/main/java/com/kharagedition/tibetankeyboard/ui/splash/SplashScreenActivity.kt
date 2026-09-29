@@ -1,6 +1,7 @@
 package com.kharagedition.tibetankeyboard.ui.splash
 
 import android.content.Intent
+import com.kharagedition.tibetankeyboard.util.applyDebugMonetizationOverrides
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -55,6 +56,7 @@ class SplashScreenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyDebugMonetizationOverrides(this, intent)
         MobileAds.initialize(this) {}
 
         if (intent?.getBooleanExtra(MyFirebaseMessagingService.EXTRA_FROM_NOTIFICATION, false) == true) {

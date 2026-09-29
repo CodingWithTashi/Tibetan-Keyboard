@@ -10,7 +10,7 @@ class CommonUtils {
         var FACEBOOK_URL = "https://www.facebook.com/kharagedition"
         var GITHUB_URL = "https://github.com/CodingWithTashi/Tibetan-Keyboard"
         var PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.kharagedition.tibetankeyboard"
-        var PLAY_STORE_DICTIONARY_URL = "https://play.google.com/store/apps/details?id=com.kharagedition.tibetandictionary"
+        var PLAY_STORE_RANGJONG_URL = "https://play.google.com/store/apps/details?id=com.kharagedition.tibetan_language_app"
         var PLAY_STORE_CALENDAR_URL = "https://play.google.com/store/apps/details?id=com.codingwithtashi.tibetan_calender"
 
     }

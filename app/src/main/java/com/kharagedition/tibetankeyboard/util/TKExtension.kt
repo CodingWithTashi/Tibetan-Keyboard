@@ -1,11 +1,17 @@
 package com.kharagedition.tibetankeyboard.util
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
@@ -15,10 +21,40 @@ import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.auth.UnlockDestination
 import com.kharagedition.tibetankeyboard.auth.UnlockRouter
+import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 
 /**
  * Extension functions for common UI operations
  */
+
+/**
+ * Open [url] in an in-app browser tab, so closing it returns to the screen that opened it; any
+ * browser when the device has no Custom Tabs provider. The toolbar takes the app's background so
+ * the hosted pages (card checkout, billing portal) don't sit under a white or grey bar. Returns
+ * false if nothing could open it.
+ */
+fun Context.openInAppTab(url: String): Boolean {
+    val uri = Uri.parse(url)
+    val colors = CustomTabColorSchemeParams.Builder()
+        .setToolbarColor(TibetanColors.Espresso.toArgb())
+        .setNavigationBarColor(TibetanColors.Espresso.toArgb())
+        .build()
+    return try {
+        CustomTabsIntent.Builder()
+            .setShowTitle(true)
+            .setDefaultColorSchemeParams(colors)
+            .build()
+            .launchUrl(this, uri)
+        true
+    } catch (_: ActivityNotFoundException) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, uri))
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
+    }
+}
 
 /**
  * THE single entry point for every "unlock PRO / upgrade" action across the app and IME.

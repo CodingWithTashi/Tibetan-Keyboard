@@ -44,6 +44,19 @@ object AppAnalytics {
         analytics?.setUserProperty(USER_PROP_KB_DEFAULT, isDefault.toString())
     }
 
+    /**
+     * The user's Google Play country (from Play Billing), which can differ from the IP country GA4
+     * reports — a Bhutanese IP with an Indian Play account can still pay through Play.
+     */
+    fun setPlayCountry(countryCode: String) {
+        analytics?.setUserProperty(USER_PROP_PLAY_COUNTRY, countryCode)
+    }
+
+    /** The side of the card checkout paywall test, so any report can be split by it. */
+    fun setWebPaywallVariant(variant: String) {
+        analytics?.setUserProperty(USER_PROP_WEB_PAYWALL_VARIANT, variant)
+    }
+
     // ----------------------------------------------------------------------------------------
     // Navigation / Home hub
     // ----------------------------------------------------------------------------------------
@@ -114,7 +127,37 @@ object AppAnalytics {
     // Every event below carries the [UpgradeSource] that opened the paywall, so a sale can be
     // attributed to the gate that caused it.
 
-    fun logPaywallViewed(source: String) = log(EVENT_PAYWALL_VIEWED, PARAM_SOURCE to source)
+    /**
+     * [placement] is the RevenueCat placement the paywall was resolved for, [offering] the offering
+     * shown, and [paywallType] one of [PaywallType] — together they tell which variant converted.
+     */
+    fun logPaywallViewed(
+        source: String,
+        placement: String? = null,
+        offering: String? = null,
+        paywallType: String? = null,
+        variant: String? = null,
+    ) = log(
+        EVENT_PAYWALL_VIEWED,
+        PARAM_SOURCE to source,
+        PARAM_PLACEMENT to placement,
+        PARAM_OFFERING to offering,
+        PARAM_PAYWALL_TYPE to paywallType,
+        PARAM_VARIANT to variant,
+    )
+
+    /** The first-run / day-3 upsell opened by itself (not from a tap). */
+    fun logOnboardingPaywallShown(source: String) = log(EVENT_ONBOARDING_PAYWALL_SHOWN, PARAM_SOURCE to source)
+
+    /** Where Play can't sell, the user was sent to card checkout instead. [reason] says why. */
+    fun logBillingUnavailable(reason: String) = log(EVENT_BILLING_UNAVAILABLE, PARAM_REASON to reason)
+
+    /** [variant] is the side of the card checkout paywall test, a `WebPaywallVariant` label. */
+    fun logWebCheckoutOpened(source: String, plan: String, variant: String?) =
+        log(EVENT_WEB_CHECKOUT_OPENED, PARAM_SOURCE to source, PARAM_PLAN to plan, PARAM_VARIANT to variant)
+
+    fun logWebCheckoutCompleted(source: String, plan: String, variant: String?) =
+        log(EVENT_WEB_CHECKOUT_COMPLETED, PARAM_SOURCE to source, PARAM_PLAN to plan, PARAM_VARIANT to variant)
 
     fun logPurchaseStarted(source: String, plan: String) =
         log(EVENT_PURCHASE_STARTED, PARAM_SOURCE to source, PARAM_PLAN to plan)
@@ -144,11 +187,34 @@ object AppAnalytics {
 
     fun logPurchaseRestored() = log(EVENT_PURCHASE_RESTORED)
 
-    /** A subscriber opened the Customer Center (cancel / restore / retention offer / survey). */
+    /** A subscriber opened Manage subscription (overview, restore, cancel flow). */
     fun logManageSubscriptionOpened() = log(EVENT_MANAGE_SUBSCRIPTION_OPENED)
 
     fun logRestoreFailed(code: String, reason: String) =
         log(EVENT_RESTORE_FAILED, PARAM_CODE to code, PARAM_REASON to reason)
+
+    // Cancellation flow: reason → (retention offer) → hand-off to the store.
+
+    fun logCancelStarted() = log(EVENT_CANCEL_STARTED)
+
+    fun logCancelReason(reason: String) = log(EVENT_CANCEL_REASON, PARAM_REASON to reason)
+
+    fun logRetentionOfferShown() = log(EVENT_RETENTION_OFFER_SHOWN)
+
+    fun logRetentionOfferAccepted() = log(EVENT_RETENTION_OFFER_ACCEPTED)
+
+    fun logRetentionOfferDeclined() = log(EVENT_RETENTION_OFFER_DECLINED)
+
+    fun logRetentionOfferFailed(code: String) = log(EVENT_RETENTION_OFFER_FAILED, PARAM_CODE to code)
+
+    /** The user left for Google Play / the billing portal to finish cancelling. */
+    fun logCancelHandoff(reason: String?) = log(EVENT_CANCEL_HANDOFF, PARAM_REASON to reason)
+
+    /** A cancelled subscriber left for the store to turn renewal back on. */
+    fun logResubscribeOpened() = log(EVENT_RESUBSCRIBE_OPENED)
+
+    /** The user backed out of cancelling; [step] is where they stopped. */
+    fun logCancelAbandoned(step: String) = log(EVENT_CANCEL_ABANDONED, PARAM_STEP to step)
 
     fun logPaywallDismissed(source: String) = log(EVENT_PAYWALL_DISMISSED, PARAM_SOURCE to source)
 
@@ -185,6 +251,9 @@ object AppAnalytics {
 
     /** User accepted a Botok autocomplete suggestion. */
     fun logKeyboardSuggestionSelected() = log(EVENT_KEYBOARD_SUGGESTION_SELECTED)
+
+    /** A free user used up today's free suggestions; the strip switched to locked chips. */
+    fun logSuggestionQuotaExhausted(limit: Int) = log(EVENT_SUGGESTION_QUOTA_EXHAUSTED, PARAM_VALUE to limit.toString())
 
     // ----------------------------------------------------------------------------------------
     // Keyboard AI (the IME — grammar / translate / rephrase from the keyboard toolbar)
@@ -281,6 +350,19 @@ object AppAnalytics {
     private const val EVENT_PURCHASE_RESTORED = "purchase_restored"
     private const val EVENT_MANAGE_SUBSCRIPTION_OPENED = "manage_subscription_opened"
     private const val EVENT_RESTORE_FAILED = "restore_failed"
+    private const val EVENT_CANCEL_STARTED = "subscription_cancel_started"
+    private const val EVENT_CANCEL_REASON = "subscription_cancel_reason"
+    private const val EVENT_RETENTION_OFFER_SHOWN = "retention_offer_shown"
+    private const val EVENT_RETENTION_OFFER_ACCEPTED = "retention_offer_accepted"
+    private const val EVENT_RETENTION_OFFER_DECLINED = "retention_offer_declined"
+    private const val EVENT_RETENTION_OFFER_FAILED = "retention_offer_failed"
+    private const val EVENT_CANCEL_HANDOFF = "subscription_cancel_handoff"
+    private const val EVENT_CANCEL_ABANDONED = "subscription_cancel_abandoned"
+    private const val EVENT_RESUBSCRIBE_OPENED = "subscription_resubscribe_opened"
+    private const val EVENT_ONBOARDING_PAYWALL_SHOWN = "onboarding_paywall_shown"
+    private const val EVENT_BILLING_UNAVAILABLE = "billing_unavailable"
+    private const val EVENT_WEB_CHECKOUT_OPENED = "web_checkout_opened"
+    private const val EVENT_WEB_CHECKOUT_COMPLETED = "web_checkout_completed"
 
     private const val EVENT_KEYBOARD_ENABLE_CLICKED = "keyboard_enable_clicked"
     private const val EVENT_KEYBOARD_PICKER_OPENED = "keyboard_picker_opened"
@@ -290,6 +372,7 @@ object AppAnalytics {
     private const val EVENT_KEYBOARD_LANGUAGE_SWITCHED = "keyboard_language_switched"
     private const val EVENT_KEYBOARD_EMOJI_OPENED = "keyboard_emoji_opened"
     private const val EVENT_KEYBOARD_SUGGESTION_SELECTED = "keyboard_suggestion_selected"
+    private const val EVENT_SUGGESTION_QUOTA_EXHAUSTED = "suggestion_quota_exhausted"
     private const val EVENT_KEYBOARD_AI_USED = "keyboard_ai_used"
     private const val EVENT_KEYBOARD_AI_APPLIED = "keyboard_ai_applied"
 
@@ -306,6 +389,7 @@ object AppAnalytics {
     // Param keys
     private const val PARAM_ACTION = "action"
     private const val PARAM_REASON = "reason"
+    private const val PARAM_STEP = "step"
     private const val PARAM_MODEL = "model"
     private const val PARAM_SUCCESS = "success"
     private const val PARAM_SOURCE_LANG = "source_lang"
@@ -320,10 +404,16 @@ object AppAnalytics {
     private const val PARAM_DAYS = "days"
     private const val PARAM_PLAN = "plan"
     private const val PARAM_CODE = "code"
+    private const val PARAM_PLACEMENT = "placement"
+    private const val PARAM_OFFERING = "offering"
+    private const val PARAM_PAYWALL_TYPE = "paywall_type"
+    private const val PARAM_VARIANT = "variant"
 
     // User properties
     private const val USER_PROP_KB_ENABLED = "kb_enabled"
     private const val USER_PROP_KB_DEFAULT = "kb_default"
+    private const val USER_PROP_PLAY_COUNTRY = "play_country"
+    private const val USER_PROP_WEB_PAYWALL_VARIANT = "web_paywall_variant"
 
     // Param values
     private const val METHOD_GOOGLE = "google"
@@ -388,7 +478,29 @@ object AppAnalytics {
         const val TRANSLATE = "translate"
         const val SETTINGS = "settings"
         const val KEYBOARD = "keyboard"
+        /** A locked suggestion chip, after the free daily suggestions ran out. */
+        const val KEYBOARD_SUGGESTIONS = "keyboard_suggestions"
         const val JOURNEY = "journey"
+        /** Opened by itself right after keyboard setup; see `OnboardingPaywallPolicy`. */
+        const val ONBOARDING = "onboarding"
+        const val ONBOARDING_DAY3 = "onboarding_day3"
+        /** The one-time showing to people who set the keyboard up before this paywall existed. */
+        const val ONBOARDING_EXISTING = "onboarding_existing"
         const val UNKNOWN = "unknown"
+
+        val ALL = listOf(
+            HOME, HOME_FEATURE_GATE, CHAT, TRANSLATE, SETTINGS, KEYBOARD, KEYBOARD_SUGGESTIONS,
+            JOURNEY, ONBOARDING, ONBOARDING_DAY3, ONBOARDING_EXISTING, UNKNOWN,
+        )
+    }
+
+    /** Which paywall rendered, for [logPaywallViewed]. */
+    object PaywallType {
+        /** Designed in the RevenueCat dashboard. */
+        const val DASHBOARD = "dashboard"
+        /** Our own Compose screen — the fallback when no dashboard paywall is attached. */
+        const val CUSTOM = "custom"
+        /** Card checkout, only where Google Play can't sell (Bhutan). */
+        const val WEB = "web"
     }
 }

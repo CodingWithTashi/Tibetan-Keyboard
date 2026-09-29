@@ -108,6 +108,7 @@ class HomeActivity : InputMethodActivity() {
         }
 
         observeAdGating()
+        observeOnboardingPaywall()
         refreshSetupState()
         requestNotificationPermission()
         subscribeToAllUsersTopic()
@@ -235,6 +236,23 @@ class HomeActivity : InputMethodActivity() {
                     } else if (nativeAd == null) {
                         loadNativeAd()
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Opens the onboarding paywall when the ViewModel asks (after keyboard setup, on day 3, or
+     * once for existing users). Only while Home is RESUMED, so it never pops over a permission
+     * dialog. Not an [openPremiumUpgrade]: nobody tapped anything, so it isn't an `upgrade_clicked`.
+     */
+    private fun observeOnboardingPaywall() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.openPaywall.collect { request ->
+                    if (!viewModel.isFresh(request)) return@collect
+                    viewModel.onOnboardingPaywallOpened(request)
+                    AuthManager(this@HomeActivity).openPremium(request.source)
                 }
             }
         }

@@ -3,6 +3,7 @@ package com.kharagedition.tibetankeyboard.auth
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.inputmethodservice.InputMethodService
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -13,6 +14,7 @@ import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
+import com.kharagedition.tibetankeyboard.ui.subscription.KeyboardPremiumActivity
 import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
 import com.kharagedition.tibetankeyboard.data.local.UserPreferences
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
@@ -93,11 +95,15 @@ class AuthManager(private val context: Context) {
         openPremiumAfter: Boolean = false,
         finishCaller: Boolean = true,
         target: Class<*>? = null,
+        returnAfterLogin: Boolean = false,
     ) {
         val intent = Intent(context, LoginActivity::class.java)
 
         if (openPremiumAfter) {
             intent.putExtra(LoginActivity.EXTRA_OPEN_PREMIUM_AFTER_LOGIN, true)
+        }
+        if (returnAfterLogin) {
+            intent.putExtra(LoginActivity.EXTRA_RETURN_AFTER_LOGIN, true)
         }
         if (target != null) {
             intent.putExtra(LoginActivity.EXTRA_POST_LOGIN_TARGET, target.name)
@@ -119,7 +125,10 @@ class AuthManager(private val context: Context) {
      * [AppAnalytics.UpgradeSource] that triggered it, carried through every purchase event.
      */
     fun openPremium(source: String = AppAnalytics.UpgradeSource.UNKNOWN) {
-        val intent = Intent(context, PremiumActivity::class.java)
+        // From the keyboard the paywall gets its own task, so closing it returns to the app being
+        // typed in rather than to Home. Any other non-Activity caller gets the normal paywall.
+        val target = if (context is InputMethodService) KeyboardPremiumActivity::class.java else PremiumActivity::class.java
+        val intent = Intent(context, target)
             .putExtra(PremiumActivity.EXTRA_UPGRADE_SOURCE, source)
 
         if (context !is Activity) {
