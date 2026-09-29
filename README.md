@@ -17,5 +17,6 @@ Tibetan-Keyboard
 | **Set up input Method** | **Use case** |
 
 ```
-adb shell svc power stayon usb
+adb shell svc power stayon true
+adb shell settings put system screen_off_timeout 2147483647
 ```

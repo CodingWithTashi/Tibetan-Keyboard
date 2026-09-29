@@ -1,5 +1,7 @@
 package com.kharagedition.tibetankeyboard.subscription
 
+import com.kharagedition.tibetankeyboard.analytics.AppAnalytics.Plan
+
 /**
  * RevenueCat and Google Play identifiers the app depends on. They must match the dashboards;
  * change them here, never inline.
@@ -25,4 +27,15 @@ object BillingCatalog {
 
     /** How our Compose paywall is named in RevenueCat's paywall-impression analytics. */
     const val CUSTOM_PAYWALL_ID = "in_app_compose"
+
+    /**
+     * The card checkout's plans (offering `pro_web_bt`, RevenueCat Billing, USD), in our paywall's
+     * order. Play can't return these products, so their prices are repeated here: change them
+     * together with the web products in the dashboard.
+     */
+    val WEB_PLANS = listOf(
+        WebPlan(packageId = "\$rc_annual", plan = Plan.ANNUAL, priceUsd = 9.99, trialDays = 7),
+        WebPlan(packageId = "\$rc_monthly", plan = Plan.MONTHLY, priceUsd = 1.99, trialDays = 7),
+        WebPlan(packageId = "\$rc_lifetime", plan = Plan.LIFETIME, priceUsd = 19.99),
+    )
 }

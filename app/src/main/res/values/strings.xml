@@ -289,7 +289,6 @@
     <!-- Card checkout, shown only where Google Play doesn't sell subscriptions (Bhutan) -->
     <string name="web_checkout_subtitle">Google Play doesn\'t sell subscriptions in Bhutan yet, so you can pay securely by card instead.</string>
     <string name="web_checkout_cards">Visa and Mastercard accepted, including Bhutanese international debit cards. Secure checkout by RevenueCat and Stripe.</string>
-    <string name="web_checkout_plans">Choose monthly, yearly or lifetime on the next page.</string>
     <string name="web_checkout_checking">Checking your payment…</string>
     <string name="web_checkout_not_found">We haven\'t received your payment yet. It can take a minute to arrive.</string>
     <string name="web_checkout_check_again">I\'ve paid — check again</string>

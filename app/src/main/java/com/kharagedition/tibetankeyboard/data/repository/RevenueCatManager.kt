@@ -27,6 +27,10 @@ import com.kharagedition.tibetankeyboard.subscription.BillingStore
 import com.kharagedition.tibetankeyboard.subscription.PlanKind
 import com.kharagedition.tibetankeyboard.subscription.RemoteConfig
 import com.kharagedition.tibetankeyboard.subscription.WebCheckout
+import com.kharagedition.tibetankeyboard.subscription.WebPaywallExperiment
+import com.kharagedition.tibetankeyboard.subscription.WebPaywallVariant
+import com.kharagedition.tibetankeyboard.subscription.WebPlan
+import com.kharagedition.tibetankeyboard.subscription.WebPlans
 import com.kharagedition.tibetankeyboard.subscription.ManageSubscriptionPolicy
 import com.kharagedition.tibetankeyboard.subscription.SubscriptionSnapshot
 import com.kharagedition.tibetankeyboard.billing.BillingAvailability
@@ -58,6 +62,9 @@ class RevenueCatManager private constructor() {
         /** Stripe → RevenueCat can land a few seconds after the checkout's success page. */
         private val WEB_PURCHASE_RETRY_DELAYS_MS = longArrayOf(0L, 2_000L, 4_000L)
         private const val LOOKUP_TIMEOUT_MS = 3_000L
+
+        /** Customer attribute holding the side of the card checkout paywall test. */
+        private const val ATTRIBUTE_WEB_PAYWALL_VARIANT = "web_paywall_variant"
 
         // Stable codes for failures RevenueCat does not raise as a PurchasesErrorCode.
         const val ERROR_NOT_CONFIGURED = "SDK_NOT_CONFIGURED"
@@ -353,7 +360,14 @@ class RevenueCatManager private constructor() {
         val placementOffering = offerings?.getCurrentOfferingForPlacement(placementId)
         val current = offerings?.current
         val fallback = offerings?.getOffering(OFFERING_ID)
-        val choice = PaywallOfferingResolver.resolve(placementOffering?.summary(), fallback?.summary(), current?.summary())
+        // Debug builds can ask for our own paywall: without the dashboard's offerings the
+        // resolver falls back to it.
+        val own = debugOwnPaywall()
+        val choice = PaywallOfferingResolver.resolve(
+            placementOffering?.summary().takeUnless { own },
+            fallback?.summary(),
+            current?.summary().takeUnless { own },
+        )
         val chosenId = choiceOfferingId(choice)
         val offering = listOfNotNull(placementOffering, current, fallback).firstOrNull { it.identifier == chosenId }
         val plans = offering?.let { withDefault(buildPlans(it), storefront) }.orEmpty()
@@ -431,6 +445,10 @@ class RevenueCatManager private constructor() {
         return if (isConfigured) runCatching { Purchases.sharedInstance.storefrontCountryCode }.getOrNull() else null
     }
 
+    /** Debug builds only: our own paywall was asked for through `applyDebugMonetizationOverrides`. */
+    private fun debugOwnPaywall(): Boolean =
+        BuildConfig.DEBUG && appContext?.let { MonetizationStore.getInstance(it).debugOwnPaywall() } == true
+
     /** Debug builds only: a storefront faked through `applyDebugMonetizationOverrides`. */
     private fun debugStorefront(): String? = if (BuildConfig.DEBUG) {
         appContext?.let { MonetizationStore.getInstance(it).debugStorefrontOverride() }
@@ -460,6 +478,47 @@ class RevenueCatManager private constructor() {
         webCheckoutConfigured = webCheckoutConfigured,
     )
 
+    /** The card checkout's plans, at the dashboard's prices where it states them. */
+    fun webPlans(): List<WebPlan> = WebPlans.list(remoteConfig.webPrices)
+
+    /** This install's side of the card checkout paywall test; null before [configureAnonymous]. */
+    fun webPaywallVariant(): WebPaywallVariant? {
+        val context = appContext ?: return null
+        return WebPaywallExperiment.variant(
+            MonetizationStore.getInstance(context).webPaywallBucket(),
+            remoteConfig.webAnnualFirstPercent,
+        )
+    }
+
+    /**
+     * Notes [variant] on the RevenueCat customer. Card payments never pass through the app, so
+     * this is what lets revenue be compared by variant.
+     */
+    fun reportWebPaywallVariant(variant: WebPaywallVariant) {
+        if (!isConfigured) return
+        runCatching {
+            Purchases.sharedInstance.setAttributes(mapOf(ATTRIBUTE_WEB_PAYWALL_VARIANT to variant.label))
+        }
+    }
+
+    /**
+     * Whether this customer never bought anything, which is who the card checkout gives its free
+     * trial to. Null when RevenueCat can't say; the paywall then promises no trial.
+     */
+    suspend fun awaitNeverPurchased(): Boolean? {
+        if (!isConfigured) return null
+        return withTimeoutOrNull(LOOKUP_TIMEOUT_MS) {
+            identifySignedInUser()
+            attempt { Purchases.sharedInstance.awaitCustomerInfo() }?.allPurchasedProductIds?.isEmpty()
+        }
+    }
+
+    /** RevenueCat must be the signed-in user before it is asked about them; sign-in's `logIn` may still be in flight. */
+    private suspend fun identifySignedInUser() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (Purchases.sharedInstance.appUserID != uid) attempt { Purchases.sharedInstance.awaitLogIn(uid) }
+    }
+
     /**
      * A purchase made through RevenueCat's own paywall UI never passes through [purchasePremium],
      * so publish the new entitlement here. (RevenueCat acknowledges it with Play itself.)
@@ -471,15 +530,12 @@ class RevenueCatManager private constructor() {
 
     /**
      * After the card checkout tab closes: is PRO active now? The checkout link carries the
-     * Firebase UID, so RevenueCat must be that user before asking (sign-in's `logIn` may still be
-     * in flight), and Stripe's result can take a few seconds to land, so it asks a few times.
+     * Firebase UID, so RevenueCat must be that user before asking, and Stripe's result can take a
+     * few seconds to land, so it asks a few times.
      */
     suspend fun refreshAfterWebCheckout(): Boolean {
         if (!isConfigured) return false
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid != null && Purchases.sharedInstance.appUserID != uid) {
-            attempt { Purchases.sharedInstance.awaitLogIn(uid) }
-        }
+        identifySignedInUser()
         for (wait in WEB_PURCHASE_RETRY_DELAYS_MS) {
             if (wait > 0) delay(wait)
             Purchases.sharedInstance.invalidateCustomerInfoCache() // the cached one predates the purchase

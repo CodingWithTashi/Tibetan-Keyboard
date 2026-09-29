@@ -49,4 +49,31 @@ class RemoteConfigTest {
         assertEquals(setOf("BT"), c.webCheckoutCountries)
         assertEquals(emptySet<String>(), RemoteConfig.fromMetadata(mapOf(RemoteConfig.META_WEB_CHECKOUT_COUNTRIES to listOf("IN"))).webCheckoutCountries)
     }
+
+    @Test
+    fun webPrices_keepOnlyKnownPlansWithAPrice() {
+        val c = RemoteConfig.fromMetadata(
+            mapOf(
+                RemoteConfig.META_WEB_PRICES to mapOf(
+                    "monthly" to 0.99,
+                    "annual" to 7,
+                    "lifetime" to "19.99",
+                    "weekly" to 0.5,
+                    "unknown" to 0,
+                )
+            )
+        )
+        assertEquals(mapOf("monthly" to 0.99, "annual" to 7.0), c.webPrices)
+        assertEquals(emptyMap<String, Double>(), RemoteConfig.fromMetadata(mapOf(RemoteConfig.META_WEB_PRICES to "1.99")).webPrices)
+    }
+
+    @Test
+    fun webAnnualFirstPercent_isAShareOfAHundred() {
+        fun percent(value: Any?) = RemoteConfig.fromMetadata(mapOf(RemoteConfig.META_WEB_ANNUAL_FIRST_PERCENT to value)).webAnnualFirstPercent
+        assertEquals(0, percent(0))
+        assertEquals(100, percent(100))
+        assertEquals(WebPaywallExperiment.DEFAULT_ANNUAL_FIRST_PERCENT, percent(101))
+        assertEquals(WebPaywallExperiment.DEFAULT_ANNUAL_FIRST_PERCENT, percent(-1))
+        assertEquals(WebPaywallExperiment.DEFAULT_ANNUAL_FIRST_PERCENT, percent("all"))
+    }
 }

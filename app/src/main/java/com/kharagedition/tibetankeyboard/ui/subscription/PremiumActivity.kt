@@ -84,6 +84,7 @@ open class PremiumActivity : AppCompatActivity() {
                         state = state,
                         actions = WebCheckoutActions(
                             onBack = ::closePaywall,
+                            onSelectPlan = viewModel::selectWebPlan,
                             onContinue = ::continueToWebCheckout,
                             onCheckAgain = viewModel::checkWebPurchase,
                         ),
@@ -190,7 +191,7 @@ open class PremiumActivity : AppCompatActivity() {
     /**
      * Card checkout (Bhutan only). The purchase must land on a real account, so a signed-out user
      * signs in first and comes straight back here; then RevenueCat's hosted checkout opens in a
-     * browser tab, and [onResume] checks for the purchase when the tab closes.
+     * browser tab on the picked plan, and [onResume] checks for the purchase when the tab closes.
      */
     private fun continueToWebCheckout() {
         if (webCheckoutOpened) return // double tap

@@ -52,6 +52,11 @@ object AppAnalytics {
         analytics?.setUserProperty(USER_PROP_PLAY_COUNTRY, countryCode)
     }
 
+    /** The side of the card checkout paywall test, so any report can be split by it. */
+    fun setWebPaywallVariant(variant: String) {
+        analytics?.setUserProperty(USER_PROP_WEB_PAYWALL_VARIANT, variant)
+    }
+
     // ----------------------------------------------------------------------------------------
     // Navigation / Home hub
     // ----------------------------------------------------------------------------------------
@@ -131,12 +136,14 @@ object AppAnalytics {
         placement: String? = null,
         offering: String? = null,
         paywallType: String? = null,
+        variant: String? = null,
     ) = log(
         EVENT_PAYWALL_VIEWED,
         PARAM_SOURCE to source,
         PARAM_PLACEMENT to placement,
         PARAM_OFFERING to offering,
         PARAM_PAYWALL_TYPE to paywallType,
+        PARAM_VARIANT to variant,
     )
 
     /** The first-run / day-3 upsell opened by itself (not from a tap). */
@@ -145,9 +152,12 @@ object AppAnalytics {
     /** Where Play can't sell, the user was sent to card checkout instead. [reason] says why. */
     fun logBillingUnavailable(reason: String) = log(EVENT_BILLING_UNAVAILABLE, PARAM_REASON to reason)
 
-    fun logWebCheckoutOpened(source: String) = log(EVENT_WEB_CHECKOUT_OPENED, PARAM_SOURCE to source)
+    /** [variant] is the side of the card checkout paywall test, a `WebPaywallVariant` label. */
+    fun logWebCheckoutOpened(source: String, plan: String, variant: String?) =
+        log(EVENT_WEB_CHECKOUT_OPENED, PARAM_SOURCE to source, PARAM_PLAN to plan, PARAM_VARIANT to variant)
 
-    fun logWebCheckoutCompleted(source: String) = log(EVENT_WEB_CHECKOUT_COMPLETED, PARAM_SOURCE to source)
+    fun logWebCheckoutCompleted(source: String, plan: String, variant: String?) =
+        log(EVENT_WEB_CHECKOUT_COMPLETED, PARAM_SOURCE to source, PARAM_PLAN to plan, PARAM_VARIANT to variant)
 
     fun logPurchaseStarted(source: String, plan: String) =
         log(EVENT_PURCHASE_STARTED, PARAM_SOURCE to source, PARAM_PLAN to plan)
@@ -397,11 +407,13 @@ object AppAnalytics {
     private const val PARAM_PLACEMENT = "placement"
     private const val PARAM_OFFERING = "offering"
     private const val PARAM_PAYWALL_TYPE = "paywall_type"
+    private const val PARAM_VARIANT = "variant"
 
     // User properties
     private const val USER_PROP_KB_ENABLED = "kb_enabled"
     private const val USER_PROP_KB_DEFAULT = "kb_default"
     private const val USER_PROP_PLAY_COUNTRY = "play_country"
+    private const val USER_PROP_WEB_PAYWALL_VARIANT = "web_paywall_variant"
 
     // Param values
     private const val METHOD_GOOGLE = "google"

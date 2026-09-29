@@ -18,6 +18,9 @@ import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.subscription.PaywallChoice
 import com.kharagedition.tibetankeyboard.subscription.PaywallPlacements
 import com.kharagedition.tibetankeyboard.subscription.WebCheckout
+import com.kharagedition.tibetankeyboard.subscription.WebPaywallVariant
+import com.kharagedition.tibetankeyboard.subscription.WebPlan
+import com.kharagedition.tibetankeyboard.subscription.WebPlans
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Offering
 import com.revenuecat.purchases.Package
@@ -65,9 +68,19 @@ data class PremiumUiState(
     val checkingWebPurchase: Boolean = false,
     /** Card checkout: the last check found no payment yet (it can take a minute). */
     val webPurchasePending: Boolean = false,
+    /** Card checkout: the plans of the in-app picker. */
+    val webPlans: List<WebPlan> = emptyList(),
+    val selectedWebPlanId: String? = null,
+    /** Card checkout: what a year saves over twelve months, in percent. */
+    val webAnnualSaving: Int? = null,
+    /** Card checkout: this customer never bought anything, so the checkout starts with the free trial. */
+    val webTrialEligible: Boolean = false,
 ) {
     val selectedPlan: RevenueCatManager.PremiumPlan?
         get() = plans.firstOrNull { it.id == selectedPlanId } ?: plans.firstOrNull()
+
+    val selectedWebPlan: WebPlan?
+        get() = webPlans.firstOrNull { it.packageId == selectedWebPlanId } ?: webPlans.firstOrNull()
 }
 
 /** Lambdas the paywall can invoke; mirrors the `XxxActions` convention of the other screens. */
@@ -112,7 +125,10 @@ class PremiumViewModel(
             placementId = PaywallPlacements.forSource(source),
             isSignedIn = isSignedIn(),
             webCheckoutAvailable = revenueCat.webCheckoutConfigured,
-        )
+            // Kept in the saved state: the checkout is a browser tab, and Android may end this
+            // process while the user types their card number there.
+            selectedWebPlanId = savedStateHandle[KEY_WEB_PLAN],
+        ).withWebPlans()
     )
     val uiState: StateFlow<PremiumUiState> = _uiState.asStateFlow()
 
@@ -125,6 +141,9 @@ class PremiumViewModel(
 
     /** Plan bought through the dashboard paywall, kept for the completed event. */
     private var dashboardPackage: Package? = null
+
+    /** This install's side of the card checkout paywall test, once that paywall shows. */
+    private var webVariant: WebPaywallVariant? = null
 
     private val premiumObserver = Observer<Boolean> { isPremium ->
         _uiState.update { it.copy(isPremium = isPremium) }
@@ -154,10 +173,12 @@ class PremiumViewModel(
                 resolved.choice is PaywallChoice.Custom && resolved.plans.isNotEmpty() -> PaywallContent.Custom
                 else -> PaywallContent.Error
             }
-            if (decision.route == BillingRoute.WEB_CHECKOUT) logBillingUnavailableOnce(decision)
+            val web = decision.route == BillingRoute.WEB_CHECKOUT
+            if (web) logBillingUnavailableOnce(decision)
+            val trialEligible = web && enterWebCheckout()
 
             _uiState.update { state ->
-                state.copy(
+                state.withWebPlans().copy(
                     content = content,
                     plans = resolved.plans,
                     // Keep the user's choice across reloads, else the policy's pick.
@@ -168,6 +189,7 @@ class PremiumViewModel(
                     billingRoute = decision.route,
                     offeringId = resolved.offering?.identifier,
                     isSignedIn = isSignedIn(),
+                    webTrialEligible = trialEligible,
                 )
             }
             // Unknown PRO status after the timeout still counts: better one view logged for a
@@ -182,7 +204,10 @@ class PremiumViewModel(
         if (savedStateHandle.get<Boolean>(KEY_VIEW_LOGGED) == true) return
         savedStateHandle[KEY_VIEW_LOGGED] = true
         val state = _uiState.value
-        AppAnalytics.logPaywallViewed(source, state.placementId, state.offeringId, paywallType(content))
+        AppAnalytics.logPaywallViewed(
+            source, state.placementId, state.offeringId, paywallType(content),
+            variant = webVariant?.label.takeIf { content == PaywallContent.WebCheckout },
+        )
         // Dashboard paywalls report their own views to RevenueCat; ours must.
         if (content == PaywallContent.Custom) revenueCat.trackCustomPaywallImpression(state.offeringId)
     }
@@ -271,22 +296,79 @@ class PremiumViewModel(
         val decision = billingDecision()
         if (decision.route == BillingRoute.WEB_CHECKOUT) {
             logBillingUnavailableOnce(decision)
-            _uiState.update { it.copy(content = PaywallContent.WebCheckout, billingRoute = BillingRoute.WEB_CHECKOUT) }
+            viewModelScope.launch {
+                val trialEligible = enterWebCheckout()
+                _uiState.update {
+                    it.withWebPlans().copy(
+                        content = PaywallContent.WebCheckout,
+                        billingRoute = BillingRoute.WEB_CHECKOUT,
+                        webTrialEligible = trialEligible,
+                    )
+                }
+            }
         }
     }
 
     // ── card checkout ───────────────────────────────────────────────────────
 
-    /** Re-read the sign-in state after returning from the login screen. */
-    fun refreshSignIn() {
-        _uiState.update { it.copy(isSignedIn = isSignedIn()) }
+    /**
+     * The card checkout paywall is about to show: settles this install's side of its test, and
+     * returns whether the customer who will pay gets the free trial. That customer is the
+     * signed-in account, so this runs again after sign-in.
+     */
+    private suspend fun enterWebCheckout(): Boolean {
+        val variant = webVariant ?: revenueCat.webPaywallVariant()?.also {
+            webVariant = it
+            AppAnalytics.setWebPaywallVariant(it.label)
+        }
+        val neverPurchased = revenueCat.awaitNeverPurchased()
+        // After the lookup, which makes RevenueCat the signed-in user: the payment will be theirs,
+        // so the variant must be noted on them.
+        variant?.let(revenueCat::reportWebPaywallVariant)
+        return neverPurchased == true
     }
 
-    /** The checkout link for this user, or null if signed out or not configured. */
-    fun webCheckoutUrl(): String? =
-        WebCheckout.url(BuildConfig.WEB_PURCHASE_LINK, FirebaseAuth.getInstance().currentUser?.uid)
+    /** The picker's plans; the user's pick is kept, else the variant's plan is pre-selected. */
+    private fun PremiumUiState.withWebPlans(): PremiumUiState {
+        val plans = revenueCat.webPlans()
+        val picked = selectedWebPlanId?.takeIf { id -> plans.any { it.packageId == id } }
+            ?: webVariant?.let { WebPlans.preselected(plans, it) }?.packageId
+        if (picked != null) savedStateHandle[KEY_WEB_PLAN] = picked
+        return copy(
+            webPlans = plans,
+            selectedWebPlanId = picked,
+            webAnnualSaving = WebPlans.annualSavingPercent(plans),
+        )
+    }
 
-    fun onWebCheckoutOpened() = AppAnalytics.logWebCheckoutOpened(source)
+    fun selectWebPlan(plan: WebPlan) {
+        savedStateHandle[KEY_WEB_PLAN] = plan.packageId
+        _uiState.update { it.copy(selectedWebPlanId = plan.packageId) }
+        AppAnalytics.logPaywallPlanSelected(source, plan.plan)
+    }
+
+    /** Re-read the sign-in state after returning from the login screen. */
+    fun refreshSignIn() {
+        val signedIn = isSignedIn()
+        val justSignedIn = signedIn && !_uiState.value.isSignedIn
+        _uiState.update { it.copy(isSignedIn = signedIn) }
+        // The account may have bought before, on another phone; the checkout then gives no trial.
+        if (justSignedIn && _uiState.value.content == PaywallContent.WebCheckout) {
+            viewModelScope.launch {
+                val trialEligible = enterWebCheckout()
+                _uiState.update { it.copy(webTrialEligible = trialEligible) }
+            }
+        }
+    }
+
+    /** The checkout link for this user and the picked plan, or null if signed out or not configured. */
+    fun webCheckoutUrl(): String? = WebCheckout.url(
+        BuildConfig.WEB_PURCHASE_LINK,
+        FirebaseAuth.getInstance().currentUser?.uid,
+        _uiState.value.selectedWebPlan?.packageId,
+    )
+
+    fun onWebCheckoutOpened() = AppAnalytics.logWebCheckoutOpened(source, webPlanLabel(), webVariantLabel())
 
     /** After the checkout tab closes (or "check again"): has the payment landed? */
     fun checkWebPurchase() {
@@ -296,7 +378,7 @@ class PremiumViewModel(
             val paid = revenueCat.refreshAfterWebCheckout()
             _uiState.update { it.copy(checkingWebPurchase = false, webPurchasePending = !paid) }
             if (paid) {
-                AppAnalytics.logWebCheckoutCompleted(source)
+                AppAnalytics.logWebCheckoutCompleted(source, webPlanLabel(), webVariantLabel())
                 _events.trySend(PremiumEvent.ProActive(announce = true))
             }
         }
@@ -320,6 +402,11 @@ class PremiumViewModel(
 
     private fun isSignedIn(): Boolean = FirebaseAuth.getInstance().currentUser != null
 
+    private fun webPlanLabel(): String = _uiState.value.selectedWebPlan?.plan ?: AppAnalytics.Plan.UNKNOWN
+
+    /** Asked again rather than read from [webVariant]: after process death the payment can land before [load] ends. */
+    private fun webVariantLabel(): String? = (webVariant ?: revenueCat.webPaywallVariant())?.label
+
     private fun paywallType(content: PaywallContent): String = when (content) {
         is PaywallContent.Dashboard -> AppAnalytics.PaywallType.DASHBOARD
         PaywallContent.WebCheckout -> AppAnalytics.PaywallType.WEB
@@ -333,5 +420,6 @@ class PremiumViewModel(
 
     private companion object {
         const val KEY_VIEW_LOGGED = "paywall_view_logged"
+        const val KEY_WEB_PLAN = "web_plan"
     }
 }
