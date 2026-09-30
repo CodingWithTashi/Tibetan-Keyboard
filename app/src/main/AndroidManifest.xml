@@ -28,7 +28,8 @@
         </service>
         <activity
             android:name=".ui.login.LoginActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.TibetanKeyboard.Sheet" />
         <activity
             android:name=".ui.chat.ChatActivity"
             android:exported="false"

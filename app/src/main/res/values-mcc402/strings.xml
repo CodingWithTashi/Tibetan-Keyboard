@@ -5,7 +5,6 @@
     <string name="ime_subtype_tibetan">Dzongkha</string>
     <string name="chat_assistant">Dzongkha Assistant</string>
     <string name="ask_in_english">Ask in English/Dzongkha</string>
-    <string name="login_subtitle">Your AI Assistant for Dzongkha Language</string>
     <string name="grammar_analyzer_hint">Enter Dzongkha text to analyze</string>
     <string name="analyze_your_tibetan">Analyze your Dzongkha text for grammar, spelling, and style</string>
     <string name="enter_tibetan_text">Enter text to transliterate&#8230;</string>

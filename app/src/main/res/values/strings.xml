@@ -48,12 +48,19 @@
     <string name="typing">Typing...</string>
     <!-- Login Activity -->
     <string name="app_logo">App Logo</string>
-    <string name="login_subtitle">Your AI Assistant for Tibetan Language</string>
     <string name="welcome_back">Welcome Back</string>
     <string name="sign_in_to_continue">Sign in to continue chatting</string>
     <string name="sign_in_with_google">Continue with Google</string>
     <string name="sign_in">Sign in</string>
-    <string name="sign_in_benefit">Keep PRO and your streak on every device</string>
+    <string name="sign_in_benefit">Keep PRO on every device</string>
+    <string name="sign_in_title">Sign in to %1$s</string>
+    <string name="sign_in_subtitle">One tap with your Google account.</string>
+    <string name="sign_in_benefit_pro">PRO on every device</string>
+    <string name="sign_in_benefit_pro_desc">Your subscription follows your account</string>
+    <string name="sign_in_benefit_ai">AI chat and translate</string>
+    <string name="sign_in_benefit_ai_desc">Ask questions and translate with AI</string>
+    <string name="sign_in_benefit_community">Community comparison</string>
+    <string name="sign_in_benefit_community_desc">See how your streak compares</string>
     <string name="privacy_policy_text">By signing in, you agree to our Terms of Service and Privacy Policy</string>
 
     <!-- Chat Activity -->
@@ -302,7 +309,6 @@
     <string name="github">GitHub</string>
     <string name="contact">Contact</string>
     <string name="get">Get</string>
-    <string name="welcome">Welcome</string>
     <string name="by_signing_in">By signing in, you agree to our</string>
     <string name="terms_of_service">Terms of Service</string>
     <string name="and_word"> and </string>
