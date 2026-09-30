@@ -8,7 +8,12 @@ interface AIKeyboardInterface {
     fun onTranslateReplace(originalText: String, translatedText: String)
     fun onRephraseReplace(originalText: String, rephrasedText: String)
     fun onAICancel()
-    fun onSuggestionSelected(word: String)
+
+    /**
+     * The user tapped [word] in the suggestion strip. [matched] is the end of the typed prefix
+     * the word completes (see `SuggestionEngine.suggest`): that, and only that, gets replaced.
+     */
+    fun onSuggestionSelected(word: String, matched: String)
 
     /** Open the AI chat screen (PRO users). */
     fun onOpenChat()

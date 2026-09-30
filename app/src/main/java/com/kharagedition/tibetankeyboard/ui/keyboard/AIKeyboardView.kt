@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard.ui.keyboard
 
+import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.R
 
 import android.animation.AnimatorSet
@@ -70,6 +71,8 @@ class AIKeyboardView @JvmOverloads constructor(
     private var themeColor: String = "#FF704C04"
     private lateinit var suggestionStrip: SuggestionStripView
     private var suggestionEngine: SuggestionEngine? = null
+    /** The end of the typed prefix the chips now showing complete (what a tap replaces). */
+    private var suggestionsMatched = ""
     private var currentOriginalText = ""
     private var currentSuggestedText = ""
     private var currentSourceLang = "en" // English
@@ -230,7 +233,7 @@ class AIKeyboardView @JvmOverloads constructor(
                 AppAnalytics.logSuggestionQuotaExhausted(dailyLimit())
                 refreshStrip()
             }
-            aiKeyboardInterface?.onSuggestionSelected(word)
+            aiKeyboardInterface?.onSuggestionSelected(word, suggestionsMatched)
         }
         suggestionStrip.onLockedSuggestionClick = {
             aiKeyboardInterface?.onUnlockPro(AppAnalytics.UpgradeSource.KEYBOARD_SUGGESTIONS)
@@ -632,8 +635,12 @@ class AIKeyboardView @JvmOverloads constructor(
         val mode = suggestionMode()
         val strip = ProStripState.forUser(isPremiumUser, mode)
         applyStrip(strip)
-        val suggestions = if (prefix.isNotEmpty()) engine.getSuggestions(prefix, strip.maxSuggestions) else emptyList()
-        Log.d(TAG, "updateSuggestions: prefix='$prefix' → ${suggestions.size} results: $suggestions")
+        val result = if (prefix.isNotEmpty()) engine.suggest(prefix, strip.maxSuggestions) else SuggestionEngine.Suggestions.NONE
+        val suggestions = result.words
+        suggestionsMatched = result.matched
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "updateSuggestions: prefix='$prefix' → ${suggestions.size} results for '${result.matched}': $suggestions")
+        }
         // Only swap the chips inside the single top bar — never change its height. Empty list →
         // blank middle; the bar stays one fixed height so the keyboard never jumps (Gboard flow).
         if (mode == SuggestionMode.LIVE) {
