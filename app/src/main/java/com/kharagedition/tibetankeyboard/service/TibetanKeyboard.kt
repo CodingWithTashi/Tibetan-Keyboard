@@ -26,6 +26,7 @@ import android.view.inputmethod.InputConnection
 import android.widget.FrameLayout
 import androidx.preference.PreferenceManager
 import com.google.firebase.auth.FirebaseAuth
+import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
 import com.kharagedition.tibetankeyboard.analytics.UserActivityTracker
 import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
@@ -41,6 +42,7 @@ import com.kharagedition.tibetankeyboard.ui.journey.WordSegmenter
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
+import com.kharagedition.tibetankeyboard.ui.keyboard.WordComposer
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardCodes
@@ -66,11 +68,10 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     // honour the user's own saved language choice. Set on every onStartInputView.
     private var forcedTibetan: Boolean? = null
 
-    // Tracks how many Unicode code points the user has typed since the last word boundary.
-    // Used to know exactly what to delete when a suggestion is selected.
-    // Resets on: shad (།), space, newline, or suggestion commit.
-    // Tshek (་) is NOT a boundary — it is part of the Tibetan word.
-    private var currentWordLength = 0
+    // The word being typed (the suggestion prefix) and the rules for accepting a suggestion:
+    // what a tap replaces, the tsheg it writes, and how the next key treats that tsheg. Pure and
+    // unit-tested; this service only feeds it editor text and applies the edits it returns.
+    private val composer = WordComposer()
 
     // Journey streak/stats. PRIVACY: the store only ever receives counts and one-way word
     // hashes — no typed text is persisted or transmitted (see TypingStatsStore's contract).
@@ -125,7 +126,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
-        currentWordLength = 0
+        composer.reset()
         // Read the focused field's requested layout before (re)building the view,
         // so onCreateInputView can open on the matching language.
         forcedTibetan = KeyboardLayoutHint.forcedTibetan(info?.privateImeOptions)
@@ -259,9 +260,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
         when (i) {
             Keyboard.KEYCODE_DELETE -> {
+                composer.onDelete(textBeforeCursor(inputConnection))
                 inputConnection.deleteSurroundingText(1, 0)
-                if (currentWordLength > 0) currentWordLength--
-                aiKeyboardView?.updateSuggestions(currentPrefix(inputConnection))
+                aiKeyboardView?.updateSuggestions(composer.composing)
             }
             Keyboard.KEYCODE_SHIFT -> {
                 isCaps = !isCaps
@@ -269,6 +270,12 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 keyboardView!!.invalidateAllKeys()
             }
             Keyboard.KEYCODE_DONE -> {
+                // Enter ends the run like a shad does (word stats, suggestion state); the editor
+                // itself gets the action / key event below, not the composer's text.
+                val edit = composer.onChar('\n', textBeforeCursor(inputConnection))
+                if (edit.finishedChunk.isNotEmpty()) {
+                    recordChunkAsWords(edit.finishedChunk)
+                }
                 sendDefaultEditorAction(true)
                 inputConnection.sendKeyEvent(
                     KeyEvent(
@@ -276,6 +283,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                         KeyEvent.KEYCODE_ENTER
                     )
                 )
+                aiKeyboardView?.updateSuggestions("")
             }
 
             // AI Feature Codes - These are handled by AIKeyboardView now
@@ -324,28 +332,23 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             else -> {
                 var code = i.toChar()
                 if (Character.isLetter(code) && isCaps) code = Character.toUpperCase(code)
-                // Shad (།) and space are sentence/word boundaries — reset the word tracker.
-                // Tshek (་) is a syllable separator WITHIN a word, so it increments the counter.
-                if (code == '།' || code == '༎' || code == ' ' || code == '\n') {
-                    // A chunk just finished: segment it into real dictionary words (Tibetan has
-                    // no spaces between words, so the whole chunk can be a full clause) and fold
-                    // each into the Journey stats. Only one-way hashes survive (vocabulary size),
-                    // never the text.
-                    if (currentWordLength > 0) {
-                        recordChunkAsWords(currentPrefix(inputConnection))
-                    }
-                    currentWordLength = 0
-                } else {
-                    currentWordLength++
+                val edit = composer.onChar(code, textBeforeCursor(inputConnection))
+                // A shad (།), space or newline just finished a chunk: segment it into real
+                // dictionary words (Tibetan has no spaces between words, so the whole chunk can
+                // be a full clause) and fold each into the Journey stats. Only one-way hashes
+                // survive (vocabulary size), never the text.
+                if (edit.finishedChunk.isNotEmpty()) {
+                    recordChunkAsWords(edit.finishedChunk)
                 }
-                inputConnection.commitText(code.toString(), 1)
-                // Journey streak: count Tibetan code points typed (a number, nothing else).
-                if (TypingStatsStore.isTibetanCodePoint(code.code)) {
+                applyEdit(inputConnection, edit)
+                // Journey streak: count Tibetan code points typed (a number, nothing else). A
+                // tsheg typed onto the one an accepted suggestion already wrote inserts nothing.
+                if (edit.text.isNotEmpty() && TypingStatsStore.isTibetanCodePoint(code.code)) {
                     typingStats.recordTibetanChars(1)?.let { milestone ->
                         AppAnalytics.logStreakMilestone(milestone)
                     }
                 }
-                aiKeyboardView?.updateSuggestions(currentPrefix(inputConnection))
+                aiKeyboardView?.updateSuggestions(composer.composing)
             }
         }
     }
@@ -490,6 +493,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             inputConnection.deleteSurroundingText(textLength, 0)
             inputConnection.commitText(correctedText, 1)
         }
+        composer.reset()
         currentMode = KeyboardMode.NORMAL
         aiKeyboardView?.showNormalKeyboard()
     }
@@ -503,6 +507,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             inputConnection.deleteSurroundingText(textLength, 0)
             inputConnection.commitText(translatedText, 1)
         }
+        composer.reset()
         currentMode = KeyboardMode.NORMAL
         aiKeyboardView?.showNormalKeyboard()
     }
@@ -516,6 +521,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             inputConnection.deleteSurroundingText(textLength, 0)
             inputConnection.commitText(rephrasedText, 1)
         }
+        composer.reset()
         currentMode = KeyboardMode.NORMAL
         aiKeyboardView?.showNormalKeyboard()
     }
@@ -525,18 +531,45 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         aiKeyboardView?.showNormalKeyboard()
     }
 
-    override fun onSuggestionSelected(word: String) {
+    override fun onSuggestionSelected(word: String, matched: String) {
         val ic = currentInputConnection ?: return
         AppAnalytics.logKeyboardSuggestionSelected()
-        Log.d("TibetanKeyboard", "onSuggestionSelected: '$word', deleting $currentWordLength chars")
-        if (currentWordLength > 0) ic.deleteSurroundingText(currentWordLength, 0)
-        ic.commitText(word, 1)
-        currentWordLength = 0
-        // Journey stats: an accepted suggestion completes a word (hash-only, see store contract).
+        val edit = composer.onAccept(
+            word,
+            matched,
+            textBeforeCursor(ic, extra = matched.length),
+            ic.getTextAfterCursor(1, 0),
+        )
+        if (BuildConfig.DEBUG) {
+            Log.d(
+                "TibetanKeyboard",
+                "onSuggestionSelected: '$word' for '$matched' → delete ${edit.deleteBefore}, insert '${edit.text}'"
+            )
+        }
+        applyEdit(ic, edit)
+        // Journey stats (hash-only, see store contract): the accepted word completes a word, and
+        // the syllables it leaves in place before it are typed words too.
+        if (edit.finishedChunk.isNotEmpty()) {
+            recordChunkAsWords(edit.finishedChunk)
+        }
         typingStats.recordWordTyped(word)?.let { milestone ->
             AppAnalytics.logStreakMilestone(milestone)
         }
         aiKeyboardView?.updateSuggestions("")
+    }
+
+    override fun onUpdateSelection(
+        oldSelStart: Int, oldSelEnd: Int, newSelStart: Int, newSelEnd: Int,
+        candidatesStart: Int, candidatesEnd: Int,
+    ) {
+        super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        // Our own edits echo back here too. The composer keeps state the editor still confirms
+        // and drops the rest (the user tapped elsewhere, the app changed the text), so the strip
+        // never offers to replace characters that are no longer before the cursor.
+        if (!composer.hasState) return
+        val ic = currentInputConnection ?: return
+        val before = if (newSelStart == newSelEnd) textBeforeCursor(ic) else null
+        if (composer.sync(before)) aiKeyboardView?.updateSuggestions("")
     }
 
     override fun onOpenChat() {
@@ -570,14 +603,20 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         }
     }
 
-    // Returns the Unicode code points the user has typed since the last word boundary,
-    // verified against actual text before the cursor.
-    private fun currentPrefix(ic: InputConnection): String {
-        if (currentWordLength == 0) return ""
-        val textBefore = ic.getTextBeforeCursor(currentWordLength + 5, 0)?.toString() ?: ""
-        val prefix = textBefore.takeLast(currentWordLength)
-        Log.d("TibetanKeyboard", "prefix='$prefix' (wordLen=$currentWordLength)")
-        return prefix
+    /**
+     * The text before the cursor, as much as the composer needs to check its state (plus
+     * [extra]); null when the editor cannot say, which the composer treats as "trust nothing".
+     */
+    private fun textBeforeCursor(ic: InputConnection, extra: Int = 0): CharSequence? =
+        ic.getTextBeforeCursor(composer.lookback + extra, 0)
+
+    /** Applies one composer decision as a single editor change. */
+    private fun applyEdit(ic: InputConnection, edit: WordComposer.Edit) {
+        if (edit.deleteBefore == 0 && edit.text.isEmpty()) return
+        ic.beginBatchEdit()
+        if (edit.deleteBefore > 0) ic.deleteSurroundingText(edit.deleteBefore, 0)
+        if (edit.text.isNotEmpty()) ic.commitText(edit.text, 1)
+        ic.endBatchEdit()
     }
 
     private fun vibratePhone() {

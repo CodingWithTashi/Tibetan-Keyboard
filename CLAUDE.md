@@ -28,11 +28,12 @@ npm run deploy    # Deploy to Firebase Functions (asia-south1)
 > [!NOTE]
 > `:app:testDebugUnitTest` now compiles and runs (the stale `AIGrammarViewModelTest`, which
 > referenced deleted Grammar classes, was removed). It holds **pure JVM tests** for the
-> conversion-critical decision logic — `ProStripState` (free-vs-PRO strip), `UnlockRouter`
-> (auth→paywall routing), `PostLoginDestination` (post-login routing), and `KeyboardLayoutTest`
-> (guards the removed "+"/`-20` key across all `res/xml` layouts). Keep view/IME/RevenueCat-SDK
-> behaviour out of these (no mockito/Robolectric); test it by extracting the decision into a pure
-> unit (see those classes) or via on-device verification. `:botok:test` remains the tokenizer suite.
+> conversion-critical decision logic — `ProStripState` (free-vs-PRO strip), `WordComposer`
+> (suggestion tap / tsheg rules), `UnlockRouter` (auth→paywall routing), `PostLoginDestination`
+> (post-login routing), and `KeyboardLayoutTest` (guards the removed "+"/`-20` key across all
+> `res/xml` layouts). Keep view/IME/RevenueCat-SDK behaviour out of these (no mockito/Robolectric);
+> test it by extracting the decision into a pure unit (see those classes) or via on-device
+> verification. `:botok:test` remains the tokenizer suite.
 
 ## Architecture Overview
 
@@ -114,6 +115,12 @@ preference changes apply the next time the keyboard opens.
 - `TibetanKeyboardView extends KeyboardView` — the typing surface. Custom `onDraw` paints the
   **Enter key gold** on top of any layout (visual only; key codes untouched).
 - `SuggestionStripView` — Botok autocomplete; top suggestion gold, rest cream.
+- `WordComposer` (pure, unit-tested) decides what a suggestion tap does: it replaces only the part
+  of the typed run the engine matched (`SuggestionEngine.suggest(...).matched`: the whole run, or
+  the longest tail of it starting after a tsheg), writes the next tsheg (`བོ` → `བོད་`), swallows
+  a tsheg typed onto it and lets a shad take its place (`བོད།`, but `རང་།` after nga). Every edit
+  is checked against the text before the cursor (`onUpdateSelection` re-syncs), so a cursor move
+  can never make a tap delete the wrong characters. Enter (`KEYCODE_DONE`) closes the run too.
 - `KeyboardMode` enum: `NORMAL`, `AI_GRAMMAR`, `AI_REPHRASE`.
 
 **Keyboard layouts & theming** are driven by `PreferenceManager.getDefaultSharedPreferences`
