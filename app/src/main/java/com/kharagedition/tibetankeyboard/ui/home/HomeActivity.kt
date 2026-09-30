@@ -130,6 +130,7 @@ class HomeActivity : InputMethodActivity() {
         super.onResume()
         refreshSetupState()
         viewModel.refreshJourney()
+        viewModel.refreshAccount()
         // CRITICAL: sync purchases on resume to acknowledge pending subscriptions
         // (prevents Google Play auto-cancelling after 3 days).
         if (viewModel.isUserAuthenticated()) {
@@ -204,6 +205,16 @@ class HomeActivity : InputMethodActivity() {
             AppAnalytics.logHomeAction(AppAnalytics.HomeAction.JOURNEY)
             AppAnalytics.logJourneyOpened(AppAnalytics.JourneySource.HOME)
             startActivity(Intent(this, JourneyActivity::class.java))
+        },
+        onSignIn = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.SIGN_IN)
+            // Home stays underneath, so signing in (or backing out) lands back here.
+            AuthManager(this).redirectToLogin(finishCaller = false, returnAfterLogin = true)
+        },
+        onAccount = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.ACCOUNT)
+            // Plan, manage subscription and sign out live in Settings → Account.
+            startActivity(Intent(this, SettingsActivity::class.java))
         },
     )
 

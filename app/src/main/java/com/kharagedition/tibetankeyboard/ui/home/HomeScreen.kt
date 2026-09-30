@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
@@ -34,15 +35,18 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.ui.compose.components.AccountAvatar
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BoText
 import com.kharagedition.tibetankeyboard.ui.compose.components.IconTile
@@ -61,7 +65,12 @@ data class HomeUiState(
     val isPremium: Boolean = false,
     val streakDays: Int = 0,
     val wordsToday: Int = 0,
+    /** Who is signed in; null when signed out. */
+    val account: HomeAccount? = null,
 )
+
+/** The signed-in user as the Home header shows them. */
+data class HomeAccount(val name: String, val photoUrl: String?)
 
 /** Callbacks for Home actions, owned by the Activity. */
 class HomeActions(
@@ -75,6 +84,8 @@ class HomeActions(
     val onAbout: () -> Unit,
     val onUpgrade: () -> Unit,
     val onJourney: () -> Unit,
+    val onSignIn: () -> Unit,
+    val onAccount: () -> Unit,
 )
 
 private data class QuickAction(
@@ -124,7 +135,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         ScreenScaffold(horizontalPadding = 18.dp) {
             Spacer(Modifier.height(8.dp))
-            BrandHeader()
+            BrandHeader(state.account, onSignIn = actions.onSignIn, onAccount = actions.onAccount)
             Spacer(Modifier.height(18.dp))
             SetupCard(
                 state = state,
@@ -229,7 +240,7 @@ private fun UpdateReadyBanner(onInstall: () -> Unit, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun BrandHeader() {
+private fun BrandHeader(account: HomeAccount?, onSignIn: () -> Unit, onAccount: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -248,10 +259,50 @@ private fun BrandHeader() {
                 modifier = Modifier.size(72.dp,).clip(RoundedCornerShape(10.dp))
             )
         }
-        Column {
-            Text(stringResource(R.string.app_name), color = TibetanColors.Cream, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.app_name),
+                color = TibetanColors.Cream, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
             BoText(stringResource(R.string.bo_app_name), color = TibetanColors.CreamDim, fontSize = 13.sp)
         }
+        AccountControl(account, onSignIn = onSignIn, onAccount = onAccount)
+    }
+}
+
+/**
+ * Top right of Home: "Sign in" for a signed-out user, their picture once signed in. Without it
+ * the only way to sign in was to reach a PRO screen first, so a subscriber on a new phone had no
+ * obvious way back to their PRO.
+ */
+@Composable
+private fun AccountControl(account: HomeAccount?, onSignIn: () -> Unit, onAccount: () -> Unit) {
+    if (account == null) {
+        Row(
+            modifier = Modifier
+                .clip(TibetanTokens.Pill)
+                .border(1.dp, TibetanColors.Gold400.copy(alpha = 0.7f), TibetanTokens.Pill)
+                .clickable(role = Role.Button, onClick = onSignIn)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(AppIcons.Person, null, tint = TibetanColors.Gold300, modifier = Modifier.size(17.dp))
+            Text(stringResource(R.string.sign_in), color = TibetanColors.Gold300, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        }
+    } else {
+        AccountAvatar(
+            name = account.name,
+            photoUrl = account.photoUrl,
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(
+                    onClickLabel = stringResource(R.string.title_account),
+                    role = Role.Button,
+                    onClick = onAccount,
+                ),
+        )
     }
 }
 

@@ -52,6 +52,8 @@
     <string name="welcome_back">Welcome Back</string>
     <string name="sign_in_to_continue">Sign in to continue chatting</string>
     <string name="sign_in_with_google">Continue with Google</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_benefit">Keep PRO and your streak on every device</string>
     <string name="privacy_policy_text">By signing in, you agree to our Terms of Service and Privacy Policy</string>
 
     <!-- Chat Activity -->
@@ -62,7 +64,7 @@
     <!-- Menu Items -->
     <string name="clear_chat">Clear Chat</string>
     <string name="profile">Profile</string>
-    <string name="sign_out">Sign Out</string>
+    <string name="sign_out">Sign out</string>
 
     <!-- General -->
     <string name="loading">Loading...</string>
@@ -245,7 +247,6 @@
     <string name="subscription">Subscription</string>
     <string name="premium_plan">Premium plan</string>
     <string name="free_plan">Free plan</string>
-    <string name="logout">Logout</string>
     <string name="done">Done</string>
     <string name="ai_assistant">AI Assistant</string>
     <string name="online_tibetan">Online · Tibetan</string>

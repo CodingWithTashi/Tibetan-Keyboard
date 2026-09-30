@@ -1,7 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.TibetanKeyboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:typeface">monospace</item>
+        <!-- No android:typeface here. It used to be "monospace", the hook an old font override
+             replaced with a Tibetan face; with the override gone it put every View-based text
+             (dialogs, ad cards) in real monospace, unlike the Compose screens. -->
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/brown_700</item>
         <item name="colorPrimaryVariant">@color/brown_700</item>
@@ -43,6 +45,9 @@
         <item name="android:textColorSecondary">@color/tk_cream_dim</item>
         <item name="shapeAppearanceMediumComponent">@style/TkDialogShape</item>
         <item name="materialAlertDialogTitleTextStyle">@style/TkDialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TkDialogBody</item>
+        <item name="buttonBarPositiveButtonStyle">@style/TkDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/TkDialogButton.Quiet</item>
     </style>
 
     <style name="TkDialogShape" parent="">
@@ -50,9 +55,32 @@
         <item name="cornerSize">20dp</item>
     </style>
 
+    <!-- The dialog's text follows the Compose screens: the system sans face, sentence case. -->
     <style name="TkDialogTitle" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
         <item name="android:textColor">@color/tk_cream</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">19sp</item>
+    </style>
+
+    <style name="TkDialogBody" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
+        <item name="android:textColor">@color/tk_cream_dim</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">14.5sp</item>
+    </style>
+
+    <style name="TkDialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/tk_gold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textSize">14sp</item>
+        <item name="rippleColor">@color/tk_gold_500</item>
+    </style>
+
+    <!-- The way out (Cancel) reads quieter than the action. -->
+    <style name="TkDialogButton.Quiet">
+        <item name="android:textColor">@color/tk_cream_dim</item>
     </style>
 
         <style name="SearchKeyStyle">

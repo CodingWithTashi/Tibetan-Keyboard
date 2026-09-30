@@ -97,8 +97,8 @@ class ChatActivity : AppCompatActivity() {
 
     private fun signOut() {
         authManager.signOut {
-            authManager.redirectToLogin()
             showToast(getString(R.string.signed_out))
+            authManager.redirectToHome()
         }
     }
 

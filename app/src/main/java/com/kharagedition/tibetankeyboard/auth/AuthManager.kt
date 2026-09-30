@@ -13,6 +13,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.ui.home.HomeActivity
 import com.kharagedition.tibetankeyboard.ui.login.LoginActivity
 import com.kharagedition.tibetankeyboard.ui.subscription.KeyboardPremiumActivity
 import com.kharagedition.tibetankeyboard.ui.subscription.PremiumActivity
@@ -41,6 +42,8 @@ class AuthManager(private val context: Context) {
     fun getCurrentUserName(): String {
         return userPreferences.getUserName().takeIf { it.isNotEmpty() } ?: "User"
     }
+
+    fun getCurrentUserEmail(): String = userPreferences.getUserEmail()
 
     /**
      * Get current user photo URL
@@ -118,6 +121,22 @@ class AuthManager(private val context: Context) {
         // Keep the caller alive when asked (e.g. Home stays beneath the paywall so
         // closing the paywall never leaves an empty back stack).
         if (finishCaller) (context as? Activity)?.finish()
+    }
+
+    /**
+     * Back to Home, closing the screens above it. Where a sign-out lands: Home needs no account
+     * and its header offers "Sign in" again, while a login screen would read as a demand.
+     */
+    fun redirectToHome() {
+        val intent = Intent(context, HomeActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+
+        if (context !is Activity) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        context.startActivity(intent)
+        (context as? Activity)?.finish()
     }
 
     /**
