@@ -252,5 +252,9 @@ Claude, so they carry the same middleware chain.
   resource merge).
 - **Always device-verify Compose changes** (`installDebug` + screenshot), not just `assembleDebug` —
   a green build can still crash at runtime (e.g. the empty-font bug).
+- **Never start the Android emulator** unless the user asked for it, or said yes when asked. It is
+  slow to boot and device checks belong on the connected phone. If the phone can't take the build
+  (a debug build can't replace a Play-installed one: the signatures differ, and uninstalling wipes
+  the app's data), stop and ask how to verify instead of reaching for the emulator.
 - A few inline strings remain (Premium feature descriptions, quick-action labels, Tibetan
   placeholders) — externalize if expanding i18n.

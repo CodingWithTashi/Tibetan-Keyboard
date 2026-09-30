@@ -25,12 +25,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
@@ -150,6 +152,42 @@ fun CharCounter(
         fontSize = 11.5.sp,
         fontWeight = if (over) FontWeight.Bold else FontWeight.Normal,
     )
+}
+
+/**
+ * The signed-in user's picture in a gold ring. Their initial sits underneath, so it shows while
+ * the picture loads and stays if there is none.
+ */
+@Composable
+fun AccountAvatar(
+    name: String,
+    photoUrl: String?,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(TibetanColors.Brown600)
+            .border(1.5.dp, TibetanColors.Gold400, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            name.trim().take(1).uppercase().ifEmpty { "?" },
+            color = TibetanColors.Gold300,
+            fontSize = (size.value * 0.42f).sp,
+            fontWeight = FontWeight.ExtraBold,
+        )
+        if (!photoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize().padding(1.5.dp).clip(CircleShape),
+            )
+        }
+    }
 }
 
 /** Small rounded badge, e.g. "PRO". */

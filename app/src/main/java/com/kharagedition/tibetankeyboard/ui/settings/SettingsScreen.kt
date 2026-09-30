@@ -60,6 +60,9 @@ data class SettingsState(
     val streakReminder: Boolean = true,
     val isPremium: Boolean = false,
     val isAuthenticated: Boolean = false,
+    /** The signed-in account, shown at the top of the Account group. */
+    val accountName: String = "",
+    val accountEmail: String = "",
 )
 
 class SettingsActions(
@@ -72,6 +75,7 @@ class SettingsActions(
     val onStreakReminder: (Boolean) -> Unit,
     val onUpgrade: () -> Unit,
     val onManageSubscription: () -> Unit,
+    val onSignIn: () -> Unit,
     val onLogout: () -> Unit,
 )
 
@@ -146,6 +150,22 @@ fun SettingsScreen(
                 SectionLabel(stringResource(R.string.title_account))
                 Spacer(Modifier.height(9.dp))
                 SettingsGroup {
+                    if (state.isAuthenticated) {
+                        SettingsRow(
+                            icon = AppIcons.Person,
+                            title = state.accountName,
+                            subtitle = state.accountEmail.takeIf { it.isNotBlank() },
+                        )
+                    } else {
+                        SettingsRow(
+                            icon = AppIcons.Person,
+                            title = stringResource(R.string.sign_in),
+                            subtitle = stringResource(R.string.sign_in_benefit),
+                            onClick = actions.onSignIn,
+                            trailing = { ChevronIcon() },
+                        )
+                    }
+                    SettingsDivider()
                     SettingsRow(
                         icon = AppIcons.Crown,
                         title = stringResource(R.string.subscription),
@@ -182,7 +202,7 @@ fun SettingsScreen(
                         SettingsDivider()
                         SettingsRow(
                             icon = AppIcons.Logout,
-                            title = stringResource(R.string.logout),
+                            title = stringResource(R.string.sign_out),
                             onClick = actions.onLogout,
                             trailing = { ChevronIcon() },
                         )

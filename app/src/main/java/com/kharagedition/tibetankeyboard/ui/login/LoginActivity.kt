@@ -83,6 +83,8 @@ class LoginActivity : AppCompatActivity() {
                     onGoogleSignIn = { signInWithGoogle() },
                     onTerms = { openTermsOfService() },
                     onPrivacy = { openPrivacyPolicy() },
+                    // Swiped away, tapped outside or Back: whatever is underneath is still there.
+                    onDismiss = { finish() },
                 )
             }
         }

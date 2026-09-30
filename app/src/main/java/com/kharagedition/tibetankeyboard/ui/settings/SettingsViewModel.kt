@@ -20,9 +20,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private val authManager = AuthManager(app)
     private val premiumLiveData = RevenueCatManager.getInstance().isPremiumUser
 
-    private val _uiState = MutableStateFlow(
-        SettingsPrefs.read(app).copy(isAuthenticated = authManager.isUserAuthenticated())
-    )
+    private val _uiState = MutableStateFlow(SettingsPrefs.read(app).withAccount())
     val uiState: StateFlow<SettingsState> = _uiState.asStateFlow()
 
     private val premiumObserver = Observer<Boolean> { isPremium ->
@@ -68,12 +66,21 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     /** Reload prefs in case they changed elsewhere (e.g. legacy preference screen). */
     fun reload() {
         val current = _uiState.value
-        _uiState.value = SettingsPrefs.read(getApplication())
-            .copy(isPremium = current.isPremium, isAuthenticated = authManager.isUserAuthenticated())
+        _uiState.value = SettingsPrefs.read(getApplication()).copy(isPremium = current.isPremium).withAccount()
+    }
+
+    private fun SettingsState.withAccount(): SettingsState {
+        val signedIn = authManager.isUserAuthenticated()
+        return copy(
+            isAuthenticated = signedIn,
+            accountName = if (signedIn) authManager.getCurrentUserName() else "",
+            accountEmail = if (signedIn) authManager.getCurrentUserEmail() else "",
+        )
     }
 
     fun signOut(onComplete: () -> Unit) = authManager.signOut(onComplete)
-    fun redirectToLogin() = authManager.redirectToLogin()
+    /** Sign in from Settings: this screen stays underneath, so the user lands back here. */
+    fun signIn() = authManager.redirectToLogin(finishCaller = false, returnAfterLogin = true)
     fun refreshPremium() = RevenueCatManager.getInstance().refreshCustomerInfo()
 
     override fun onCleared() {

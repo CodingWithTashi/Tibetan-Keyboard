@@ -53,6 +53,18 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     init {
         premiumLiveData.observeForever(premiumObserver)
         RevenueCatManager.getInstance().refreshCustomerInfo()
+        refreshAccount()
+    }
+
+    /** Re-read who is signed in (every resume: signing in and out happen on other screens). */
+    fun refreshAccount() {
+        val account = if (authManager.isUserAuthenticated()) {
+            HomeAccount(
+                name = authManager.getCurrentUserName(),
+                photoUrl = authManager.getCurrentUserPhotoUrl().takeIf { it.isNotBlank() },
+            )
+        } else null
+        _uiState.update { it.copy(account = account) }
     }
 
     /** Called by the Activity after it reads keyboard-enabled / default-IME status. */

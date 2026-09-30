@@ -17,6 +17,7 @@ import com.kharagedition.tibetankeyboard.BuildConfig
 import com.kharagedition.tibetankeyboard.ui.subscription.ManageSubscriptionActivity
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.analytics.AppAnalytics
+import com.kharagedition.tibetankeyboard.auth.AuthManager
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.util.showConfirmationDialog
@@ -59,6 +60,7 @@ class SettingsActivity : AppCompatActivity() {
         onStreakReminder = viewModel::setStreakReminder,
         onUpgrade = { openPremiumUpgrade(AppAnalytics.UpgradeSource.SETTINGS) },
         onManageSubscription = { ManageSubscriptionActivity.open(this) },
+        onSignIn = { viewModel.signIn() },
         onLogout = {
             showConfirmationDialog(
                 title = getString(R.string.sign_out),
@@ -71,8 +73,8 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun signOut() {
         viewModel.signOut {
-            viewModel.redirectToLogin()
             showToast(getString(R.string.signed_out))
+            AuthManager(this).redirectToHome()
         }
     }
 

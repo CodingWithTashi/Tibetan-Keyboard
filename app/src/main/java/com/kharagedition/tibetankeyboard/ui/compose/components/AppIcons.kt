@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Share
@@ -56,6 +57,7 @@ object AppIcons {
     val Sound: ImageVector = Icons.Rounded.VolumeUp
     val Bell: ImageVector = Icons.Rounded.Notifications
     val Logout: ImageVector = Icons.AutoMirrored.Rounded.Logout
+    val Person: ImageVector = Icons.Rounded.Person
     val Copy: ImageVector = Icons.Rounded.ContentCopy
     val Send: ImageVector = Icons.AutoMirrored.Rounded.Send
     val Globe: ImageVector = Icons.Rounded.Language

@@ -443,6 +443,8 @@ object AppAnalytics {
         const val ABOUT = "about"
         const val UPGRADE = "upgrade"
         const val JOURNEY = "journey"
+        const val SIGN_IN = "sign_in"
+        const val ACCOUNT = "account"
     }
 
     /** Stable source labels for [logJourneyOpened] (where the Journey screen was opened from). */
