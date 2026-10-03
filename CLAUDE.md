@@ -188,6 +188,12 @@ and `billing/`; keep new rules there. RevenueCat/Play ids live only in `subscrip
     USD prices are `BillingCatalog.WEB_PLANS`; change them together with the dashboard's.
   - The trial is promised only to customers who never bought anything (`awaitNeverPurchased`),
     which is the web products' eligibility rule.
+  - The card route is decided from the storefront **before** offerings load, and both the paywall
+    (`PremiumViewModel.load`) and Home's onboarding check skip `loadOfferings()` for it: Play is
+    slowest where it can't sell, and waiting lost ~half of Bhutan's paywall opens (2.3.2).
+  - Continue while signed out → login → back on the paywall, which opens the checkout by itself
+    (`PremiumEvent.OpenWebCheckout`). Funnel: `web_checkout_continue` (`signed_in`) →
+    `web_checkout_opened`; `paywall_dismissed` carries `paywall_type`, `loading` = closed on the spinner.
   - Its A/B test is ours, not a RevenueCat experiment: `WebPaywallExperiment` pre-selects monthly
     (control) or annual from a number stored per install. The variant is on the GA4 events
     (`variant`, user property `web_paywall_variant`) and on the RevenueCat customer (attribute

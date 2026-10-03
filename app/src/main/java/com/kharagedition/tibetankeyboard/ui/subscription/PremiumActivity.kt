@@ -69,6 +69,7 @@ open class PremiumActivity : AppCompatActivity() {
                             closedAfterPurchase = true
                             closePaywall()
                         }
+                        PremiumEvent.OpenWebCheckout -> openWebCheckout()
                     }
                 }
             }
@@ -157,7 +158,7 @@ open class PremiumActivity : AppCompatActivity() {
     private fun closePaywall() {
         if (closing || isFinishing) return
         closing = true
-        if (!closedAfterPurchase) AppAnalytics.logPaywallDismissed(viewModel.source)
+        if (!closedAfterPurchase) AppAnalytics.logPaywallDismissed(viewModel.source, viewModel.dismissedPaywallType())
         if (isTaskRoot && returnsHomeWhenRoot) {
             startActivity(Intent(this, HomeActivity::class.java))
         }
@@ -190,15 +191,26 @@ open class PremiumActivity : AppCompatActivity() {
 
     /**
      * Card checkout (Bhutan only). The purchase must land on a real account, so a signed-out user
-     * signs in first and comes straight back here; then RevenueCat's hosted checkout opens in a
-     * browser tab on the picked plan, and [onResume] checks for the purchase when the tab closes.
+     * signs in first and comes straight back here, where the checkout opens by itself
+     * ([PremiumEvent.OpenWebCheckout]).
      */
     private fun continueToWebCheckout() {
         if (webCheckoutOpened) return // double tap
-        if (!viewModel.uiState.value.isSignedIn) {
+        val signedIn = viewModel.uiState.value.isSignedIn
+        viewModel.onWebCheckoutContinue(signedIn)
+        if (!signedIn) {
             AuthManager(this).redirectToLogin(returnAfterLogin = true, finishCaller = false)
             return
         }
+        openWebCheckout()
+    }
+
+    /**
+     * RevenueCat's hosted checkout, in a browser tab on the picked plan; [onResume] checks for the
+     * purchase when the tab closes.
+     */
+    private fun openWebCheckout() {
+        if (webCheckoutOpened) return
         val url = viewModel.webCheckoutUrl() ?: run {
             showToast(getString(R.string.web_checkout_unavailable))
             return

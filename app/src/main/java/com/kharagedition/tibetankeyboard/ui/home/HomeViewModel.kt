@@ -11,6 +11,7 @@ import com.kharagedition.tibetankeyboard.data.local.MonetizationStore
 import com.kharagedition.tibetankeyboard.data.local.TypingStatsStore
 import com.kharagedition.tibetankeyboard.data.repository.RevenueCatManager
 import com.kharagedition.tibetankeyboard.util.localEpochDay
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -117,11 +118,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 // Past this, the "keyboard ready" moment is gone; the next resume tries again.
                 val decision = withTimeoutOrNull(ONBOARDING_CHECK_TIMEOUT_MS) {
-                    val isPremium = revenueCat.awaitIsPremium()
-                    revenueCat.loadOfferings() // refreshes the dashboard kill switch
+                    val isPremium = async { revenueCat.awaitIsPremium() }
+                    val storefront = revenueCat.storefrontCountry()
+                    // Refreshes the dashboard kill switch. Skipped for card checkout: where Play
+                    // can't sell, its products load slowest or never arrive, and that wait sits
+                    // inside this timeout (Bhutan got none of these paywalls in 2.3.2).
+                    if (!revenueCat.usesCardCheckout(storefront)) revenueCat.loadOfferings()
                     // Never pop a paywall at someone who can't pay (Bhutan before card checkout is live).
-                    val canSell = revenueCat.canSellHere(revenueCat.storefrontCountry())
-                    decide(isPremium, revenueCat.remoteConfig.onboardingPaywallEnabled && canSell)
+                    val canSell = revenueCat.canSellHere(storefront)
+                    decide(isPremium.await(), revenueCat.remoteConfig.onboardingPaywallEnabled && canSell)
                 } ?: return@launch
                 val source = when (decision) {
                     OnboardingPaywall.FIRST -> AppAnalytics.UpgradeSource.ONBOARDING
