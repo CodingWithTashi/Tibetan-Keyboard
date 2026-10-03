@@ -101,6 +101,9 @@ sealed interface PremiumEvent {
      * purchase or restore in this paywall; not for someone who already had PRO.
      */
     data class ProActive(val announce: Boolean) : PremiumEvent
+
+    /** Back from the sign-in that Continue asked for: open the card checkout. */
+    data object OpenWebCheckout : PremiumEvent
 }
 
 /**
@@ -145,6 +148,9 @@ class PremiumViewModel(
     /** This install's side of the card checkout paywall test, once that paywall shows. */
     private var webVariant: WebPaywallVariant? = null
 
+    /** Back from signing in to pay: open the checkout once the account is checked. */
+    private var autoContinuePending = false
+
     private val premiumObserver = Observer<Boolean> { isPremium ->
         _uiState.update { it.copy(isPremium = isPremium) }
         if (isPremium) _events.trySend(PremiumEvent.ProActive(announce = false))
@@ -162,9 +168,20 @@ class PremiumViewModel(
             val premium = async { revenueCat.awaitIsPremium() }
             val country = currentStorefront()
             storefront = country
-            val resolved = revenueCat.resolvePaywall(_uiState.value.placementId, country)
+            // Card checkout needs none of Play's products, and Play is slowest to answer exactly
+            // where it can't sell (in Bhutan nearly half the paywalls closed before loading ended).
+            val known = billingDecision()
+            val webFirst = known.route == BillingRoute.WEB_CHECKOUT
+            val resolved = if (webFirst) {
+                RevenueCatManager.ResolvedPaywall(PaywallChoice.Unavailable, null, emptyList())
+            } else {
+                revenueCat.resolvePaywall(_uiState.value.placementId, country)
+            }
+            // A failed offerings load can itself prove Play can't sell (Bhutanese SIM, no storefront).
+            val decision = if (webFirst) known else billingDecision()
+            val web = decision.route == BillingRoute.WEB_CHECKOUT
+            val trialLookup = if (web) async { enterWebCheckout() } else null
             val isPremium = premium.await()
-            val decision = billingDecision()
 
             val content = when {
                 decision.route == BillingRoute.WEB_CHECKOUT -> PaywallContent.WebCheckout
@@ -173,9 +190,8 @@ class PremiumViewModel(
                 resolved.choice is PaywallChoice.Custom && resolved.plans.isNotEmpty() -> PaywallContent.Custom
                 else -> PaywallContent.Error
             }
-            val web = decision.route == BillingRoute.WEB_CHECKOUT
             if (web) logBillingUnavailableOnce(decision)
-            val trialEligible = web && enterWebCheckout()
+            val trialEligible = trialLookup?.await() == true
 
             _uiState.update { state ->
                 state.withWebPlans().copy(
@@ -347,16 +363,35 @@ class PremiumViewModel(
         AppAnalytics.logPaywallPlanSelected(source, plan.plan)
     }
 
+    /**
+     * The card checkout's Continue was tapped. Signed out, the Activity sends the user to sign in,
+     * and [refreshSignIn] carries on to the checkout when they come back signed in.
+     */
+    fun onWebCheckoutContinue(signedIn: Boolean) {
+        autoContinuePending = false // tapped while the return from sign-in was still checking
+        savedStateHandle[KEY_CONTINUE_AFTER_SIGN_IN] = !signedIn
+        AppAnalytics.logWebCheckoutContinue(source, webPlanLabel(), webVariantLabel(), signedIn)
+    }
+
     /** Re-read the sign-in state after returning from the login screen. */
     fun refreshSignIn() {
         val signedIn = isSignedIn()
         val justSignedIn = signedIn && !_uiState.value.isSignedIn
         _uiState.update { it.copy(isSignedIn = signedIn) }
+        // Only the return from that sign-in continues; backing out of it cancels.
+        val continueToCheckout = savedStateHandle.remove<Boolean>(KEY_CONTINUE_AFTER_SIGN_IN) == true && signedIn
         // The account may have bought before, on another phone; the checkout then gives no trial.
-        if (justSignedIn && _uiState.value.content == PaywallContent.WebCheckout) {
+        if ((justSignedIn || continueToCheckout) && _uiState.value.content == PaywallContent.WebCheckout) {
+            autoContinuePending = continueToCheckout
             viewModelScope.launch {
                 val trialEligible = enterWebCheckout()
                 _uiState.update { it.copy(webTrialEligible = trialEligible) }
+                // They signed in to pay, so don't make them tap Continue again, unless the
+                // account already has PRO (the premium observer then closes the paywall).
+                if (continueToCheckout && revenueCat.awaitIsPremium() != true && autoContinuePending) {
+                    autoContinuePending = false
+                    _events.trySend(PremiumEvent.OpenWebCheckout)
+                }
             }
         }
     }
@@ -413,6 +448,13 @@ class PremiumViewModel(
         else -> AppAnalytics.PaywallType.CUSTOM
     }
 
+    /** What was on screen when the paywall closed, so closing on the spinner can be counted. */
+    fun dismissedPaywallType(): String = when (val content = _uiState.value.content) {
+        PaywallContent.Loading -> AppAnalytics.PaywallType.LOADING
+        PaywallContent.Error -> AppAnalytics.PaywallType.ERROR
+        else -> paywallType(content)
+    }
+
     override fun onCleared() {
         revenueCat.isPremiumUser.removeObserver(premiumObserver)
         super.onCleared()
@@ -421,5 +463,6 @@ class PremiumViewModel(
     private companion object {
         const val KEY_VIEW_LOGGED = "paywall_view_logged"
         const val KEY_WEB_PLAN = "web_plan"
+        const val KEY_CONTINUE_AFTER_SIGN_IN = "continue_after_sign_in"
     }
 }

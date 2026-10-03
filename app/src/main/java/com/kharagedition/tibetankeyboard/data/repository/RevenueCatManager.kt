@@ -34,6 +34,7 @@ import com.kharagedition.tibetankeyboard.subscription.WebPlans
 import com.kharagedition.tibetankeyboard.subscription.ManageSubscriptionPolicy
 import com.kharagedition.tibetankeyboard.subscription.SubscriptionSnapshot
 import com.kharagedition.tibetankeyboard.billing.BillingAvailability
+import com.kharagedition.tibetankeyboard.billing.BillingRoute
 import com.kharagedition.tibetankeyboard.billing.BillingSignals
 import com.kharagedition.tibetankeyboard.data.local.MonetizationStore
 import kotlinx.coroutines.CancellationException
@@ -468,6 +469,13 @@ class RevenueCatManager private constructor() {
             webCheckoutCountries = remoteConfig.webCheckoutCountries,
         )
     }
+
+    /**
+     * Whether this user pays by card rather than through Play, from what is already known (no
+     * network). Card checkout needs none of Play's products, so callers can skip [loadOfferings].
+     */
+    fun usesCardCheckout(storefront: String?): Boolean =
+        BillingAvailability.route(billingSignals(storefront)) == BillingRoute.WEB_CHECKOUT
 
     /**
      * Whether this user can buy PRO at all, from what is already known (no network). False only

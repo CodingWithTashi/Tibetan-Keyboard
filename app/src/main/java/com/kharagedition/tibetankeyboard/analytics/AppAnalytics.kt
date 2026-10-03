@@ -152,6 +152,19 @@ object AppAnalytics {
     /** Where Play can't sell, the user was sent to card checkout instead. [reason] says why. */
     fun logBillingUnavailable(reason: String) = log(EVENT_BILLING_UNAVAILABLE, PARAM_REASON to reason)
 
+    /**
+     * The card checkout's Continue was tapped. [signedIn] false means a sign-in comes first, so
+     * the gap to [logWebCheckoutOpened] is the sign-in step's drop.
+     */
+    fun logWebCheckoutContinue(source: String, plan: String, variant: String?, signedIn: Boolean) =
+        log(
+            EVENT_WEB_CHECKOUT_CONTINUE,
+            PARAM_SOURCE to source,
+            PARAM_PLAN to plan,
+            PARAM_VARIANT to variant,
+            PARAM_SIGNED_IN to signedIn,
+        )
+
     /** [variant] is the side of the card checkout paywall test, a `WebPaywallVariant` label. */
     fun logWebCheckoutOpened(source: String, plan: String, variant: String?) =
         log(EVENT_WEB_CHECKOUT_OPENED, PARAM_SOURCE to source, PARAM_PLAN to plan, PARAM_VARIANT to variant)
@@ -216,7 +229,9 @@ object AppAnalytics {
     /** The user backed out of cancelling; [step] is where they stopped. */
     fun logCancelAbandoned(step: String) = log(EVENT_CANCEL_ABANDONED, PARAM_STEP to step)
 
-    fun logPaywallDismissed(source: String) = log(EVENT_PAYWALL_DISMISSED, PARAM_SOURCE to source)
+    /** [paywallType] is one of [PaywallType], including [PaywallType.LOADING] for a close on the spinner. */
+    fun logPaywallDismissed(source: String, paywallType: String? = null) =
+        log(EVENT_PAYWALL_DISMISSED, PARAM_SOURCE to source, PARAM_PAYWALL_TYPE to paywallType)
 
     fun logPaywallPlanSelected(source: String, plan: String) =
         log(EVENT_PAYWALL_PLAN_SELECTED, PARAM_SOURCE to source, PARAM_PLAN to plan)
@@ -361,6 +376,7 @@ object AppAnalytics {
     private const val EVENT_RESUBSCRIBE_OPENED = "subscription_resubscribe_opened"
     private const val EVENT_ONBOARDING_PAYWALL_SHOWN = "onboarding_paywall_shown"
     private const val EVENT_BILLING_UNAVAILABLE = "billing_unavailable"
+    private const val EVENT_WEB_CHECKOUT_CONTINUE = "web_checkout_continue"
     private const val EVENT_WEB_CHECKOUT_OPENED = "web_checkout_opened"
     private const val EVENT_WEB_CHECKOUT_COMPLETED = "web_checkout_completed"
 
@@ -408,6 +424,7 @@ object AppAnalytics {
     private const val PARAM_OFFERING = "offering"
     private const val PARAM_PAYWALL_TYPE = "paywall_type"
     private const val PARAM_VARIANT = "variant"
+    private const val PARAM_SIGNED_IN = "signed_in"
 
     // User properties
     private const val USER_PROP_KB_ENABLED = "kb_enabled"
@@ -496,7 +513,7 @@ object AppAnalytics {
         )
     }
 
-    /** Which paywall rendered, for [logPaywallViewed]. */
+    /** Which paywall rendered, for [logPaywallViewed] and [logPaywallDismissed]. */
     object PaywallType {
         /** Designed in the RevenueCat dashboard. */
         const val DASHBOARD = "dashboard"
@@ -504,5 +521,9 @@ object AppAnalytics {
         const val CUSTOM = "custom"
         /** Card checkout, only where Google Play can't sell (Bhutan). */
         const val WEB = "web"
+        /** Only on [logPaywallDismissed]: closed before any paywall showed. */
+        const val LOADING = "loading"
+        /** Only on [logPaywallDismissed]: closed on the "try again" screen. */
+        const val ERROR = "error"
     }
 }
