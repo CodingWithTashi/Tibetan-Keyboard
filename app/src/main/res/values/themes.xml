@@ -13,8 +13,14 @@
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- The window is the screens' own colour, so nothing lighter flashes before the first
+             frame: at launch (the system's starting window, which on Android 12+ is this
+             background with the icon on it) and between two screens. The bars match it until
+             the activity goes edge to edge (TibetanKeyboardApp). -->
+        <item name="android:windowBackground">@color/tk_bg_900</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/tk_bg_900</item>
+        <item name="android:statusBarColor">@color/tk_bg_900</item>
+        <item name="android:navigationBarColor">@color/tk_bg_900</item>
         <!-- Customize your theme here. -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
         <item name="android:textColorPrimary">@color/white</item>

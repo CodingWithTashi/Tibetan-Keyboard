@@ -26,14 +26,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.kharagedition.tibetankeyboard.ui.compose.theme.LocalTibetanFont
+import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanLineHeight
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanColors
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanTokens
 import com.kharagedition.tibetankeyboard.util.AiLimits
@@ -46,7 +50,7 @@ fun BoText(
     color: Color = TibetanColors.Cream,
     fontSize: androidx.compose.ui.unit.TextUnit = 16.sp,
     fontWeight: FontWeight = FontWeight.Normal,
-    lineHeight: androidx.compose.ui.unit.TextUnit = androidx.compose.ui.unit.TextUnit.Unspecified,
+    lineHeight: androidx.compose.ui.unit.TextUnit = TibetanLineHeight,
     maxLines: Int = Int.MAX_VALUE,
 ) {
     Text(
@@ -190,14 +194,19 @@ fun AccountAvatar(
     }
 }
 
-/** Small rounded badge, e.g. "PRO". */
+/**
+ * Small rounded badge, e.g. "PRO". [fixedSize] is for a badge pinned over other content: it
+ * keeps its size when the user enlarges text, where a growing one would cover what it sits on.
+ */
 @Composable
 fun PillBadge(
     text: String,
     modifier: Modifier = Modifier,
     background: Brush = TibetanTokens.GoldVertical,
     textColor: Color = TibetanColors.Espresso,
+    fixedSize: Boolean = false,
 ) {
+    val fontSize = if (fixedSize) with(LocalDensity.current) { 10.5.dp.toSp() } else 10.5.sp
     Box(
         modifier = modifier
             .clip(TibetanTokens.Pill)
@@ -205,7 +214,7 @@ fun PillBadge(
             .padding(horizontal = 9.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = textColor, fontSize = 10.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp)
+        Text(text, color = textColor, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp)
     }
 }
 
@@ -225,11 +234,15 @@ fun GoldButton(
             .alpha(if (enabled) 1f else 0.5f)
             .clip(RoundedCornerShape(15.dp))
             .background(brush)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 15.dp),
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 15.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = TibetanColors.Espresso, fontSize = fontSize, fontWeight = FontWeight.ExtraBold)
+        Text(
+            text,
+            color = TibetanColors.Espresso, fontSize = fontSize, fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -265,7 +278,7 @@ fun BackHeader(
                 .padding(4.dp)
                 .size(23.dp),
         )
-        Text(title, color = titleColor, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+        Text(title, color = titleColor, fontSize = 19.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
     }
 }
 

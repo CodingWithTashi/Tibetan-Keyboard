@@ -7,7 +7,10 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
+import android.os.Build
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
@@ -48,6 +51,10 @@ class AIKeyboardView @JvmOverloads constructor(
     private lateinit var proChatBtn: ImageView
     private lateinit var proAutoBtn: ImageView
     private lateinit var proTranslateBtn: ImageView
+    private lateinit var proPromptBar: View
+    private lateinit var proPromptText: TextView
+    private lateinit var proPromptCta: View
+    private lateinit var proPromptClose: View
     private lateinit var normalKeyboardContainer: FrameLayout
     private lateinit var aiInterfaceContainer: LinearLayout
     private lateinit var aiBackBtn: ImageView
@@ -90,11 +97,22 @@ class AIKeyboardView @JvmOverloads constructor(
     /** The strip last laid out, so an unchanged premium re-post doesn't wipe the chips mid-typing. */
     private var appliedStrip: ProStripState? = null
 
+    /** The locked control the prompt bar is asking about; null while the normal bar shows. */
+    private var promptFor: KeyboardUpsell.Control? = null
+    private val promptTimeout = Runnable { hideProPrompt() }
+
+    /**
+     * `uptimeMillis` when a tap last swapped one bar for the other (the prompt appearing, or its
+     * close button putting the normal bar back); see [KeyboardUpsell.isStrayTap].
+     */
+    private var barSwappedAtMs = 0L
+
     // Kept as a field so we can removeObserver() on detach — the IME rebuilds this view on every
     // onStartInputView, and the LiveData lives on a process-wide singleton, so an un-removed
     // observeForever would leak every previous view (and run refreshStrip on detached views).
     private val premiumObserver = Observer<Boolean> { isPremium ->
         isPremiumUser = isPremium
+        if (isPremium) hideProPrompt()
         refreshStrip()
     }
 
@@ -106,6 +124,7 @@ class AIKeyboardView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         RevenueCatManager.getInstance().isPremiumUser.removeObserver(premiumObserver)
+        removeCallbacks(promptTimeout)
         super.onDetachedFromWindow()
     }
 
@@ -164,6 +183,50 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun suggestionMode(): SuggestionMode = suggestionQuota.mode(premiumOrNull(), canSell, dailyLimit())
 
+    /** A free user tapped a locked PRO control; see [KeyboardUpsell] for why the bar asks first. */
+    private fun onLockedTap(control: KeyboardUpsell.Control) {
+        if (isStrayTap()) return
+        val confirmFirst = RevenueCatManager.getInstance().remoteConfig.keyboardUpsellConfirm
+        when (KeyboardUpsell.onLockedTap(confirmFirst)) {
+            KeyboardUpsell.Action.OPEN_PAYWALL -> aiKeyboardInterface?.onUnlockPro(control.source)
+            KeyboardUpsell.Action.ASK_FIRST -> showProPrompt(control)
+        }
+    }
+
+    /** Swap the bar for the question. Same height, so the keys below don't move. */
+    /** The second tap of a double tap, landing on what the first tap put under the finger. */
+    private fun isStrayTap(): Boolean =
+        KeyboardUpsell.isStrayTap(SystemClock.uptimeMillis() - barSwappedAtMs)
+
+    private fun showProPrompt(control: KeyboardUpsell.Control) {
+        promptFor = control
+        barSwappedAtMs = SystemClock.uptimeMillis()
+        proPromptText.setText(
+            when (control) {
+                KeyboardUpsell.Control.PILL -> R.string.keyboard_pro_prompt
+                KeyboardUpsell.Control.CHAT -> R.string.keyboard_pro_prompt_chat
+                KeyboardUpsell.Control.TRANSLATE -> R.string.keyboard_pro_prompt_translate
+                KeyboardUpsell.Control.AUTOCOMPLETE,
+                KeyboardUpsell.Control.LOCKED_SUGGESTION -> R.string.keyboard_pro_prompt_suggestions
+            }
+        )
+        aiToolbar.visibility = View.GONE
+        proPromptBar.visibility = View.VISIBLE
+        AppAnalytics.logKeyboardProPromptShown(control.source)
+        removeCallbacks(promptTimeout)
+        postDelayed(promptTimeout, KeyboardUpsell.PROMPT_TIMEOUT_MS)
+    }
+
+    /** Back to the normal bar: closed, answered, timed out, or the user went on typing. */
+    private fun hideProPrompt() {
+        if (promptFor == null) return
+        promptFor = null
+        removeCallbacks(promptTimeout)
+        proPromptBar.visibility = View.GONE
+        // The AI panel hides the bar while it is open and brings it back itself.
+        if (aiInterfaceContainer.visibility != View.VISIBLE) aiToolbar.visibility = View.VISIBLE
+    }
+
     /**
      * Lift the whole keyboard above the system's IME navigation bar (the hide-keyboard
      * arrow on the left and the switch-input globe on the right). Without this the root
@@ -178,20 +241,31 @@ class AIKeyboardView @JvmOverloads constructor(
      * reopen-collapse and the over-padding from the resource fallback.
      */
     private fun applyBottomInsetPadding() {
-        val base = if (cachedNavInset >= 0) cachedNavInset else systemNavBarHeight()
+        // Remembered per orientation: turned on its side a phone's bar is a different height,
+        // or moves to the side edge, and the upright value would leave a gap under the keys.
+        val side = if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
+        val base = if (cachedNavInset[side] >= 0) cachedNavInset[side] else systemNavBarHeight()
         updatePadding(bottom = base + EXTRA_BOTTOM_GAP_PX)
         ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
             val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            if (navBars.bottom > 0) cachedNavInset = navBars.bottom
-            val resolved = if (cachedNavInset >= 0) cachedNavInset else navBars.bottom
+            if (navBars.bottom > 0) cachedNavInset[side] = navBars.bottom
+            val resolved = if (cachedNavInset[side] >= 0) cachedNavInset[side] else navBars.bottom
             v.updatePadding(bottom = resolved + EXTRA_BOTTOM_GAP_PX)
             insets
         }
         ViewCompat.requestApplyInsets(this)
     }
 
-    /** Fallback only, used before any real inset arrives; over-reports on gesture nav. */
+    /**
+     * Fallback only, used before any real inset arrives; over-reports on gesture nav.
+     *
+     * Zero before Android 15. There the system lays the keyboard out above the navigation bar
+     * and hands this view no inset at all, so the guess was never corrected: it stayed as an
+     * empty band, as high as the bar, under the keys of every older phone. From Android 15 the
+     * keyboard's window runs under the bar (edge to edge is enforced for `targetSdk` 35+).
+     */
     private fun systemNavBarHeight(): Int {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return 0
         val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
         return if (resId > 0) resources.getDimensionPixelSize(resId)
         else (16 * resources.displayMetrics.density).toInt()
@@ -208,8 +282,17 @@ class AIKeyboardView @JvmOverloads constructor(
         proChatBtn = findViewById(R.id.pro_chat_btn)
         proAutoBtn = findViewById(R.id.pro_auto_btn)
         proTranslateBtn = findViewById(R.id.pro_translate_btn)
+        proPromptBar = findViewById(R.id.pro_prompt_bar)
+        proPromptText = findViewById(R.id.pro_prompt_text)
+        proPromptCta = findViewById(R.id.pro_prompt_cta)
+        proPromptClose = findViewById(R.id.pro_prompt_close)
         normalKeyboardContainer = findViewById(R.id.normal_keyboard_container)
         aiInterfaceContainer = findViewById(R.id.ai_interface_container)
+        // The panel takes the place of the bar and the keys at their height on this screen
+        // (the layout's 360dp where the rows are the declared 60dp), so it never outgrows a
+        // short screen and opening it does not move the keyboard's top edge.
+        aiInterfaceContainer.layoutParams.height =
+            (KeyboardSizing.panelHeightDp(keyHeightDpFor(context)) * resources.displayMetrics.density).toInt()
         aiBackBtn = findViewById(R.id.ai_back_btn)
         aiTitleText = findViewById(R.id.ai_title_text)
         aiInrBtn = findViewById(R.id.ai_inner_btn)
@@ -235,9 +318,7 @@ class AIKeyboardView @JvmOverloads constructor(
             }
             aiKeyboardInterface?.onSuggestionSelected(word, suggestionsMatched)
         }
-        suggestionStrip.onLockedSuggestionClick = {
-            aiKeyboardInterface?.onUnlockPro(AppAnalytics.UpgradeSource.KEYBOARD_SUGGESTIONS)
-        }
+        suggestionStrip.onLockedSuggestionClick = { onLockedTap(KeyboardUpsell.Control.LOCKED_SUGGESTION) }
     }
 
     private fun setupClickListeners() {
@@ -245,22 +326,35 @@ class AIKeyboardView @JvmOverloads constructor(
         streakChip.setOnClickListener { aiKeyboardInterface?.onOpenJourney() }
 
         // Gold upsell pill — free users only (hidden for PRO).
-        proPill.setOnClickListener { aiKeyboardInterface?.onUnlockPro() }
+        proPill.setOnClickListener { onLockedTap(KeyboardUpsell.Control.PILL) }
 
         // AI Chat — PRO opens the chat screen; free routes to unlock.
         proChatBtn.setOnClickListener {
-            if (isPremiumUser) aiKeyboardInterface?.onOpenChat() else aiKeyboardInterface?.onUnlockPro()
+            if (isPremiumUser) aiKeyboardInterface?.onOpenChat() else onLockedTap(KeyboardUpsell.Control.CHAT)
         }
 
         // Autocomplete — shown to free users only, once today's free suggestions are used.
-        proAutoBtn.setOnClickListener {
-            aiKeyboardInterface?.onUnlockPro(AppAnalytics.UpgradeSource.KEYBOARD_SUGGESTIONS)
+        proAutoBtn.setOnClickListener { onLockedTap(KeyboardUpsell.Control.AUTOCOMPLETE) }
+
+        // The prompt bar: only "See plans" opens the paywall, and not on the second tap of a
+        // double tap on the icon it has just covered.
+        proPromptCta.setOnClickListener {
+            val control = promptFor ?: return@setOnClickListener
+            if (isStrayTap()) return@setOnClickListener
+            hideProPrompt()
+            aiKeyboardInterface?.onUnlockPro(control.source)
+        }
+        proPromptClose.setOnClickListener {
+            if (isStrayTap()) return@setOnClickListener
+            hideProPrompt()
+            // The translate icon is back under the finger now.
+            barSwappedAtMs = SystemClock.uptimeMillis()
         }
 
         // Translate — PRO opens the translate panel; free routes to unlock.
         proTranslateBtn.setOnClickListener {
             if (!isPremiumUser) {
-                aiKeyboardInterface?.onUnlockPro()
+                onLockedTap(KeyboardUpsell.Control.TRANSLATE)
                 return@setOnClickListener
             }
             val currentText = getCurrentInputText()
@@ -376,6 +470,7 @@ class AIKeyboardView @JvmOverloads constructor(
         // matches the keyboard surface rather than showing the lighter root brown.
         setBackgroundColor(surface)
         aiToolbar.setBackgroundColor(surface)
+        proPromptBar.setBackgroundColor(surface)
         suggestionStrip.setThemeColor(surface)
         // The translate/grammar panel keeps a fixed espresso look from XML; its Replace button is
         // dark-on-gold, so no runtime text-colour override is needed here.
@@ -582,6 +677,7 @@ class AIKeyboardView @JvmOverloads constructor(
         get() = 26 * resources.displayMetrics.density
 
     private fun showAIInterface() {
+        hideProPrompt()
         // Hide the top bar (suggestion strip is a child of it now) so the panel is the single,
         // cohesive surface — its own header takes over.
         aiToolbar.visibility = View.GONE
@@ -622,6 +718,8 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     fun updateSuggestions(prefix: String) {
+        // Every keystroke lands here: someone who goes on typing has answered the question.
+        hideProPrompt()
         val engine = suggestionEngine
         if (engine == null) {
             Log.d(TAG, "updateSuggestions: engine not loaded yet, prefix='$prefix'")
@@ -694,9 +792,11 @@ class AIKeyboardView @JvmOverloads constructor(
         @Volatile
         private var sharedEngine: SuggestionEngine? = null
 
-        /** Last real navigation-bar inset, remembered across IME view rebuilds. -1 = unknown. */
-        @Volatile
-        private var cachedNavInset = -1
+        /**
+         * Last real navigation-bar inset, remembered across IME view rebuilds: upright at 0,
+         * on its side at 1. -1 = unknown.
+         */
+        private val cachedNavInset = intArrayOf(-1, -1)
 
         /**
          * Read-only access to the process-wide dictionary for callers outside the suggestion

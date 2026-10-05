@@ -3,8 +3,12 @@ package com.kharagedition.tibetankeyboard.app
 import android.app.Activity
 import android.app.Application
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
 import androidx.work.Configuration
@@ -53,6 +57,7 @@ class TibetanKeyboardApp : Application(), Configuration.Provider {
         // Per-user activity aggregates (users/{uid}.activity) — drives the "most active users"
         // Firestore query. Throttled to one write/user/day, so resuming any screen is cheap.
         registerActivityLifecycleCallbacks(activityTracker)
+        registerActivityLifecycleCallbacks(edgeToEdge)
         // setup RevenueCat
         setUpRevenueCat()
         val enableEventNotification = prefs.getBoolean("event_notification", true)
@@ -99,5 +104,36 @@ class TibetanKeyboardApp : Application(), Configuration.Provider {
         override fun onActivityStopped(activity: Activity) {}
         override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
         override fun onActivityDestroyed(activity: Activity) {}
+    }
+
+    /**
+     * Every screen of ours draws behind transparent system bars, with light bar icons for the
+     * dark-warm design. Android 15+ does this to the app anyway (`targetSdk` 35+); older versions
+     * otherwise keep a coloured status bar and a black navigation bar around the same screens.
+     * The screens stay clear of the bars themselves (see `ScreenScaffold`).
+     *
+     * Runs inside `super.onCreate()`, so before any `setContent`. Other libraries' activities
+     * (ads, Google sign-in) are left as they are.
+     */
+    private val edgeToEdge = object : ActivityLifecycleCallbacks {
+        private val bars = SystemBarStyle.dark(Color.TRANSPARENT)
+
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+            if (activity is ComponentActivity && activity.javaClass.name.startsWith(OWN_PACKAGE)) {
+                activity.enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+            }
+        }
+
+        override fun onActivityStarted(activity: Activity) {}
+        override fun onActivityResumed(activity: Activity) {}
+        override fun onActivityPaused(activity: Activity) {}
+        override fun onActivityStopped(activity: Activity) {}
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+        override fun onActivityDestroyed(activity: Activity) {}
+    }
+
+    private companion object {
+        /** Our own classes; the debug build's application id may differ, their package does not. */
+        const val OWN_PACKAGE = "com.kharagedition.tibetankeyboard."
     }
 }

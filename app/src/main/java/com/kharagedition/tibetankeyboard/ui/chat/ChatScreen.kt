@@ -10,12 +10,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -77,8 +78,8 @@ fun ChatScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(TibetanColors.Bg900)
-            .statusBarsPadding()
-            .imePadding()
+            // Bars, the cutout (on a side in landscape) and the keyboard, as in ScreenScaffold.
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         ChatHeader(model, actions)
 
@@ -231,7 +232,6 @@ private fun ChatInput(enabled: Boolean, onSubmit: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Row(
@@ -241,7 +241,8 @@ private fun ChatInput(enabled: Boolean, onSubmit: (String) -> Unit) {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(46.dp)
+                    // A minimum: Tibetan stacks at a large font size are taller than 46dp.
+                    .heightIn(min = 46.dp)
                     .clip(RoundedCornerShape(23.dp))
                     .background(TibetanColors.Brown700)
                     .border(1.dp, if (overLimit) TibetanColors.MaroonSoft else TibetanColors.Line2, RoundedCornerShape(23.dp))

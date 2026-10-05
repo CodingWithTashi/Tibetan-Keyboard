@@ -193,20 +193,39 @@ class EmojiKeyboardView @JvmOverloads constructor(
 
     private fun enterSearchMode() {
         isSearchMode = true
-        val layoutParams = emojiRecyclerView.layoutParams
-        layoutParams.height = (120 * context.resources.displayMetrics.density).toInt()
-        emojiRecyclerView.layoutParams = layoutParams
+        sizeGrid()
         searchKeyboardContainer.visibility = View.VISIBLE
         showSearchKeyboardListener?.invoke()
     }
 
     private fun exitSearchMode() {
         isSearchMode = false
-        val layoutParams = emojiRecyclerView.layoutParams
-        layoutParams.height = (200 * context.resources.displayMetrics.density).toInt()
-        emojiRecyclerView.layoutParams = layoutParams
+        sizeGrid()
         searchKeyboardContainer.visibility = View.GONE
         hideSearchKeyboardListener?.invoke()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        // The keyboard service keeps this view and shows it again after the phone is turned,
+        // so it is sized each time it goes on screen, not once.
+        sizeGrid()
+    }
+
+    /**
+     * The grid is as tall as this screen has room for (see [KeyboardSizing]): the layout's 200dp,
+     * or 120dp while the search keyboard is up, where the key rows are their declared height,
+     * less on a short screen or a phone on its side. There the category row also makes way for
+     * the search keyboard, so the search field stays on screen.
+     */
+    private fun sizeGrid() {
+        val keyHeightDp = keyHeightDpFor(context)
+        val layoutParams = emojiRecyclerView.layoutParams
+        layoutParams.height =
+            (KeyboardSizing.emojiGridHeightDp(keyHeightDp, isSearchMode) * resources.displayMetrics.density).toInt()
+        emojiRecyclerView.layoutParams = layoutParams
+        categoryRecyclerView.visibility =
+            if (isSearchMode && KeyboardSizing.isCompact(keyHeightDp)) View.GONE else View.VISIBLE
     }
 
     private fun insertTextInSearch(text: String) {

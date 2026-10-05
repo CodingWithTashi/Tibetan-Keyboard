@@ -12,8 +12,12 @@
     <string name="setup_enable_keyboard">Enable Dzongkha Keyboard</string>
     <string name="setup_coach_step1_title">Turn on Dzongkha Keyboard</string>
     <string name="setup_coach_step1_desc">Tap here to open your phone\'s keyboard settings, then switch on Dzongkha Keyboard in the list.</string>
+    <string name="setup_enable_toast">Switch on Dzongkha Keyboard and tap OK, then go back to the app.</string>
+    <string name="setup_enable_toast_returns">Switch on Dzongkha Keyboard, then tap OK.</string>
     <string name="setup_coach_step2_title">Switch to Dzongkha Keyboard</string>
     <string name="setup_coach_step2_desc">Tap here, then pick Dzongkha Keyboard from the popup to start typing.</string>
+    <string name="setup_try_working">Working — you\'re typing in Dzongkha Keyboard.</string>
+    <string name="setup_try_wrong_keyboard">That\'s a different keyboard. Tap “Switch keyboard” below to pick Dzongkha Keyboard.</string>
     <string name="online_tibetan">Online · Dzongkha</string>
     <string name="premium_title">Dzongkha Keyboard PRO</string>
     <string name="lang_tibetan">Dzongkha</string>

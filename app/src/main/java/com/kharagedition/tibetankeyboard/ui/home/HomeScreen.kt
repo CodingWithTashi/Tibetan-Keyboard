@@ -7,13 +7,24 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -22,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,11 +45,14 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,6 +66,7 @@ import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.BoText
 import com.kharagedition.tibetankeyboard.ui.compose.components.IconTile
 import com.kharagedition.tibetankeyboard.ui.compose.components.PillBadge
+import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenMaxWidth
 import com.kharagedition.tibetankeyboard.ui.compose.components.ScreenScaffold
 import com.kharagedition.tibetankeyboard.ui.compose.components.SectionLabel
 import com.kharagedition.tibetankeyboard.ui.compose.components.TapTargetPrompt
@@ -132,8 +148,13 @@ fun HomeScreen(
     }
     val showPrompt = activeStep != null && activeStep !in dismissed && activeBounds != null && ready
 
+    // The update banner floats over the screen, so the content ends above it: the last card
+    // scrolls clear of the banner instead of staying under it.
+    var bannerHeightPx by remember { mutableIntStateOf(0) }
+    val bannerSpace = if (showUpdateBanner) with(LocalDensity.current) { bannerHeightPx.toDp() } else 0.dp
+
     Box(modifier = Modifier.fillMaxSize()) {
-        ScreenScaffold(horizontalPadding = 18.dp) {
+        ScreenScaffold(horizontalPadding = 18.dp, bottomPadding = 24.dp + bannerSpace) {
             Spacer(Modifier.height(8.dp))
             BrandHeader(state.account, onSignIn = actions.onSignIn, onAccount = actions.onAccount)
             Spacer(Modifier.height(18.dp))
@@ -196,7 +217,16 @@ fun HomeScreen(
         if (showUpdateBanner) {
             UpdateReadyBanner(
                 onInstall = onInstallUpdate,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    // Above the navigation bar (48dp of buttons on three-button phones) and
+                    // beside the cutout. Not above the keyboard: it stays behind it.
+                    .windowInsetsPadding(
+                        WindowInsets.systemBars.union(WindowInsets.displayCutout)
+                            .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                    )
+                    .widthIn(max = ScreenMaxWidth)
+                    .onSizeChanged { bannerHeightPx = it.height },
             )
         }
     }
@@ -225,8 +255,18 @@ private fun UpdateReadyBanner(onInstall: () -> Unit, modifier: Modifier = Modifi
             Icon(AppIcons.Download, null, tint = TibetanColors.Espresso, modifier = Modifier.size(20.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text("Update Ready to Install", color = TibetanColors.Espresso, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text("Tap here to apply the latest update", color = TibetanColors.Espresso.copy(alpha = 0.72f), fontSize = 12.sp)
+            // Two lines each at most: at the largest font sizes the banner otherwise grows over
+            // half of a small screen.
+            Text(
+                "Update Ready to Install",
+                color = TibetanColors.Espresso, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                maxLines = 2, overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                "Tap here to apply the latest update",
+                color = TibetanColors.Espresso.copy(alpha = 0.72f), fontSize = 12.sp,
+                maxLines = 2, overflow = TextOverflow.Ellipsis,
+            )
         }
         Box(
             modifier = Modifier
@@ -260,10 +300,12 @@ private fun BrandHeader(account: HomeAccount?, onSignIn: () -> Unit, onAccount: 
             )
         }
         Column(Modifier.weight(1f)) {
+            // Two lines before it is cut: beside "Sign in" the name does not fit on one line on
+            // a narrow phone or at a large font size, and a clipped name reads as broken.
             Text(
                 stringResource(R.string.app_name),
                 color = TibetanColors.Cream, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                lineHeight = 22.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
             BoText(stringResource(R.string.bo_app_name), color = TibetanColors.CreamDim, fontSize = 13.sp)
         }
@@ -279,17 +321,28 @@ private fun BrandHeader(account: HomeAccount?, onSignIn: () -> Unit, onAccount: 
 @Composable
 private fun AccountControl(account: HomeAccount?, onSignIn: () -> Unit, onAccount: () -> Unit) {
     if (account == null) {
+        // At the largest font sizes the label would take half the row and break the app's name
+        // in mid-word; the icon alone keeps the button and its place.
+        val iconOnly = LocalDensity.current.fontScale >= 1.5f
+        val signIn = stringResource(R.string.sign_in)
         Row(
             modifier = Modifier
                 .clip(TibetanTokens.Pill)
                 .border(1.dp, TibetanColors.Gold400.copy(alpha = 0.7f), TibetanTokens.Pill)
-                .clickable(role = Role.Button, onClick = onSignIn)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .clickable(onClickLabel = signIn, role = Role.Button, onClick = onSignIn)
+                .padding(horizontal = if (iconOnly) 11.dp else 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Icon(AppIcons.Person, null, tint = TibetanColors.Gold300, modifier = Modifier.size(17.dp))
-            Text(stringResource(R.string.sign_in), color = TibetanColors.Gold300, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Icon(
+                AppIcons.Person,
+                contentDescription = if (iconOnly) signIn else null,
+                tint = TibetanColors.Gold300,
+                modifier = Modifier.size(if (iconOnly) 20.dp else 17.dp),
+            )
+            if (!iconOnly) {
+                Text(signIn, color = TibetanColors.Gold300, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
         }
     } else {
         AccountAvatar(
@@ -443,9 +496,14 @@ private fun QuickActionsGrid(state: HomeUiState, actions: HomeActions) {
     )
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
         items.chunked(3).forEach { rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(11.dp)) {
+            // One height per row: a label that wraps ("AI Translate" on a narrow phone or at a
+            // large font size) would otherwise leave its card taller than its neighbours.
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(11.dp),
+            ) {
                 rowItems.forEach { item ->
-                    QuickActionCard(item, modifier = Modifier.weight(1f))
+                    QuickActionCard(item, modifier = Modifier.weight(1f).fillMaxHeight())
                 }
             }
         }
@@ -459,19 +517,30 @@ private fun QuickActionCard(item: QuickAction, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(16.dp))
             .background(TibetanColors.Brown700)
             .border(1.dp, TibetanColors.Line, RoundedCornerShape(16.dp))
-            .clickable(onClick = item.onClick)
-            .padding(start = 8.dp, end = 8.dp, top = 15.dp, bottom = 12.dp),
+            .clickable(onClick = item.onClick),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 6.dp, end = 6.dp, top = 15.dp, bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(9.dp),
         ) {
             IconTile(item.icon, size = 42.dp, iconSize = 21.dp)
-            Text(item.label, color = TibetanColors.Cream2, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                item.label,
+                color = TibetanColors.Cream2, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis,
+            )
         }
         if (item.tag != null) {
-            PillBadge(item.tag, modifier = Modifier.align(Alignment.TopEnd))
+            // Tucked into the corner of the card at a fixed size, so it stays off the icon on
+            // the narrowest cards (87dp on a 320dp phone) and at any font size.
+            PillBadge(
+                item.tag,
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 4.dp, end = 4.dp),
+                fixedSize = true,
+            )
         }
     }
 }
@@ -605,11 +674,13 @@ private fun TestKeyboardField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                // A minimum, not a height: stacked Tibetan letters, a second line or a large
+                // font size make the text taller than the box used to be.
+                .heightIn(min = 52.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(TibetanColors.Bg800)
                 .border(1.dp, TibetanColors.Line2, RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
             if (text.isEmpty()) {

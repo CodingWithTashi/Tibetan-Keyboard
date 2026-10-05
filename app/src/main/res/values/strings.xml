@@ -82,6 +82,12 @@
     <string name="translate">Translate</string>
     <string name="pro_badge">PRO</string>
     <string name="unlock_pro">Unlock PRO</string>
+    <!-- The keyboard bar asks before opening the paywall: a tap right above the keys is often a slip -->
+    <string name="keyboard_pro_prompt">PRO adds AI chat, translation and unlimited suggestions.</string>
+    <string name="keyboard_pro_prompt_chat">AI Chat is a PRO feature.</string>
+    <string name="keyboard_pro_prompt_translate">Translate is a PRO feature.</string>
+    <string name="keyboard_pro_prompt_suggestions">You\'ve used today\'s free suggestions.</string>
+    <string name="keyboard_pro_prompt_cta">See plans</string>
     <string name="cd_ai_chat">AI Chat</string>
     <string name="cd_autocomplete">Autocomplete</string>
     <string name="translate_original">ORIGINAL</string>
@@ -236,6 +242,11 @@
     <string name="setup_coach_step2_title">Switch to Tibetan Keyboard</string>
     <string name="setup_coach_step2_desc">Tap here, then pick Tibetan Keyboard from the popup to start typing.</string>
     <string name="setup_coach_got_it">Got it</string>
+    <!-- Shown over the system's keyboard list, the one setup screen the app can't draw on. The
+         "returns" one is for Android versions where the app comes back by itself: telling the
+         user to go back there would make them press Back on the app they have just returned to. -->
+    <string name="setup_enable_toast">Switch on Tibetan Keyboard and tap OK, then go back to the app.</string>
+    <string name="setup_enable_toast_returns">Switch on Tibetan Keyboard, then tap OK.</string>
     <!-- Try-it field: the only place the user can prove the keyboard works without leaving the app -->
     <string name="setup_try_working">Working — you\'re typing in Tibetan Keyboard.</string>
     <string name="setup_try_wrong_keyboard">That\'s a different keyboard. Tap \u201cSwitch keyboard\u201d below to pick Tibetan Keyboard.</string>

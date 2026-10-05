@@ -26,8 +26,9 @@ abstract class InputMethodActivity : AppCompatActivity() {
     }
 
     private var mState = 0
-    protected fun pickInput() {
-        AppAnalytics.logKeyboardPickerOpened()
+    /** [trigger] is an [AppAnalytics.PickerTrigger]: what opened the picker (analytics only). */
+    protected fun pickInput(trigger: String = AppAnalytics.PickerTrigger.TAP) {
+        AppAnalytics.logKeyboardPickerOpened(trigger)
         val imm: InputMethodManager =
             applicationContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showInputMethodPicker()

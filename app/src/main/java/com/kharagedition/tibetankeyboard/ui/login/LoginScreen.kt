@@ -1,5 +1,6 @@
 package com.kharagedition.tibetankeyboard.ui.login
 
+import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,11 +24,13 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -35,6 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import com.kharagedition.tibetankeyboard.R
 import com.kharagedition.tibetankeyboard.ui.compose.components.AppIcons
 import com.kharagedition.tibetankeyboard.ui.compose.components.IconTile
@@ -78,6 +83,7 @@ fun LoginScreen(
         scrimColor = TibetanColors.Espresso.copy(alpha = 0.72f),
         dragHandle = { SheetHandle() },
     ) {
+        SheetNavigationBar()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -114,6 +120,23 @@ fun LoginScreen(
             Spacer(Modifier.height(14.dp))
             LegalLine(onTerms = onTerms, onPrivacy = onPrivacy)
         }
+    }
+}
+
+/**
+ * The sheet is a window of its own, and on a phone with navigation buttons the system painted
+ * that window's bar as a pale strip (its contrast scrim) under the dark sheet. Let the sheet's
+ * own colour run behind the buttons, and keep them light.
+ */
+@Composable
+private fun SheetNavigationBar() {
+    val view = LocalView.current
+    SideEffect {
+        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
+        @Suppress("DEPRECATION") // No effect from Android 15, where the bar is transparent anyway.
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
     }
 }
 

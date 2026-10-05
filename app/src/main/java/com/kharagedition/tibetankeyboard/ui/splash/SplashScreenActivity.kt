@@ -78,6 +78,11 @@ class SplashScreenActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper()).postDelayed({
             val forceUpdate = intent?.getBooleanExtra(MyFirebaseMessagingService.EXTRA_FORCE_UPDATE, false) == true
             startActivity(Intent(this, HomeActivity::class.java).apply {
+                // Reuse a Home already in this task rather than stacking a second one. One is
+                // there when the user left the system keyboard settings (setup step 1, opened
+                // inside this task below Android 15) with the Home button and tapped the icon
+                // again; this also clears that settings screen from above it.
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 if (forceUpdate) putExtra(MyFirebaseMessagingService.EXTRA_FORCE_UPDATE, true)
             })
             finish()

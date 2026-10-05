@@ -30,8 +30,11 @@ npm run deploy    # Deploy to Firebase Functions (asia-south1)
 > referenced deleted Grammar classes, was removed). It holds **pure JVM tests** for the
 > conversion-critical decision logic — `ProStripState` (free-vs-PRO strip), `WordComposer`
 > (suggestion tap / tsheg rules), `UnlockRouter` (auth→paywall routing), `PostLoginDestination`
-> (post-login routing), and `KeyboardLayoutTest` (guards the removed "+"/`-20` key across all
-> `res/xml` layouts). Keep view/IME/RevenueCat-SDK behaviour out of these (no mockito/Robolectric);
+> (post-login routing), `EnableTrip` (coming back from the system keyboard settings),
+> `KeyboardUpsell` (the keyboard bar asks before the paywall), `KeyboardSizing` (how tall the
+> keyboard is on each screen), and `KeyboardLayoutTest` (guards
+> the removed "+"/`-20` key across all `res/xml` layouts). Keep view/IME/RevenueCat-SDK behaviour
+> out of these (no mockito/Robolectric);
 > test it by extracting the decision into a pure unit (see those classes) or via on-device
 > verification. `:botok:test` remains the tokenizer suite.
 
@@ -78,6 +81,20 @@ View-based UI left is the **IME keyboard** (see below) and ad views embedded via
 - Tibetan text uses **Uchen** (block) via the **system font** (`FontFamily.Default` → Noto Sans
   Tibetan). Do NOT bundle `jomolhari_regular.ttf` (it's a 0-byte/corrupt file and crashes
   Compose's font loader); never use the cursive Ume face.
+- Line height follows the font size: `Text` defaults to `UiLineHeight` (1.4em), `BoText` to
+  `TibetanLineHeight` (1.6em). Screens set `fontSize` inline, and Material's fixed 24sp made
+  wrapped captions look double-spaced. Set `lineHeight` only where a block needs its own.
+
+**Every screen size.** Screens are checked at 320dp wide, at 130% and 200% font size, in
+landscape, and on Android 12 with three navigation buttons, not only on a Pixel:
+- No fixed `height` around text: use `heightIn(min = …)`, so a large font size or stacked Tibetan
+  letters grow the box instead of being cut off.
+- Text beside other content wraps or ends in an ellipsis on purpose (`maxLines` + `overflow`);
+  cards in one `Row` share a height (`IntrinsicSize.Max` + `fillMaxHeight`).
+- A badge pinned over other content uses `PillBadge(fixedSize = true)`.
+- `TibetanKeyboardApp` makes every activity of ours edge to edge on every Android version, and
+  the theme's `windowBackground` is the screens' own colour, so launch and screen changes never
+  flash a lighter window.
 
 ### MVVM conventions (follow these for new screens)
 
@@ -91,9 +108,11 @@ View-based UI left is the **IME keyboard** (see below) and ad views embedded via
   queries, `ActivityResultLauncher` (Google sign-in), `RevenueCatManager.purchasePremium(activity)`,
   ad `AndroidView`s, intents/navigation. This is correct MVVM — those APIs require an Activity, so
   they do **not** belong in a ViewModel.
-- Reuse `ScreenScaffold { … }` for scrollable screens (handles full-bleed background + status/nav
-  bar insets + scroll). `targetSdk 36` forces edge-to-edge, so **always** consume insets or content
-  draws under the status bar.
+- Reuse `ScreenScaffold { … }` for screens (full-bleed background, scroll, and insets for the
+  system bars, the display cutout and the keyboard; content stays a centred column of at most
+  `ScreenMaxWidth` on tablets and in landscape). Every screen is edge to edge, so one that does
+  not use it must consume `WindowInsets.safeDrawing` itself (see `ChatScreen`). An activity with a
+  text field declares `adjustResize`; the scaffold then scrolls the field above the keyboard.
 - Build `RevenueCatManager.SubscriptionCallback`s with `subscriptionCallback(onSuccess =, onError =)`
   rather than hand-written anonymous objects.
 - **Strings**: user-facing UI chrome lives in `res/values/strings.xml` via `stringResource(...)`.
@@ -106,6 +125,37 @@ Compose screen (collectAsStateWithLifecycle)
 ViewModel  ──── Repository.apiCall() [Coroutine on IO] ──→ Retrofit → Backend
 ```
 
+### Keyboard setup (Home)
+
+Two steps on Home: switch the keyboard on in the system settings, then pick it.
+- Step 1 leaves the app. `EnableTrip` (pure, unit-tested) follows the trip: `HomeActivity` polls
+  the enabled-keyboards list and logs `keyboard_enabled` the moment the keyboard is switched on,
+  while the user is still away. Once they are back, the ViewModel asks for the picker so step 2
+  needs no tap. The trip is kept in saved instance state, so a process killed mid-trip still
+  opens the picker.
+- Home comes back **by itself** only below Android 15. There the settings screen is opened
+  without `NEW_TASK` (and with no other flag: nothing may change how the system screen itself
+  behaves), and the platform lets an app start an activity when it has one in the task on screen
+  (`BackgroundLaunchProcessController`: "process has activity in foreground task"; the public
+  list of exceptions no longer names it). From Android 15 the activity security model can refuse
+  an app covering a system screen from below, so there the settings keep their own task, as
+  before, and the user comes back unaided. Never drop `NEW_TASK` on those versions.
+- Two consequences of the in-task screen, both handled: a user who leaves it with the Home
+  button and taps the icon again gets a new Splash, which reuses the existing Home
+  (`CLEAR_TOP|SINGLE_TOP`) and so clears the leftover screen instead of stacking a second Home;
+  and for 2.5 s after Home brought itself back it swallows Back, because a press meant for the
+  settings screen would close the app (Home is the bottom of its task). The toast over the
+  settings screen says "go back to the app" only where Home will not come back by itself.
+- Funnel: `keyboard_enable_clicked` → `keyboard_enabled` (`method`: `setup` / `other`) →
+  `keyboard_picker_opened` (`method`: `auto_return` / `manual_return` / `tap`) →
+  `keyboard_setup_completed`. `keyboard_enabled` exists since 2.3.3; the last two are checked on
+  Home only. Since 2.3.3 `keyboard_picker_opened` also fires when Home opens the picker itself:
+  filter `method = tap` for "the user chose to". `auto_return` is exact (the intent Home sent
+  itself arrived), not a guess.
+- The IME service label is `@string/app_name`, so the system's keyboard list shows the name
+  setup tells people to switch on. `values-mcc402` renames the app "Dzongkha Keyboard" for
+  Bhutanese SIMs; never hard-code the label.
+
 ### IME Service Flow (View-based, NOT Compose)
 
 `TibetanKeyboard` (InputMethodService) rebuilds the keyboard on every `onStartInputView`, so
@@ -114,6 +164,19 @@ preference changes apply the next time the keyboard opens.
   container. AI features run **inside** this panel (`showAIInterface()`), not as separate screens.
 - `TibetanKeyboardView extends KeyboardView` — the typing surface. Custom `onDraw` paints the
   **Enter key gold** on top of any layout (visual only; key codes untouched).
+- `KeyboardSizing` (pure, unit-tested) decides how tall the keyboard is. `res/xml` declares 60dp
+  rows; `SizedKeyboard` loads every layout and only ever makes its rows shorter, at runtime, so
+  the bar and five rows take at most 47% of the screen's height upright and 60% on its side
+  (down to 34dp rows). A screen from 766dp high, upright, keeps 60dp. With fixed rows the
+  keyboard covered the whole screen in landscape. The AI panel and the emoji grid take their
+  heights from the same rule. Heights are of the whole screen (`getRealMetrics`):
+  `Resources.displayMetrics` counts the system bars only from Android 15.
+- Key labels follow the system font size up to 130% (`KeyboardSizing.labelFontScale`); past that
+  the views are built with a capped font scale (`TibetanKeyboard.keyboardContext`), because at
+  200% neighbouring letters ran into each other.
+- Bottom inset (`AIKeyboardView.applyBottomInsetPadding`): from Android 15 the keyboard's window
+  runs under the navigation bar and the view pads itself; before that the system keeps it above
+  the bar, so the fallback there is 0 (a non-zero one stayed as an empty band under the keys).
 - `SuggestionStripView` — Botok autocomplete; top suggestion gold, rest cream.
 - `WordComposer` (pure, unit-tested) decides what a suggestion tap does: it replaces only the part
   of the typed run the engine matched (`SuggestionEngine.suggest(...).matched`: the whole run, or
@@ -203,10 +266,19 @@ and `billing/`; keep new rules there. RevenueCat/Play ids live only in `subscrip
   `false`, which must not be read as "free" (no quota, no upsell for an unknown user).
 - The keyboard gives free users `SuggestionQuota` (20/day) live suggestions, then locked chips.
   The strip re-lays out only when its `ProStripState` changes.
+- A tap on a locked PRO control in the keyboard bar (pill, chat, translate, locked chip) does not
+  open the paywall: the bar asks first (`KeyboardUpsell`, event `keyboard_pro_prompt_shown`), and
+  only its "See plans" button logs `upgrade_clicked` and opens it. A tap right above the keys is
+  often a slip, and the paywall covers the app being typed in (2.3.3). The question's buttons
+  sit where the bar's icons are, so taps within half a second of the bar swapping are ignored.
+  **Analytics:** for sources `keyboard` and `keyboard_suggestions`, `upgrade_clicked` means "tapped
+  See plans" from 2.3.3 on, and "tapped a lock" before it or while `keyboard_upsell_confirm` is
+  `false`; do not compare its count across that line.
 - Home opens the paywall by itself via `OnboardingPaywallPolicy` (after setup, day 3, once for
   existing users). It is not an `upgrade_clicked`.
 - Dashboard switches (metadata on `pro_v2`, parsed by `subscription/RemoteConfig`), no release
-  needed: `free_suggestions_per_day`, `onboarding_paywall_enabled`, `web_checkout_countries`,
+  needed: `free_suggestions_per_day`, `onboarding_paywall_enabled`, `keyboard_upsell_confirm`
+  (`false` restores the direct paywall open), `web_checkout_countries`,
   `web_prices` (`{"monthly": 1.99}`), `web_annual_first_percent` (0 or 100 ends the test).
   `web_checkout_countries` can only remove countries: it is clamped to Play-unavailable ones.
   They arrive with the offerings, so where Play returns no products the defaults apply.
@@ -260,7 +332,8 @@ Claude, so they carry the same middleware chain.
 - **New screen?** `XxxActivity` (glue) + `XxxViewModel` (StateFlow state) + `XxxScreen` (stateless
   composable in `TibetanKeyboardTheme` + `ScreenScaffold`). Wrap callbacks in an `XxxActions` class.
 - **Touching the keyboard?** It "functions exact" — restyle drawables/`onDraw`/colours only; never
-  alter key codes, `onKey()` routing, or the `res/xml` key definitions.
+  alter key codes, `onKey()` routing, or the `res/xml` key definitions. Its size on a screen is
+  `KeyboardSizing`'s to decide: change the rule and its test, not the XML.
 - **Adding strings?** Check `strings.xml` for an existing key first (duplicate names fail the
   resource merge).
 - **Always device-verify Compose changes** (`installDebug` + screenshot), not just `assembleDebug` —

@@ -16,11 +16,13 @@ class RemoteConfigTest {
             mapOf(
                 RemoteConfig.META_FREE_SUGGESTIONS to 10,
                 RemoteConfig.META_ONBOARDING_ENABLED to false,
+                RemoteConfig.META_KEYBOARD_UPSELL_CONFIRM to false,
                 RemoteConfig.META_WEB_CHECKOUT_COUNTRIES to listOf("bt"),
             )
         )
         assertEquals(10, c.freeSuggestionsPerDay)
         assertEquals(false, c.onboardingPaywallEnabled)
+        assertEquals(false, c.keyboardUpsellConfirm)
         assertEquals(setOf("BT"), c.webCheckoutCountries)
     }
 
@@ -30,6 +32,7 @@ class RemoteConfigTest {
             mapOf(
                 RemoteConfig.META_FREE_SUGGESTIONS to -5,
                 RemoteConfig.META_ONBOARDING_ENABLED to "yes",
+                RemoteConfig.META_KEYBOARD_UPSELL_CONFIRM to "off",
                 RemoteConfig.META_WEB_CHECKOUT_COUNTRIES to 42,
             )
         )

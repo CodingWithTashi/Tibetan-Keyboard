@@ -120,6 +120,59 @@
 
     </LinearLayout>
 
+    <!-- Asks before the paywall when a free user taps a locked PRO control in the bar above
+         (AIKeyboardView.showProPrompt). It takes the bar's place at the same height, so the
+         keyboard never jumps; only "See plans" opens the paywall. -->
+    <LinearLayout
+        android:id="@+id/pro_prompt_bar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="#FF704C04"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp"
+        android:gravity="center_vertical"
+        android:elevation="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/pro_prompt_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/tk_cream"
+            android:textSize="12.5sp"
+            tools:text="@string/keyboard_pro_prompt" />
+
+        <TextView
+            android:id="@+id/pro_prompt_cta"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginStart="8dp"
+            android:gravity="center"
+            android:paddingHorizontal="14dp"
+            android:text="@string/keyboard_pro_prompt_cta"
+            android:textColor="#3A2606"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:background="@drawable/pro_pill_background"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
+            android:id="@+id/pro_prompt_close"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:padding="12dp"
+            android:src="@drawable/ic_close"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/close"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+    </LinearLayout>
+
     <!-- Main Keyboard Container - This will switch between normal keyboard and emoji keyboard -->
     <FrameLayout
         android:layout_width="match_parent"

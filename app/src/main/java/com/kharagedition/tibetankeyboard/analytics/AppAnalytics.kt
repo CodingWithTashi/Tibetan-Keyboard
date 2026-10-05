@@ -124,6 +124,14 @@ object AppAnalytics {
     /** An "unlock PRO" intent, before any login/paywall is shown. [source] is one of [UpgradeSource]. */
     fun logUpgradeClicked(source: String) = log(EVENT_UPGRADE_CLICKED, PARAM_SOURCE to source)
 
+    /**
+     * The keyboard bar asked "see plans?" after a tap on a locked PRO control, instead of opening
+     * the paywall. Against [logUpgradeClicked] for the same [source] it shows how many of those
+     * taps were meant.
+     */
+    fun logKeyboardProPromptShown(source: String) =
+        log(EVENT_KEYBOARD_PRO_PROMPT_SHOWN, PARAM_SOURCE to source)
+
     // Every event below carries the [UpgradeSource] that opened the paywall, so a sale can be
     // attributed to the gate that caused it.
 
@@ -242,7 +250,18 @@ object AppAnalytics {
 
     fun logKeyboardEnableClicked() = log(EVENT_KEYBOARD_ENABLE_CLICKED)
 
-    fun logKeyboardPickerOpened() = log(EVENT_KEYBOARD_PICKER_OPENED)
+    /**
+     * The keyboard is switched on in the system settings: the step between
+     * [logKeyboardEnableClicked] and [logKeyboardPickerOpened]. Once per install, and logged the
+     * moment it happens, while the user is still in the system settings, so it does not depend on
+     * them finding the way back. [method] is an `EnabledVia` label.
+     */
+    fun logKeyboardEnabled(method: String) =
+        log(EVENT_KEYBOARD_ENABLED, FirebaseAnalytics.Param.METHOD to method)
+
+    /** [trigger] is one of [PickerTrigger]: a tap, or Home opening it after the keyboard was switched on. */
+    fun logKeyboardPickerOpened(trigger: String = PickerTrigger.TAP) =
+        log(EVENT_KEYBOARD_PICKER_OPENED, FirebaseAnalytics.Param.METHOD to trigger)
 
     /** Keyboard enabled AND selected. Once per install — the funnel's missing endpoint. */
     fun logKeyboardSetupCompleted() = log(EVENT_KEYBOARD_SETUP_COMPLETED)
@@ -355,6 +374,7 @@ object AppAnalytics {
 
     private const val EVENT_FEATURE_GATE_SHOWN = "feature_gate_shown"
     private const val EVENT_UPGRADE_CLICKED = "upgrade_clicked"
+    private const val EVENT_KEYBOARD_PRO_PROMPT_SHOWN = "keyboard_pro_prompt_shown"
     private const val EVENT_PAYWALL_VIEWED = "paywall_viewed"
     private const val EVENT_PAYWALL_DISMISSED = "paywall_dismissed"
     private const val EVENT_PAYWALL_PLAN_SELECTED = "paywall_plan_selected"
@@ -381,6 +401,7 @@ object AppAnalytics {
     private const val EVENT_WEB_CHECKOUT_COMPLETED = "web_checkout_completed"
 
     private const val EVENT_KEYBOARD_ENABLE_CLICKED = "keyboard_enable_clicked"
+    private const val EVENT_KEYBOARD_ENABLED = "keyboard_enabled"
     private const val EVENT_KEYBOARD_PICKER_OPENED = "keyboard_picker_opened"
     private const val EVENT_KEYBOARD_SETUP_COMPLETED = "keyboard_setup_completed"
     private const val EVENT_KEYBOARD_TRYOUT_TYPED = "keyboard_tryout_typed"
@@ -434,6 +455,15 @@ object AppAnalytics {
 
     // Param values
     private const val METHOD_GOOGLE = "google"
+
+    /** What opened the keyboard picker, for [logKeyboardPickerOpened]. */
+    object PickerTrigger {
+        const val TAP = "tap"
+        /** Home came back by itself once the keyboard was switched on, then opened the picker. */
+        const val AUTO_RETURN = "auto_return"
+        /** The user came back from the system settings unaided; Home then opened the picker. */
+        const val MANUAL_RETURN = "manual_return"
+    }
 
     /** Stable feature labels for [logKeyboardAiUsed] / [logKeyboardAiApplied]. */
     object KeyboardFeature {

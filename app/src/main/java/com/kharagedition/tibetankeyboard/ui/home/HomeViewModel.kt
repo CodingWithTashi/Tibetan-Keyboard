@@ -1,6 +1,7 @@
 package com.kharagedition.tibetankeyboard.ui.home
 
 import android.app.Application
+import android.os.Build
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
@@ -51,6 +52,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     val openPaywall: Flow<OnboardingPaywallRequest> = _openPaywall.receiveAsFlow()
     private var onboardingCheckInFlight = false
 
+    /** Kept here, not in the Activity, so a rotation in the system settings doesn't lose the trip. */
+    private val enableTrip = EnableTrip(Build.VERSION.SDK_INT)
+
+    /** Whether Home may ask to come back from the system settings by itself; see [EnableTrip.bringsHomeBack]. */
+    val bringsHomeBack: Boolean get() = enableTrip.bringsHomeBack
+
+    /**
+     * One-shot "open the keyboard picker" requests: the user is back from switching the keyboard
+     * on. Each carries the [AppAnalytics.PickerTrigger] to log.
+     */
+    private val _openPicker = Channel<String>(Channel.CONFLATED)
+    val openPicker: Flow<String> = _openPicker.receiveAsFlow()
+
     init {
         premiumLiveData.observeForever(premiumObserver)
         RevenueCatManager.getInstance().refreshCustomerInfo()
@@ -68,9 +82,39 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         _uiState.update { it.copy(account = account) }
     }
 
-    /** Called by the Activity after it reads keyboard-enabled / default-IME status. */
-    fun refreshSetup(keyboardEnabled: Boolean, inputMethodSelected: Boolean) {
+    /** A trip to the system's keyboard settings is under way (saved by the Activity across process death). */
+    val enableTripPending: Boolean get() = enableTrip.pending
+
+    /** The user tapped setup step 1 and is leaving for the system's keyboard settings. */
+    fun onEnableTripStarted() = enableTrip.start()
+
+    /** The Activity's saved state says a trip was under way when the process died. */
+    fun restoreEnableTrip() = enableTrip.restore()
+
+    /** The intent Home sent itself to come back has arrived: the system let it return. */
+    fun onBroughtBack() = enableTrip.broughtBack()
+
+    /**
+     * Polled by the Activity while the user is in the system settings. True once: the keyboard
+     * has just been switched on. Logged right here, because the user may never find the way back.
+     */
+    fun sawKeyboardSwitchedOn(keyboardEnabled: Boolean): Boolean {
+        if (!enableTrip.sawSwitchedOn(keyboardEnabled)) return false
+        logKeyboardEnabledOnce(EnabledVia.SETUP)
+        return true
+    }
+
+    /**
+     * Called by the Activity after it reads keyboard-enabled / default-IME status. [homeInFront]
+     * marks the check Home makes as it comes to the front, which ends a trip to the system settings.
+     */
+    fun refreshSetup(keyboardEnabled: Boolean, inputMethodSelected: Boolean, homeInFront: Boolean = false) {
         _uiState.update { it.copy(keyboardEnabled = keyboardEnabled, inputMethodSelected = inputMethodSelected) }
+        if (homeInFront) {
+            val trip = enableTrip.finish(keyboardEnabled, inputMethodSelected)
+            trip.enabledVia?.let(::logKeyboardEnabledOnce)
+            trip.openPicker?.let { _openPicker.trySend(it) }
+        }
         val setupComplete = keyboardEnabled && inputMethodSelected
         rememberSetupStateBeforeOnboardingPaywall(setupComplete)
         if (setupComplete) {
@@ -166,6 +210,16 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         AppAnalytics.logKeyboardSetupCompleted()
     }
 
+    /**
+     * Once per install, like [logSetupCompletedOnce]. Someone who switched the keyboard on before
+     * this event existed (2.3.3) logs it as [EnabledVia.OTHER] on their first Home open after updating.
+     */
+    private fun logKeyboardEnabledOnce(via: EnabledVia) {
+        if (setupPrefs.getBoolean(KEY_ENABLED_LOGGED, false)) return
+        setupPrefs.edit().putBoolean(KEY_ENABLED_LOGGED, true).apply()
+        AppAnalytics.logKeyboardEnabled(via.label)
+    }
+
     /** Re-read the on-device streak numbers for the Journey banner (cheap; every resume). */
     fun refreshJourney() {
         val stats = TypingStatsStore.getInstance(getApplication())
@@ -189,6 +243,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
         const val SETUP_PREFS = "keyboard_setup"
         const val KEY_SETUP_LOGGED = "setup_completed_logged"
+        const val KEY_ENABLED_LOGGED = "keyboard_enabled_logged"
         const val KEY_SETUP_BEFORE_ONBOARDING = "setup_done_before_onboarding_paywall"
         const val ONBOARDING_DELAY_MS = 800L
         const val ONBOARDING_CHECK_TIMEOUT_MS = 5_000L

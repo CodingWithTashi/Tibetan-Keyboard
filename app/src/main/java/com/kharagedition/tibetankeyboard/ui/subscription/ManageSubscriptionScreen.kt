@@ -385,14 +385,19 @@ private fun ColumnScope.OfferStep(state: ManageUiState, actions: ManageSubscript
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     offer.fullPrice,
-                    color = TibetanColors.CreamFaint, fontSize = 17.sp,
+                    color = TibetanColors.CreamFaint, fontSize = 17.sp, lineHeight = 24.sp,
                     textDecoration = TextDecoration.LineThrough,
                     modifier = Modifier.padding(bottom = 5.dp),
                 )
                 Spacer(Modifier.width(10.dp))
                 // One localized "%1$s / month" string, with the price picked out, so translators
                 // control the word order.
-                Text(emphasizedPrice(stringResource(R.string.premium_per_month, offer.discountedPrice), offer.discountedPrice))
+                // The line height this row was laid out with; the theme's default follows the
+                // font size, which here is the small text's, not the price's.
+                Text(
+                    emphasizedPrice(stringResource(R.string.premium_per_month, offer.discountedPrice), offer.discountedPrice),
+                    lineHeight = 24.sp,
+                )
             }
             Spacer(Modifier.height(6.dp))
             Text(

@@ -4,10 +4,15 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.ads.AdRequest
@@ -80,22 +85,28 @@ class SettingsActivity : AppCompatActivity() {
 
     @Composable
     private fun BannerAd() {
-        // AdView holds a WebView and timers, so it must be paused/resumed and destroyed.
-        val adView = remember {
-            AdView(this).apply {
-                setAdSize(AdSize.BANNER)
-                adUnitId = if (BuildConfig.DEBUG) TEST_BANNER_AD_UNIT else PROD_BANNER_AD_UNIT
-                loadAd(AdRequest.Builder().build())
+        // Sized to the room it has and centred in it. The fixed 320dp banner was wider than the
+        // screen's content on a 320dp phone (its right end was cut off) and sat against the
+        // left edge on every wider one.
+        BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            val widthDp = maxWidth.value.toInt()
+            // AdView holds a WebView and timers, so it must be paused/resumed and destroyed.
+            val adView = remember(widthDp) {
+                AdView(this@SettingsActivity).apply {
+                    setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp))
+                    adUnitId = if (BuildConfig.DEBUG) TEST_BANNER_AD_UNIT else PROD_BANNER_AD_UNIT
+                    loadAd(AdRequest.Builder().build())
+                }
             }
-        }
-        DisposableEffect(adView) {
-            adView.resume()
-            onDispose {
-                adView.pause()
-                adView.destroy()
+            DisposableEffect(adView) {
+                adView.resume()
+                onDispose {
+                    adView.pause()
+                    adView.destroy()
+                }
             }
+            key(adView) { AndroidView(factory = { adView }) }
         }
-        AndroidView(factory = { adView })
     }
 
     companion object {

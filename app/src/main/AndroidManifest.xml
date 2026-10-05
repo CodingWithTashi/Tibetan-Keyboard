@@ -69,10 +69,12 @@
             android:exported="false"
             android:parentActivityName=".ui.home.HomeActivity" />
 
+        <!-- The label is the name in the system's keyboard list and picker. It must be the app
+             name: setup tells people which name to switch on, and values-mcc402 renames the app. -->
         <service
             android:name=".service.TibetanKeyboard"
             android:exported="true"
-            android:label="Tibetan Keyboard"
+            android:label="@string/app_name"
             android:permission="android.permission.BIND_INPUT_METHOD">
             <meta-data
                 android:name="android.view.im"
@@ -104,9 +106,13 @@
                     android:scheme="tibetankeyboard" />
             </intent-filter>
         </activity>
+        <!-- adjustResize: the keyboard is reported as an inset and the screen scrolls the
+             try-out field above it (ScreenScaffold). Left to the default, the system slid the
+             whole window up, under the status bar. -->
         <activity
             android:name=".ui.home.HomeActivity"
-            android:hardwareAccelerated="true" />
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize" />
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

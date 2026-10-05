@@ -3,6 +3,7 @@ package com.kharagedition.tibetankeyboard.service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.inputmethodservice.InputMethodService
@@ -16,6 +17,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ImageSpan
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -41,6 +43,8 @@ import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
 import com.kharagedition.tibetankeyboard.ui.journey.WordSegmenter
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
+import com.kharagedition.tibetankeyboard.ui.keyboard.SizedKeyboard
+import com.kharagedition.tibetankeyboard.ui.keyboard.keyLabelFontScaleFor
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.WordComposer
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardView
@@ -61,6 +65,9 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     private var currentMode = KeyboardMode.NORMAL
     private var emojiKeyboardView: EmojiKeyboardView? = null
     private var isEmojiMode = false
+
+    /** What the keyboard's views are built with; see [keyboardContext]. Set per view build. */
+    private var viewContext: Context = this
 
     // Per-field layout override requested by the focused field via
     // EditorInfo.privateImeOptions (e.g. the AI Translate source field forces
@@ -142,6 +149,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     override fun onCreateInputView(): View {
         Log.i("TAG", "onCreateInputView: CALLED")
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        viewContext = keyboardContext()
 
         // Create the main container with AI toolbar
         val mainContainer = createMainKeyboardView()
@@ -160,14 +168,30 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         // user's language in every other app is unaffected.
         forcedTibetan?.let { isLanguageTibetan = it }
         keyboard = if(isLanguageTibetan){
-            Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
+            SizedKeyboard(this, R.xml.tibetan_uchen_alphabet_1)
         }else{
-            Keyboard(this, R.xml.qwerty)
+            SizedKeyboard(this, R.xml.qwerty)
         }
         keyboardView?.keyboard = keyboard
         keyboardView?.setOnKeyboardActionListener(this)
 
         return mainContainer
+    }
+
+    /**
+     * The context the keyboard's views are built with: this service, or, at a system font size
+     * larger than a key has room for, this service with the font scale capped (see
+     * [KeyboardSizing.labelFontScale]). `KeyboardView` takes its label size from its context
+     * and offers no other handle on it; at 200% the letters of neighbouring keys ran into each
+     * other and the bar's text outgrew its fixed height.
+     */
+    private fun keyboardContext(): Context {
+        val scale = keyLabelFontScaleFor(this)
+        if (scale >= resources.configuration.fontScale) return this
+        // The theme InputMethodService gives itself, so the views resolve the same attributes.
+        return ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_InputMethod).apply {
+            applyOverrideConfiguration(Configuration().apply { fontScale = scale })
+        }
     }
 
     /** Colour the user is entitled to; cached entitlement keeps this synchronous on the hot path. */
@@ -186,7 +210,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         val color = entitledColor()
 
         // Create AIKeyboardView directly
-        aiKeyboardView = AIKeyboardView(this)
+        aiKeyboardView = AIKeyboardView(viewContext)
         aiKeyboardView?.setAIKeyboardInterface(this)
         aiKeyboardView?.setThemeColor(color ?: "#FF704C04")
         isEmojiMode = false
@@ -196,11 +220,12 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     private fun setKeyBoardView() {
         val color = entitledColor()
         val keyboardStyle = entitledStyle()
+        val inflater = if (viewContext === this) layoutInflater else layoutInflater.cloneInContext(viewContext)
 
         if (keyboardStyle == "borderless") {
             // Borderless is colour-agnostic: one transparent-key layout, surface tint
             // applied below. Glyphs only, no key boxes.
-            keyboardView = layoutInflater.inflate(R.layout.keyboard_borderless, null) as TibetanKeyboardView
+            keyboardView = inflater.inflate(R.layout.keyboard_borderless, null) as TibetanKeyboardView
             keyboardView?.setBackgroundColor(darkenColor(Color.parseColor(color ?: "#FF704C04"), 0.42f))
             return
         }
@@ -208,23 +233,23 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         keyboardView = when (color) {
             "#FF704C04" -> {
                 if (keyboardStyle == "modern") {
-                    layoutInflater.inflate(R.layout.keyboard_brown_modern, null) as TibetanKeyboardView
+                    inflater.inflate(R.layout.keyboard_brown_modern, null) as TibetanKeyboardView
                 } else {
-                    layoutInflater.inflate(R.layout.keyboard_brown, null) as TibetanKeyboardView
+                    inflater.inflate(R.layout.keyboard_brown, null) as TibetanKeyboardView
                 }
             }
             "#FF000000" -> {
                 if (keyboardStyle == "modern") {
-                    layoutInflater.inflate(R.layout.keyboard_black_modern, null) as TibetanKeyboardView
+                    inflater.inflate(R.layout.keyboard_black_modern, null) as TibetanKeyboardView
                 } else {
-                    layoutInflater.inflate(R.layout.keyboard_black, null) as TibetanKeyboardView
+                    inflater.inflate(R.layout.keyboard_black, null) as TibetanKeyboardView
                 }
             }
             else -> {
                 if (keyboardStyle == "modern") {
-                    layoutInflater.inflate(R.layout.keyboard_green_modern, null) as TibetanKeyboardView
+                    inflater.inflate(R.layout.keyboard_green_modern, null) as TibetanKeyboardView
                 } else {
-                    layoutInflater.inflate(R.layout.keyboard_green, null) as TibetanKeyboardView
+                    inflater.inflate(R.layout.keyboard_green, null) as TibetanKeyboardView
                 }
             }
         }
@@ -299,14 +324,14 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 prefs.putBoolean(AppConstant.IS_TIB,true)
                 prefs.apply()
                 AppAnalytics.logKeyboardLanguageSwitched(AppAnalytics.KeyboardLanguage.TIBETAN)
-                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
 
             KeyboardType.TIBETAN_UCHEN_ALPHABET_2 -> {
-                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_2)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.tibetan_uchen_alphabet_2)
             }
             KeyboardType.SYMBOL_1 -> {
-                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_symbol_1)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.tibetan_uchen_symbol_1)
             }
             KeyboardType.QWERTY_SMALL -> {
                 val prefs = getSharedPreferences(
@@ -314,16 +339,16 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
                 prefs.putBoolean(AppConstant.IS_TIB,false)
                 prefs.apply()
                 AppAnalytics.logKeyboardLanguageSwitched(AppAnalytics.KeyboardLanguage.ENGLISH)
-                keyboardView?.keyboard = Keyboard(this, R.xml.qwerty)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.qwerty)
             }
             KeyboardType.TIBETAN -> {
-                keyboardView?.keyboard = Keyboard(this, R.xml.tibetan_uchen_alphabet_1)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.tibetan_uchen_alphabet_1)
             }
             KeyboardType.QWERTY_CAP -> {
-                keyboardView?.keyboard = Keyboard(this, R.xml.qwerty_cap)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.qwerty_cap)
             }
             KeyboardType.SYMBOL_EN -> {
-                keyboardView?.keyboard = Keyboard(this, R.xml.symbol_en)
+                keyboardView?.keyboard = SizedKeyboard(this, R.xml.symbol_en)
             }
             KeyboardType.EMOJI_KEYBOARD -> {
                 toggleEmojiKeyboard()

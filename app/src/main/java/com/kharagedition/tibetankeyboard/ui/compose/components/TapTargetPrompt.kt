@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -154,7 +155,7 @@ fun TapTargetPrompt(
         val gap = with(density) { 14.dp.toPx() }
         val maxH = constraints.maxHeight
         val placeBelow = targetBounds.center.y < maxH / 2f
-        val bubbleAlign = if (placeBelow) Alignment.TopStart else Alignment.BottomStart
+        val bubbleAlign = if (placeBelow) Alignment.TopCenter else Alignment.BottomCenter
 
         Column(
             modifier = Modifier
@@ -163,6 +164,8 @@ fun TapTargetPrompt(
                     if (placeBelow) IntOffset(0, (holeBottom + gap).roundToInt())
                     else IntOffset(0, -((maxH - holeTop) + gap).roundToInt())
                 }
+                // As wide as the screen's content column, which it sits over.
+                .widthIn(max = ScreenMaxWidth)
                 .fillMaxWidth()
                 .padding(horizontal = 22.dp)
                 .graphicsLayer { alpha = appear.value }
