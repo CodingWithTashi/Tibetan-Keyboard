@@ -11,6 +11,7 @@ import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView.OnKeyboardActionListener
 import android.media.AudioManager
 import android.os.Build
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.Spannable
@@ -47,6 +48,7 @@ import com.kharagedition.tibetankeyboard.ui.keyboard.SizedKeyboard
 import com.kharagedition.tibetankeyboard.ui.keyboard.keyLabelFontScaleFor
 import com.kharagedition.tibetankeyboard.ui.keyboard.TibetanKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.WordComposer
+import com.kharagedition.tibetankeyboard.ui.keyboard.EditorReadGuard
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiKeyboardView
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardCodes
@@ -79,6 +81,11 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     // what a tap replaces, the tsheg it writes, and how the next key treats that tsheg. Pure and
     // unit-tested; this service only feeds it editor text and applies the edits it returns.
     private val composer = WordComposer()
+
+    // The editor reads below block this thread on the app being typed in. A hung app would stall
+    // every key (a held Delete repeats it) into an ANR, so after one slow read they answer null
+    // for a few seconds, which the composer already handles as "the editor cannot say".
+    private val editorReads = EditorReadGuard(now = SystemClock::elapsedRealtime)
 
     // Journey streak/stats. PRIVACY: the store only ever receives counts and one-way word
     // hashes — no typed text is persisted or transmitted (see TypingStatsStore's contract).
@@ -134,6 +141,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         composer.reset()
+        editorReads.reset()
         // Read the focused field's requested layout before (re)building the view,
         // so onCreateInputView can open on the matching language.
         forcedTibetan = KeyboardLayoutHint.forcedTibetan(info?.privateImeOptions)
@@ -563,7 +571,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             word,
             matched,
             textBeforeCursor(ic, extra = matched.length),
-            ic.getTextAfterCursor(1, 0),
+            editorReads.read { ic.getTextAfterCursor(1, 0) },
         )
         if (BuildConfig.DEBUG) {
             Log.d(
@@ -633,7 +641,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
      * [extra]); null when the editor cannot say, which the composer treats as "trust nothing".
      */
     private fun textBeforeCursor(ic: InputConnection, extra: Int = 0): CharSequence? =
-        ic.getTextBeforeCursor(composer.lookback + extra, 0)
+        editorReads.read { ic.getTextBeforeCursor(composer.lookback + extra, 0) }
 
     /** Applies one composer decision as a single editor change. */
     private fun applyEdit(ic: InputConnection, edit: WordComposer.Edit) {
