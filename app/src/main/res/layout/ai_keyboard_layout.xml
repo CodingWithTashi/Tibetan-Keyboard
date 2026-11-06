@@ -22,26 +22,6 @@
         android:gravity="center_vertical"
         android:elevation="4dp">
 
-        <!-- Streak flame chip — the always-visible Journey trigger. Shown to everyone once a
-             streak exists (GONE at 0 days); tap opens the Journey screen. Value is refreshed by
-             AIKeyboardView.refreshStreakChip() on every keyboard open. -->
-        <TextView
-            android:id="@+id/streak_chip"
-            android:layout_width="wrap_content"
-            android:layout_height="34dp"
-            android:gravity="center"
-            android:paddingHorizontal="10dp"
-            android:layout_marginEnd="6dp"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textColor="@color/tk_gold"
-            android:background="@drawable/tk_lang_pill"
-            android:clickable="true"
-            android:focusable="true"
-            android:visibility="gone"
-            android:contentDescription="@string/journey_streak_chip_cd"
-            tools:text="🔥 12" />
-
         <!-- Gold upsell pill (free users only) -->
         <LinearLayout
             android:id="@+id/pro_pill"
@@ -64,7 +44,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/unlock_pro"
+                android:text="@string/keyboard_pro_pill"
                 android:textColor="#3A2606"
                 android:textStyle="bold"
                 android:textSize="12sp"
@@ -92,19 +72,6 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:tint="@color/tk_gold" />
 
-        <!-- Autocomplete (free users only) -->
-        <ImageView
-            android:id="@+id/pro_auto_btn"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:padding="9dp"
-            android:layout_marginStart="2dp"
-            android:src="@drawable/ic_pro_autocomplete"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/cd_autocomplete"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:tint="@color/tk_gold" />
-
         <!-- Translate -->
         <ImageView
             android:id="@+id/pro_translate_btn"
@@ -117,6 +84,40 @@
             android:contentDescription="@string/translate"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:tint="@color/tk_gold" />
+
+        <!-- Voice typing: the one fully lit icon in the bar (never locked, never dimmed), with a
+             NEW dot until it has worked once (AIKeyboardView.applyVoiceIntro). -->
+        <FrameLayout
+            android:id="@+id/pro_mic_btn"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="2dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/cd_voice_mic"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:background="@drawable/tk_mic_bar_bg"
+                android:importantForAccessibility="no"
+                android:padding="8dp"
+                android:src="@drawable/ic_voice_mic"
+                tools:ignore="UseAppTint"
+                android:tint="@color/tk_gold" />
+
+            <View
+                android:id="@+id/mic_new_dot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/tk_new_dot"
+                android:visibility="gone" />
+        </FrameLayout>
 
     </LinearLayout>
 
@@ -542,5 +543,14 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <!-- Voice typing panel (initially hidden). Takes the place of the bar and the keys, at the
+         same height as the AI panel (AIKeyboardView.showVoicePanel sets it). -->
+    <com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoicePanelView
+        android:id="@+id/voice_panel"
+        android:layout_width="match_parent"
+        android:layout_height="360dp"
+        android:elevation="8dp"
+        android:visibility="gone" />
 
 </LinearLayout>

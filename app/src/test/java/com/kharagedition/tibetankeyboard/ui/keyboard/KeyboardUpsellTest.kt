@@ -42,7 +42,6 @@ class KeyboardUpsellTest {
         assertEquals(UpgradeSource.KEYBOARD, Control.PILL.source)
         assertEquals(UpgradeSource.KEYBOARD, Control.CHAT.source)
         assertEquals(UpgradeSource.KEYBOARD, Control.TRANSLATE.source)
-        assertEquals(UpgradeSource.KEYBOARD_SUGGESTIONS, Control.AUTOCOMPLETE.source)
         assertEquals(UpgradeSource.KEYBOARD_SUGGESTIONS, Control.LOCKED_SUGGESTION.source)
     }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Round secondary button of the voice panel (keyboard / delete / cancel). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="oval">
+            <solid android:color="#1FFCF5E8" />
+            <stroke android:width="1dp" android:color="#29FCF5E8" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#0FFCF5E8" />
+            <stroke android:width="1dp" android:color="#29FCF5E8" />
+        </shape>
+    </item>
+</selector>

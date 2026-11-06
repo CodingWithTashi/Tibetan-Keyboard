@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The voice typing panel. Inflated into VoicePanelView (a vertical LinearLayout) which sizes
+     every part from VoicePanelLayout and fills it from VoiceContent. It takes the place of the
+     bar and the keys, in the AI panel's surface, gold and type. Use android:tint, never app:tint:
+     the IME inflates plain ImageViews. -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <LinearLayout
+        android:id="@+id/voice_header"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_voice_mic"
+            tools:ignore="UseAppTint"
+            android:tint="@color/tk_gold" />
+
+        <TextView
+            android:id="@+id/voice_header_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/voice_header_title"
+            android:textColor="@color/tk_cream"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Compact panels only: the timer joins the title line to save a row. -->
+        <TextView
+            android:id="@+id/voice_header_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:textColor="@color/tk_cream_dim"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/voice_language_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="26dp"
+            android:background="@drawable/tk_lang_pill"
+            android:gravity="center"
+            android:paddingHorizontal="11dp"
+            android:text="@string/voice_language_pill"
+            android:textColor="@color/tk_gold"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1FFCF5E8" />
+
+    <!-- The stage: a message and the waveform, or a message and the edit tools. The dictated text is
+         not repeated here: it is in the field above. Its changes are announced by TalkBack. -->
+    <LinearLayout
+        android:id="@+id/voice_stage"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:accessibilityLiveRegion="polite"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            android:id="@+id/voice_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="8dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="2"
+            android:textColor="@color/tk_cream"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/voice_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="2"
+            android:textColor="@color/tk_cream_dim"
+            android:textSize="12.5sp" />
+
+        <TextView
+            android:id="@+id/voice_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/tk_cream"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <com.kharagedition.tibetankeyboard.ui.keyboard.voice.WaveformView
+            android:id="@+id/voice_wave"
+            android:layout_width="216dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="10dp"
+            android:importantForAccessibility="no" />
+
+        <!-- Edit tools, on whenever the panel is idle. Retry takes Undo's slot after a failed upload. -->
+        <LinearLayout
+            android:id="@+id/voice_tools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/voice_tool_first"
+                style="@style/VoiceToolChip" />
+
+            <TextView
+                android:id="@+id/voice_tool_select_all"
+                style="@style/VoiceToolChip"
+                android:layout_marginStart="8dp"
+                android:text="@string/voice_tool_select_all" />
+
+            <TextView
+                android:id="@+id/voice_tool_clear"
+                style="@style/VoiceToolChip"
+                android:layout_marginStart="8dp"
+                android:text="@string/voice_tool_clear" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Controls: keyboard · orb (or one wide button) · delete or cancel. -->
+    <LinearLayout
+        android:id="@+id/voice_controls"
+        android:layout_width="match_parent"
+        android:layout_height="108dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/voice_keyboard_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/tk_side_button"
+            android:contentDescription="@string/cd_voice_keyboard"
+            android:padding="13dp"
+            android:src="@drawable/ic_voice_keyboard"
+            tools:ignore="UseAppTint"
+            android:tint="@color/tk_cream_dim" />
+
+        <com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceOrbView
+            android:id="@+id/voice_orb"
+            android:layout_width="108dp"
+            android:layout_height="108dp"
+            android:layout_marginHorizontal="12dp" />
+
+        <TextView
+            android:id="@+id/voice_cta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxWidth="196dp"
+            android:minHeight="50dp"
+            android:layout_marginHorizontal="12dp"
+            android:background="@drawable/ai_replace_button_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:textColor="#3A2606"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/voice_right_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/tk_side_button"
+            android:padding="13dp"
+            android:src="@drawable/outline_backspace_24"
+            tools:ignore="UseAppTint"
+            android:tint="@color/tk_cream_dim" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/voice_hint"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingHorizontal="12dp"
+        android:textColor="#8CFCF5E8"
+        android:textSize="12sp" />
+</merge>

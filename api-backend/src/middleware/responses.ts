@@ -49,3 +49,19 @@ export const USER_MESSAGES = {
   UNEXPECTED:
     "Something went wrong on our end. Please try again in a moment.",
 } as const;
+
+/**
+ * User-facing copy for each `/speech-to-text` failure code (the codes come from
+ * `mapMonlamStatus` and `validateSpeechRequest`). The app shows `message` as is.
+ */
+export const STT_MESSAGES: Record<string, string> = {
+  BAD_AUDIO: "We couldn't read that recording. Please try speaking again.",
+  TOO_LONG: "Recordings can be up to a minute. Please record a shorter message.",
+  STT_TIMEOUT: "That took too long to write down. Please try again.",
+  STT_UNAVAILABLE:
+    "Voice typing is temporarily unavailable. Please try again later or type instead.",
+  STT_CONFIG:
+    "Voice typing is temporarily unavailable. Please try again later or type instead.",
+  RATE_LIMITED: USER_MESSAGES.SERVER_BUSY,
+  STT_FAILED: "We couldn't write that down. Please try again.",
+};

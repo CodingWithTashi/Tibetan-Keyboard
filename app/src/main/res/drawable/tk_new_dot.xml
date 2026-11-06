@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The NEW dot on the bar's mic until voice typing has worked once. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#FFF7D899" />
+    <stroke android:width="2dp" android:color="#FF241808" />
+</shape>

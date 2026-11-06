@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import Joi from "joi";
+import { randomUUID } from "crypto";
 import { SUPPORTED_LANGUAGES, LIMITS } from "../config/constants";
+import { checkSpeechAudio } from "../services/wavInfo";
+import { STT_MESSAGES, sendFailure } from "./responses";
 
 // Fields that carry user-typed text across the API. The global cap inspects
 // every one of these on every request body, so no endpoint (including ones that
@@ -131,5 +134,63 @@ export function validateChatRequest(
     return;
   }
 
+  next();
+}
+
+/** Smallest body that can be a real recording; anything less is a stray request. */
+const MIN_AUDIO_BYTES = 1024;
+
+/** An idempotency key the app generated: a UUID-like token, never free text. */
+const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{8,64}$/;
+
+/** The recording as the Functions framework delivers it, or null. */
+function audioBody(req: Request): Buffer | null {
+  const raw = (req as Request & { rawBody?: unknown }).rawBody;
+  if (Buffer.isBuffer(raw)) return raw;
+  return Buffer.isBuffer(req.body) ? req.body : null;
+}
+
+/**
+ * Gate for `POST /speech-to-text`. The app sends the recording as the raw
+ * request body (`Content-Type: audio/wav`). Everything is checked here, before
+ * a byte reaches the paid Monlam API: the caller identifies itself, the audio
+ * is the format our app records, and it is at most 60 s long.
+ *
+ * On success the route reads `res.locals.speech` instead of re-parsing.
+ */
+export function validateSpeechRequest(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (req.headers["userid"] == null || req.headers["userid"] === "undefined") {
+    res.status(400).json({
+      success: false,
+      error: "Invalid request",
+      message: "User ID is required in headers",
+    });
+    return;
+  }
+
+  const wav = audioBody(req);
+  const checked =
+    wav && wav.length >= MIN_AUDIO_BYTES ? checkSpeechAudio(wav) : null;
+
+  if (!wav || !checked || !checked.ok) {
+    const reason = checked && !checked.ok ? checked.reason : "BAD_AUDIO";
+    sendFailure(res, reason === "TOO_LONG" ? 413 : 400, {
+      error: reason,
+      message: STT_MESSAGES[reason],
+    });
+    return;
+  }
+
+  const supplied = req.headers["x-idempotency-key"];
+  const idempotencyKey =
+    typeof supplied === "string" && IDEMPOTENCY_KEY.test(supplied)
+      ? supplied
+      : randomUUID();
+
+  res.locals.speech = { wav, durationMs: checked.durationMs, idempotencyKey };
   next();
 }

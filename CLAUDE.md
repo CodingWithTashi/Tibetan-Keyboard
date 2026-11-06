@@ -32,7 +32,9 @@ npm run deploy    # Deploy to Firebase Functions (asia-south1)
 > (suggestion tap / tsheg rules), `UnlockRouter` (auth→paywall routing), `PostLoginDestination`
 > (post-login routing), `EnableTrip` (coming back from the system keyboard settings),
 > `KeyboardUpsell` (the keyboard bar asks before the paywall), `KeyboardSizing` (how tall the
-> keyboard is on each screen), and `KeyboardLayoutTest` (guards
+> keyboard is on each screen), the whole voice typing decision layer under `ui/keyboard/voice`
+> (`VoiceMachine`, `VoiceController` with a fake mic and network, `VoiceContent`, `VoicePanelLayout`,
+> `WavEncoder`, …), and `KeyboardLayoutTest` (guards
 > the removed "+"/`-20` key across all `res/xml` layouts). Keep view/IME/RevenueCat-SDK behaviour
 > out of these (no mockito/Robolectric);
 > test it by extracting the decision into a pure unit (see those classes) or via on-device
@@ -160,8 +162,10 @@ Two steps on Home: switch the keyboard on in the system settings, then pick it.
 
 `TibetanKeyboard` (InputMethodService) rebuilds the keyboard on every `onStartInputView`, so
 preference changes apply the next time the keyboard opens.
-- `AIKeyboardView` — top toolbar (AI grammar/translate/rephrase) + suggestion strip + the keyboard
-  container. AI features run **inside** this panel (`showAIInterface()`), not as separate screens.
+- `AIKeyboardView` — top toolbar (★ PRO pill, suggestion strip, Chat, Translate, **mic**) + the
+  keyboard container. AI features run **inside** this panel (`showAIInterface()`), not as separate
+  screens. The bar has no streak chip and no autocomplete icon (the locked suggestion chips carry
+  the padlock); Journey is reached from Home.
 - `TibetanKeyboardView extends KeyboardView` — the typing surface. Custom `onDraw` paints the
   **Enter key gold** on top of any layout (visual only; key codes untouched).
 - `KeyboardSizing` (pure, unit-tested) decides how tall the keyboard is. `res/xml` declares 60dp
@@ -196,6 +200,43 @@ preference changes apply the next time the keyboard opens.
 - `vibrate`, `sound`, `event_notification`: behaviour flags read by the IME.
 - Keyboard key XML layouts live in `res/xml/` (tibetan_uchen_alphabet_1/2, qwerty, etc.) — **never
   change key codes** there; they drive `onKey()`.
+
+### Voice typing (Tibetan speech to text)
+
+The mic at the end of the keyboard bar opens a panel that takes the bar's and the keys' place
+(`AIKeyboardView.showVoicePanel`, same height as the AI panel), listens at once, and types the
+text Monlam AI writes down. **Open to everyone**: no PRO check, login or quota.
+- **Decisions live in pure units** (`ui/keyboard/voice`, all unit-tested): `VoiceMachine` (states),
+  `VoiceController` (mic + upload + field, tested with fakes), `VoiceContent` (what each state shows),
+  `VoicePanelLayout` (sizes; **compact below 300dp panel height**, because landscape leaves as little
+  as 230dp), `VoicePolicy` (the 60 s limit, hold/tap, cancel slide), `WavEncoder`, `AudioLevel`,
+  `VoiceInsert` (separator and Undo safety), `VoiceAvailability` (no mic in password fields).
+  `VoicePanelView`, `VoiceOrbView`, `WaveformView` and `AudioRecordRecorder` only draw and record.
+- **The session belongs to the service** (`TibetanKeyboard.voice`), not a view: the keyboard rebuilds
+  its views on every open. It survives that only on the same field (`VoiceField`); the keyboard hiding,
+  or a move to another field, cancels. An answer that arrives after Cancel is dropped.
+- **Gesture:** tap the orb to start and tap to finish, or hold (280 ms) to talk and let go to send;
+  slide 60dp left to cancel. The bar's mic starts listening by itself.
+- **Audio:** 16 kHz mono 16-bit WAV held in memory (never on disk), sent as the raw body of
+  `POST /speech-to-text`. Recordings stop at 60 s on the phone **and** the server refuses more
+  (`wavInfo.ts`); keep `VoicePolicy.MAX_MS` within the server's limit (a test guards it).
+- **Mic permission:** an IME cannot show the dialog, so `VoicePermissionActivity` (transparent, own
+  task) asks; the keyboard resumes listening only if the user is back on the same field within 60 s.
+- **Never log audio or transcripts.** The voice client has its own OkHttp client (HEADERS logging: the
+  shared one logs bodies). Analytics carry labels and coarse buckets only (`VoiceEvents`).
+- **Streak:** dictated Tibetan text counts toward the streak like typed text.
+- **Backend:** `api-backend` `POST /speech-to-text` (secret `MONLAM_API_KEY`, per-IP limiter of its
+  own, no attachPro / free limit / daily budget). The `stt:` log lines carry Monlam's `cost`: with no
+  gate they are the only view of spend. **Not yet:** App Check, so anyone who finds the URL can call it
+  (the limiter and the cost logs are the guard). Add it before any heavy promotion.
+- **Privacy:** we do not store the audio, but **Monlam keeps a copy**: its reply carries `audio_s3_path`
+  and a CloudFront `audio_url` (our route returns only the text). The mic panel says the voice is sent to
+  Monlam AI; never reword it to "not kept". How long Monlam retains recordings is unknown: ask them.
+- **Replies seen live (2026-11-05):** `{ text, cost, latency_ms, service_request_id, status }`; about
+  $0.032 per minute of audio, about 1.9 s for 4 s of audio, sync and `/live` equally fast. Noise comes
+  back as a lone "།", which the backend turns into "nothing heard".
+- **Release checklist:** Play Console Data safety (audio is sent to Monlam AI and retained by them),
+  privacy policy, "What's new".
 
 ### Premium Feature Gating
 

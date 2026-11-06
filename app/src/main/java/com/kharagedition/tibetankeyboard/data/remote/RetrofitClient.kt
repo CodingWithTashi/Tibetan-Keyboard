@@ -43,6 +43,26 @@ object RetrofitClient {
             .build()
             .create(YigChikTranslateAPI::class.java)
     }
+    /**
+     * Its own client: the shared one logs request bodies (`Level.BODY`), which for a recording
+     * would write the whole WAV to logcat. The read timeout outlasts the function's 60 s.
+     */
+    private val speechHttpClient = OkHttpClient.Builder()
+        .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.HEADERS })
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(70, TimeUnit.SECONDS)
+        .build()
+
+    val speechAPI: SpeechToTextAPI by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://asia-south1-tibetan-keyboard.cloudfunctions.net/api/")
+            .client(speechHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(SpeechToTextAPI::class.java)
+    }
+
     val journeyAPI: JourneyAPI by lazy {
         Retrofit.Builder()
             .baseUrl("https://asia-south1-tibetan-keyboard.cloudfunctions.net/api/")
