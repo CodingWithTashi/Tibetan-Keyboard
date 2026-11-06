@@ -47,6 +47,7 @@ import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.journey.WordSegmenter
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
+import com.kharagedition.tibetankeyboard.ui.keyboard.ClearRule
 import com.kharagedition.tibetankeyboard.ui.keyboard.DeleteRule
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.keyboard.SizedKeyboard
@@ -118,9 +119,6 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     companion object {
         /** Shared logcat tag for the client subscription flow (`adb logcat -s SubsFlow:*`). */
         private const val SUBS_TAG = "SubsFlow"
-
-        /** The most text Clear will empty: Undo can only restore what a capped read returned. */
-        private const val MAX_UNDOABLE_CLEAR = 9_000
     }
 
     override fun onCreate() {
@@ -171,7 +169,8 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         // permission dialog) on the same field, in whatever state it is in; never a move to
         // another field, where its text would land in the wrong place.
         val field = VoiceField.of(info?.packageName, info?.fieldId ?: 0)
-        val keepVoice = voicePanel.restoreOn(field)
+        val voiceAllowed = VoiceAvailability.allowed(info?.inputType ?: 0, info?.privateImeOptions)
+        val keepVoice = voicePanel.restoreOn(field, voiceAllowed)
         if (voiceStarted && !keepVoice) voice.cancelListening(VoiceEvents.EndReason.KEYBOARD_HIDDEN)
         if (!restarting) {
             AppAnalytics.logKeyboardShown()
@@ -179,9 +178,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             UserActivityTracker.recordActive(this, UserActivityTracker.Source.KEYBOARD)
         }
         setInputView(onCreateInputView())
-        aiKeyboardView?.applyVoiceAvailability(
-            VoiceAvailability.allowed(info?.inputType ?: 0, info?.privateImeOptions)
-        )
+        aiKeyboardView?.applyVoiceAvailability(voiceAllowed)
         if (keepVoice) {
             aiKeyboardView?.setVoiceController(voice)
             aiKeyboardView?.showVoicePanel(animated = false)
@@ -695,7 +692,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     private val voiceHost = object : VoiceController.Host {
         override fun insert(text: String, field: VoiceField?): String? {
             val ic = currentInputConnection ?: return null
-            if (field == null || !field.matches(currentVoiceField())) return null
+            if (field == null || !field.matches(currentVoiceField()) || !voiceAllowedHere()) return null
             composer.reset()
             val inserted = VoiceInsert.join(textBeforeCursor(ic), text)
             ic.commitText(inserted, 1)
@@ -716,10 +713,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
 
         override fun selectAll() {
             val ic = onVoiceField() ?: return
-            // The editor's own "select all"; a few apps ignore it, so fall back to selecting by range.
-            if (!ic.performContextMenuAction(android.R.id.selectAll)) {
-                ic.setSelection(0, getCurrentInputText().length)
-            }
+            selectEverything(ic) { getCurrentInputText().length }
         }
 
         override fun clearAll(): String? {
@@ -727,8 +721,11 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             val everything = getCurrentInputText()
             // Undo can only put back what was read, and the read is capped: past the cap, do nothing
             // rather than clear text that could not all be restored.
-            if (everything.isEmpty() || everything.length >= MAX_UNDOABLE_CLEAR) return null
-            ic.performContextMenuAction(android.R.id.selectAll)
+            if (!ClearRule.restorable(everything)) return null
+            selectEverything(ic) { everything.length }
+            // Delete only what was read and is really selected (see ClearRule): an editor that ignored
+            // "select all", or that gave a window of a longer field, is left untouched.
+            if (!ClearRule.canClear(everything, editorReads.read { ic.getSelectedText(0) })) return null
             ic.commitText("", 1)
             composer.reset()
             aiKeyboardView?.updateSuggestions("")
@@ -749,10 +746,26 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         }
     }
 
-    /** The input connection, but only while the keyboard is still on the field the panel opened on. */
+    /**
+     * The input connection, but only while the keyboard is still on the field the panel opened on
+     * and voice may be used there. A field id is no proof of the same field (many apps never set
+     * one), so a password field of the same app must be refused by what it is, not by its id.
+     */
     private fun onVoiceField(): InputConnection? {
         val ic = currentInputConnection ?: return null
+        if (!voiceAllowedHere()) return null
         return if (voice.field?.matches(currentVoiceField()) == true) ic else null
+    }
+
+    /** Whether the focused field may be dictated into at all (never a password or a field that opted out). */
+    private fun voiceAllowedHere(): Boolean {
+        val info = currentInputEditorInfo ?: return false
+        return VoiceAvailability.allowed(info.inputType, info.privateImeOptions)
+    }
+
+    /** The editor's own "select all"; a few apps ignore it, so fall back to selecting by range. */
+    private fun selectEverything(ic: InputConnection, length: () -> Int) {
+        if (!ic.performContextMenuAction(android.R.id.selectAll)) ic.setSelection(0, length())
     }
 
     override fun onVoiceRequested() {
@@ -801,6 +814,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
     /** Back on the field where "Allow microphone" was tapped: carry on, as if nothing happened. */
     private fun resumeVoiceAfterPermission(field: VoiceField?) {
         if (!voiceResume.check(field, SystemClock.elapsedRealtime())) return
+        if (!voiceAllowedHere()) return // a field that must not be dictated into gets no panel
         val view = aiKeyboardView ?: return
 
         view.setVoiceController(voice)

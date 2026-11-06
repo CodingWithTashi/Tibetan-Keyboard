@@ -12,7 +12,8 @@
         android:layout_height="48dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="14dp">
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp">
 
         <ImageView
             android:layout_width="16dp"
@@ -55,7 +56,8 @@
             android:minHeight="26dp"
             android:background="@drawable/tk_lang_pill"
             android:gravity="center"
-            android:paddingHorizontal="11dp"
+            android:paddingStart="11dp"
+            android:paddingEnd="11dp"
             android:text="@string/voice_language_pill"
             android:textColor="@color/tk_gold"
             android:textSize="13sp" />
@@ -76,7 +78,8 @@
         android:accessibilityLiveRegion="polite"
         android:gravity="center"
         android:orientation="vertical"
-        android:paddingHorizontal="16dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <TextView
             android:id="@+id/voice_title"
@@ -150,7 +153,8 @@
         android:layout_height="108dp"
         android:gravity="center"
         android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <ImageView
             android:id="@+id/voice_keyboard_btn"
@@ -167,7 +171,8 @@
             android:id="@+id/voice_orb"
             android:layout_width="108dp"
             android:layout_height="108dp"
-            android:layout_marginHorizontal="12dp" />
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp" />
 
         <TextView
             android:id="@+id/voice_cta"
@@ -176,7 +181,8 @@
             android:layout_weight="1"
             android:maxWidth="196dp"
             android:minHeight="50dp"
-            android:layout_marginHorizontal="12dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
             android:background="@drawable/ai_replace_button_background"
             android:clickable="true"
             android:focusable="true"
@@ -204,7 +210,8 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:paddingHorizontal="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
         android:textColor="#8CFCF5E8"
         android:textSize="12sp" />
 </merge>

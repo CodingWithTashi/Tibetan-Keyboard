@@ -23,11 +23,16 @@ class VoicePanelMemory {
         field = null
     }
 
-    /** Input restarted for [current]: true if the panel should come straight back. */
-    fun restoreOn(current: VoiceField?): Boolean {
+    /**
+     * Input restarted for [current]: true if the panel should come straight back. [allowed] is
+     * whether voice may be used in that field at all (`VoiceAvailability`): a field id is no proof
+     * of the same field, since many apps never set one, so a password field of the same app would
+     * otherwise look like the field the panel was opened on.
+     */
+    fun restoreOn(current: VoiceField?, allowed: Boolean): Boolean {
         val open = field ?: return false
-        if (current != null && current.matches(open)) return true
-        field = null // another field, or no field: the panel does not follow the user there
+        if (allowed && current != null && current.matches(open)) return true
+        field = null // another field, no field, or one that must not be dictated into
         return false
     }
 }

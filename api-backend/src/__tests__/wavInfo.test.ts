@@ -52,6 +52,18 @@ test("checkSpeechAudio rejects a recording over the limit (60.6 s) as too long",
   assert.deepEqual(result, { ok: false, reason: "TOO_LONG" });
 });
 
+test("checkSpeechAudio counts the bytes present, not a data chunk that understates them", () => {
+  // A hand-made header claiming 1 s of audio, then 62 s of it: all of it would be sent and billed.
+  const forged = wav({ seconds: 62 });
+  forged.writeUInt32LE(32000, 40); // data chunk size: 1 s at 16 kHz mono 16-bit
+  assert.deepEqual(checkSpeechAudio(forged), { ok: false, reason: "TOO_LONG" });
+});
+
+test("readWav still trusts the bytes present over a header that overstates them", () => {
+  const truncated = wav({ seconds: 5 }).subarray(0, 44 + 32000 * 2); // header says 5 s, 2 s present
+  assert.equal(readWav(truncated)?.durationMs, 2000);
+});
+
 test("checkSpeechAudio rejects 44.1 kHz audio", () => {
   assert.deepEqual(checkSpeechAudio(wav({ seconds: 2, rate: 44100 })), {
     ok: false,

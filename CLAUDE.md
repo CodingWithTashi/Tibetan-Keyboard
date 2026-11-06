@@ -204,19 +204,35 @@ preference changes apply the next time the keyboard opens.
 ### Voice typing (Tibetan speech to text)
 
 The mic at the end of the keyboard bar opens a panel that takes the bar's and the keys' place
-(`AIKeyboardView.showVoicePanel`, same height as the AI panel), listens at once, and types the
-text Monlam AI writes down. **Open to everyone**: no PRO check, login or quota.
+(`AIKeyboardView.showVoicePanel`, same height as the AI panel). The user holds the orb to talk, and
+the text Monlam AI writes down is typed into the field. **Open to everyone**: no PRO check, login or
+quota.
 - **Decisions live in pure units** (`ui/keyboard/voice`, all unit-tested): `VoiceMachine` (states),
   `VoiceController` (mic + upload + field, tested with fakes), `VoiceContent` (what each state shows),
   `VoicePanelLayout` (sizes; **compact below 300dp panel height**, because landscape leaves as little
-  as 230dp), `VoicePolicy` (the 60 s limit, hold/tap, cancel slide), `WavEncoder`, `AudioLevel`,
-  `VoiceInsert` (separator and Undo safety), `VoiceAvailability` (no mic in password fields).
+  as 230dp), `VoicePolicy` (the 60 s limit, minimum speech, cancel slide), `WavEncoder`, `AudioLevel`,
+  `VoiceInsert` (separator and Undo safety), `VoiceAvailability` (no mic in password fields),
+  `DeleteRule` (a selection is deleted whole, else one character).
   `VoicePanelView`, `VoiceOrbView`, `WaveformView` and `AudioRecordRecorder` only draw and record.
 - **The session belongs to the service** (`TibetanKeyboard.voice`), not a view: the keyboard rebuilds
   its views on every open. It survives that only on the same field (`VoiceField`); the keyboard hiding,
   or a move to another field, cancels. An answer that arrives after Cancel is dropped.
-- **Gesture:** tap the orb to start and tap to finish, or hold (280 ms) to talk and let go to send;
-  slide 60dp left to cancel. The bar's mic starts listening by itself.
+- **Gesture: hold to talk.** Press and hold the orb to record, let go to send, slide 60dp left to
+  cancel. Opening the panel never records by itself, and a tap shorter than `MIN_SPEECH_MS` says
+  "Hold a little longer" (`FailureKind.TOO_SHORT`) instead of sending anything. Only TalkBack's
+  double tap (`Press.TAP`) starts and stops by click, since it cannot hold.
+- **Editing is on the panel, not just the keys:** the idle panel always shows **Undo / Select all /
+  Clear** and a delete button, because the keys are hidden. Undo takes back the last dictation (only
+  while it is still what sits before the cursor) or a Clear. The panel's delete goes through
+  `VoiceController.backspace()`: a selection is removed as an undoable Clear, one character closes the
+  "Added" result so Undo is never a dead button. Clear (`ClearRule`) goes ahead only when what the
+  editor reports selected is exactly what was read, and shorter than `MAX_UNDOABLE_CLEAR`: an editor
+  that ignores "select all" or returns a window of a long field is left untouched, since Undo could
+  not restore it. The panel also refuses any field `VoiceAvailability` rules out (insert, edit tools
+  and restore after a restart), because a field id alone does not tell a password field from the one
+  the panel was opened on.
+- **The panel never repeats the dictated text:** it is in the field above. "Added" shows a check, the
+  streak note and the tools; the layout budget (`VoicePanelLayout`) has no transcript card.
 - **Audio:** 16 kHz mono 16-bit WAV held in memory (never on disk), sent as the raw body of
   `POST /speech-to-text`. Recordings stop at 60 s on the phone **and** the server refuses more
   (`wavInfo.ts`); keep `VoicePolicy.MAX_MS` within the server's limit (a test guards it).

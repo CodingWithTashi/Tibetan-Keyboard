@@ -65,8 +65,10 @@ export function readWav(buf: Buffer): WavInfo | null {
       haveFmt = true;
     } else if (id === "data") {
       if (!haveFmt || channels === 0 || sampleRate === 0 || bitsPerSample === 0) return null;
-      // Trust the bytes actually present over a header that may overstate them.
-      const dataBytes = Math.min(size, buf.length - body);
+      // The bytes actually present are what gets sent on and billed, whatever the header claims:
+      // one that overstates them is ignored, and one that understates them (a short data chunk
+      // followed by more audio) cannot slip a long recording past the 60 s gate.
+      const dataBytes = buf.length - body;
       const bytesPerSecond = (sampleRate * channels * bitsPerSample) / 8;
       const durationMs = Math.round((dataBytes / bytesPerSecond) * 1000);
       return { format, channels, sampleRate, bitsPerSample, durationMs };

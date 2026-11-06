@@ -853,5 +853,64 @@ class VoiceControllerTest {
         assertEquals(0, gated.host.backspaceCalls)
         assertEquals(Transcribing, gated.controller.state.value)
     }
-}
 
+    // --- a recording that was thrown away must not reach the next one ---
+
+    @Test
+    fun aLateFailureFromACancelledRecordingDoesNotKillTheNewOne() {
+        val rig = Rig()
+        rig.controller.open(field)
+        rig.controller.begin(Press.HOLD)
+        val old = rig.recorder.listener
+        rig.controller.cancel()
+        rig.controller.begin(Press.HOLD)
+        val cancelsBefore = rig.recorder.cancelCalls
+
+        old.onFailure() // queued on the main thread before the cancel, delivered after the new start
+
+        assertEquals(Listening(Press.HOLD, false), rig.controller.state.value)
+        assertEquals("the new recorder was not cancelled", cancelsBefore, rig.recorder.cancelCalls)
+    }
+
+    @Test
+    fun aLateLevelFromACancelledRecordingLeavesTheMeterAlone() {
+        val rig = Rig()
+        rig.controller.open(field)
+        rig.controller.begin(Press.HOLD)
+        val old = rig.recorder.listener
+        rig.controller.cancel()
+        rig.controller.begin(Press.HOLD)
+
+        old.onLevel(0.9f, 12_000)
+
+        assertEquals(VoiceMeter(0f, 0), rig.controller.meter.value)
+    }
+
+    @Test
+    fun aLateLimitFromACancelledRecordingDoesNotFinishTheNewOne() {
+        val rig = Rig()
+        rig.controller.open(field)
+        rig.controller.begin(Press.HOLD)
+        val old = rig.recorder.listener
+        rig.controller.cancel()
+        rig.controller.begin(Press.HOLD)
+
+        old.onLimitReached()
+
+        assertEquals(Listening(Press.HOLD, false), rig.controller.state.value)
+        assertEquals(0, rig.recorder.stopCalls)
+    }
+
+    @Test
+    fun theCurrentRecordingStillReportsItsLevelsAndLimit() {
+        val rig = Rig()
+        rig.controller.open(field)
+        rig.controller.begin(Press.HOLD)
+
+        rig.recorder.listener.onLevel(0.5f, 1_000)
+        assertEquals(VoiceMeter(0.5f, 1_000), rig.controller.meter.value)
+
+        rig.recorder.listener.onLimitReached()
+        assertEquals(1, rig.recorder.stopCalls)
+    }
+}

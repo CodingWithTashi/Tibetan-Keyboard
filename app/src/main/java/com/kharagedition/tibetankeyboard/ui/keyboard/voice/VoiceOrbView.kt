@@ -1,6 +1,7 @@
 package com.kharagedition.tibetankeyboard.ui.keyboard.voice
 
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.LinearGradient
@@ -311,6 +312,10 @@ class VoiceOrbView @JvmOverloads constructor(
         isFocusable = true
     }
 
+    // A finger's press is the whole gesture (hold to talk), so it must not also call performClick():
+    // that would start a second, tap-style recording on release. TalkBack reaches onTap through
+    // performClick() below instead.
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (!isEnabled) return false
         when (event.actionMasked) {

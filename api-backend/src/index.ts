@@ -133,6 +133,10 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
+  // Voice typing has its own limiter (sttLimiter). One request per utterance would otherwise
+  // run into this shared 15-minute budget first, lock the same IP (often a whole carrier's NAT)
+  // out of chat and translate, and make STT.PER_MINUTE a number that never applies.
+  skip: (req) => req.path === STT.ROUTE,
 });
 
 app.use(limiter);
@@ -275,7 +279,7 @@ app.post(
 // `stt:` log lines are the only view of spend, so they carry Monlam's cost.
 // Never log the audio or the transcript.
 app.post(
-  "/speech-to-text",
+  STT.ROUTE,
   sttLimiter,
   validateSpeechRequest,
   async (req, res) => {

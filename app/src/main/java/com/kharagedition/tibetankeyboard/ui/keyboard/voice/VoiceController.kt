@@ -97,14 +97,25 @@ class VoiceController(
     val isBusy: Boolean
         get() = _state.value is VoiceState.Listening || _state.value == VoiceState.Transcribing
 
-    private val recorderListener = object : VoiceRecorderPort.Listener {
+    /**
+     * Counts recordings. The recorder reports from its own thread through the main handler, so a
+     * report can still be queued when its recording is thrown away and the next one starts. Each
+     * recording gets its own listener ([listenerFor]) and an old one is ignored, so a late failure
+     * cannot cancel the new recorder, nor a late level move the new meter.
+     */
+    private var session = 0
+
+    private fun listenerFor(id: Int) = object : VoiceRecorderPort.Listener {
         override fun onLevel(level: Float, elapsedMs: Long) {
-            _meter.value = VoiceMeter(level, elapsedMs)
+            if (id == session) _meter.value = VoiceMeter(level, elapsedMs)
         }
 
-        override fun onLimitReached() = finish(auto = true)
+        override fun onLimitReached() {
+            if (id == session) finish(auto = true)
+        }
 
         override fun onFailure() {
+            if (id != session) return
             recorder.cancel()
             dispatch(VoiceEvent.Failed(FailureKind.MIC_BUSY))
         }
@@ -137,7 +148,7 @@ class VoiceController(
             return
         }
         _meter.value = VoiceMeter(0f, 0)
-        if (!recorder.start(recorderListener)) {
+        if (!recorder.start(listenerFor(++session))) {
             setState(VoiceState.Failure(FailureKind.MIC_BUSY))
             return
         }
@@ -160,16 +171,19 @@ class VoiceController(
 
         if (listening.cancelArmed) {
             events.recordingEnded(VoiceEvents.EndReason.SLID_AWAY, _meter.value.elapsedMs)
+            session++
             recorder.cancel()
             dispatch(VoiceEvent.Stop(durationMs = 0, peakLevel = 0f)) // armed, so the machine goes Ready
             return
         }
 
         finishing = true
+        val id = session
         scope.launch {
+            if (id != session) return@launch // thrown away before this ran: stop() would end the next one
             val recording = recorder.stop()
             finishing = false
-            if (_state.value !is VoiceState.Listening) return@launch // cancelled while stopping
+            if (id != session || _state.value !is VoiceState.Listening) return@launch // cancelled while stopping
 
             if (recording == null) {
                 dispatch(VoiceEvent.Failed(FailureKind.MIC_BUSY))
@@ -306,6 +320,7 @@ class VoiceController(
     }
 
     private fun discardWork() {
+        session++ // whatever the recorder still reports now belongs to nobody
         if (_state.value is VoiceState.Listening) recorder.cancel()
         transcribeJob?.cancel()
         transcribeJob = null

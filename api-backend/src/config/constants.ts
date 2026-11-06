@@ -51,6 +51,8 @@ export const RATE = {
  * does not use up their allowance, bounds a scripted caller's spend.
  */
 export const STT = {
+  // The route's path. The app-wide limiter skips it (it has its own, below), so one name serves both.
+  ROUTE: "/speech-to-text",
   // Per-IP, per-minute cap on /speech-to-text.
   PER_MINUTE: envInt("STT_RATE_PER_MINUTE", 30),
   // Monlam's sync endpoint. Switch to ".../speech-to-text/live" if the first
