@@ -1,0 +1,62 @@
+name: Release
+
+# Ships the release AAB to a Google Play track: Actions → Release → Run workflow on main.
+# Runs CI first. versionName comes from app/build.gradle; versionCode is detected from Play (highest + 1).
+run-name: Release · ${{ inputs.track }}${{ inputs.validate_only && ' · validate only' || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Play track (alpha = closed testing, beta = open testing)
+        type: choice
+        default: internal
+        options: [internal, alpha, beta, production]
+      validate_only:
+        description: Validate with Play without publishing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/main.yml
+    secrets: inherit
+
+  android:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      - name: Build and upload to Play
+        run: bundle exec fastlane android release track:"$TRACK" validate_only:"$VALIDATE_ONLY"
+        env:
+          TRACK: ${{ inputs.track }}
+          VALIDATE_ONLY: ${{ inputs.validate_only }}
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.TIB_KEYBOARD_GOOGLE_SERVICES_JSON }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}

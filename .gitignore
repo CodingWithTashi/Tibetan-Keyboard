@@ -29,3 +29,8 @@ local.properties
 # Python tooling (tools/)
 __pycache__/
 *.pyc
+
+# fastlane run output (fastlane/Fastfile).
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
