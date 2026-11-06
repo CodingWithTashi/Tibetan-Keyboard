@@ -76,6 +76,11 @@
             android:taskAffinity=""
             android:theme="@style/Theme.TibetanKeyboard.Sheet" />
         <activity
+            android:name=".ui.voicetext.VoiceTextActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
             android:name=".ui.about.AboutActivity"
             android:exported="false"
             android:parentActivityName=".ui.home.HomeActivity" />

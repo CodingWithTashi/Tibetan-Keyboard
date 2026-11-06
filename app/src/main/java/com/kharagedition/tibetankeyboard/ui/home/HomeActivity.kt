@@ -53,6 +53,7 @@ import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
+import com.kharagedition.tibetankeyboard.ui.voicetext.VoiceTextActivity
 import com.kharagedition.tibetankeyboard.ui.translate.TranslateActivity
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.CommonUtils
@@ -227,9 +228,9 @@ class HomeActivity : InputMethodActivity() {
             AppAnalytics.logHomeAction(AppAnalytics.HomeAction.SHARE)
             shareApp()
         },
-        onRate = {
-            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.RATE)
-            openView(CommonUtils.PLAY_STORE_URL)
+        onVoiceText = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.VOICE_TEXT)
+            startActivity(Intent(this, VoiceTextActivity::class.java))
         },
         onAbout = {
             AppAnalytics.logHomeAction(AppAnalytics.HomeAction.ABOUT)

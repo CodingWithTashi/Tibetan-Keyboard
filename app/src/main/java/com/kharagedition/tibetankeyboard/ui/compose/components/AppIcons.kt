@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -47,6 +48,7 @@ object AppIcons {
     val Star: ImageVector = Icons.Rounded.Star
     val More: ImageVector = Icons.Rounded.MoreHoriz
     val Crown: ImageVector = Icons.Rounded.WorkspacePremium
+    val Mic: ImageVector = Icons.Rounded.Mic
     val Bot: ImageVector = Icons.Rounded.SmartToy
     val Sparkle: ImageVector = Icons.Rounded.AutoAwesome
     val Translate: ImageVector = Icons.Rounded.Translate

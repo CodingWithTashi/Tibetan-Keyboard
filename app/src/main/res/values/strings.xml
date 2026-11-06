@@ -542,4 +542,6 @@
     <string name="voice_micbusy_body">Close other apps using it, then try again.</string>
     <string name="voice_bad_title">We couldn\'t read that recording</string>
     <string name="voice_bad_body">Please try speaking again.</string>
+    <string name="voice_text_title">Voice Text</string>
+    <string name="voice_text_hint">Tap the mic at the end of the keyboard bar, then hold the orb and speak Tibetan. Switch to our keyboard if another one opens.</string>
 </resources>

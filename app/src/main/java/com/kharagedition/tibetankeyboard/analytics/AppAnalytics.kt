@@ -538,6 +538,7 @@ object AppAnalytics {
         const val SETTINGS = "settings"
         const val SHARE = "share"
         const val RATE = "rate"
+        const val VOICE_TEXT = "voice_text"
         const val ABOUT = "about"
         const val UPGRADE = "upgrade"
         const val JOURNEY = "journey"
