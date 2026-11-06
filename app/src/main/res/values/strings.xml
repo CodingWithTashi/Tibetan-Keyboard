@@ -543,5 +543,12 @@
     <string name="voice_bad_title">We couldn\'t read that recording</string>
     <string name="voice_bad_body">Please try speaking again.</string>
     <string name="voice_text_title">Voice Text</string>
-    <string name="voice_text_hint">Tap the mic at the end of the keyboard bar, then hold the orb and speak Tibetan. Switch to our keyboard if another one opens.</string>
+    <string name="voice_text_placeholder">Your words appear here. Hold the mic below and speak Tibetan.</string>
+    <string name="voice_text_chars">%1$d characters</string>
+    <string name="voice_text_copy">Copy</string>
+    <string name="voice_text_share">Share</string>
+    <string name="voice_text_retry">Try again</string>
+    <string name="voice_text_copied">Copied to clipboard</string>
+    <string name="voice_text_busy_body">Sending your voice and writing it down. Usually a few seconds.</string>
+    <string name="voice_text_slow">Taking a little longer than usual. Still working, your recording is safe.</string>
 </resources>
