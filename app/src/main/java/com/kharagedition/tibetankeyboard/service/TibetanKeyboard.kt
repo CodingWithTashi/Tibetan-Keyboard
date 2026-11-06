@@ -1,8 +1,10 @@
 package com.kharagedition.tibetankeyboard.service
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.Drawable
@@ -17,6 +19,8 @@ import android.os.Vibrator
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ImageSpan
+import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
@@ -27,6 +31,7 @@ import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.google.firebase.auth.FirebaseAuth
 import com.kharagedition.tibetankeyboard.BuildConfig
@@ -40,9 +45,10 @@ import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.openPremiumUpgrade
 import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
-import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
 import com.kharagedition.tibetankeyboard.ui.journey.WordSegmenter
 import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardInterface
+import com.kharagedition.tibetankeyboard.ui.keyboard.ClearRule
+import com.kharagedition.tibetankeyboard.ui.keyboard.DeleteRule
 import com.kharagedition.tibetankeyboard.ui.keyboard.KeyboardLayoutHint
 import com.kharagedition.tibetankeyboard.ui.keyboard.SizedKeyboard
 import com.kharagedition.tibetankeyboard.ui.keyboard.keyLabelFontScaleFor
@@ -55,6 +61,19 @@ import com.kharagedition.tibetankeyboard.ui.keyboard.AIKeyboardCodes
 import com.kharagedition.tibetankeyboard.ui.keyboard.EmojiItemList
 import com.kharagedition.tibetankeyboard.ui.keyboard.StickerItem
 import com.kharagedition.tibetankeyboard.R
+import com.kharagedition.tibetankeyboard.data.repository.SpeechRepository
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.AppAnalyticsVoiceEvents
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.AudioRecordRecorder
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceAvailability
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceController
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceEvents
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceField
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceInsert
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoicePanelMemory
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoicePermissionActivity
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoicePermissionResult
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoicePolicy
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceResume
 
 
 class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboardInterface {
@@ -112,6 +131,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         // synchronously in any process, and initialize() is idempotent (a cheap logIn
         // when already configured), so this is safe on every IME create.
         initializeRevenueCatForKeyboard()
+        VoicePermissionResult.listener = ::onVoicePermissionAnswer
     }
 
     /**
@@ -145,13 +165,43 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         // Read the focused field's requested layout before (re)building the view,
         // so onCreateInputView can open on the matching language.
         forcedTibetan = KeyboardLayoutHint.forcedTibetan(info?.privateImeOptions)
+        // The voice panel survives the view being rebuilt (an app restarting input, the system's
+        // permission dialog) on the same field, in whatever state it is in; never a move to
+        // another field, where its text would land in the wrong place.
+        val field = VoiceField.of(info?.packageName, info?.fieldId ?: 0)
+        val voiceAllowed = VoiceAvailability.allowed(info?.inputType ?: 0, info?.privateImeOptions)
+        val keepVoice = voicePanel.restoreOn(field, voiceAllowed)
+        if (voiceStarted && !keepVoice) voice.cancelListening(VoiceEvents.EndReason.KEYBOARD_HIDDEN)
         if (!restarting) {
             AppAnalytics.logKeyboardShown()
             // Count keyboard usage toward the user's daily activity (throttled to one write/day).
             UserActivityTracker.recordActive(this, UserActivityTracker.Source.KEYBOARD)
         }
         setInputView(onCreateInputView())
+        aiKeyboardView?.applyVoiceAvailability(voiceAllowed)
+        if (keepVoice) {
+            aiKeyboardView?.setVoiceController(voice)
+            aiKeyboardView?.showVoicePanel(animated = false)
+        }
+        // Whether or not the panel came back by itself: right after "Allow microphone" it is the
+        // permission's answer that decides what it shows next (listening, asking again, or off).
+        resumeVoiceAfterPermission(field)
         super.onStartInputView(info, restarting)
+    }
+
+    override fun onWindowHidden() {
+        // The keyboard is going away (Back, another app): a recording must not go on unseen.
+        // A write-down already under way finishes; its text is typed only if the field is the same.
+        // Coming back, the user gets the keys, not a stale panel.
+        voicePanel.closed()
+        if (voiceStarted) voice.cancelListening(VoiceEvents.EndReason.KEYBOARD_HIDDEN)
+        super.onWindowHidden()
+    }
+
+    override fun onDestroy() {
+        VoicePermissionResult.listener = null
+        if (voiceStarted) voice.release()
+        super.onDestroy()
     }
 
     override fun onCreateInputView(): View {
@@ -292,11 +342,7 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             playClick(i)
 
         when (i) {
-            Keyboard.KEYCODE_DELETE -> {
-                composer.onDelete(textBeforeCursor(inputConnection))
-                inputConnection.deleteSurroundingText(1, 0)
-                aiKeyboardView?.updateSuggestions(composer.composing)
-            }
+            Keyboard.KEYCODE_DELETE -> deleteBackward(inputConnection)
             Keyboard.KEYCODE_SHIFT -> {
                 isCaps = !isCaps
                 keyboard!!.isShifted = isCaps
@@ -475,6 +521,12 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
             hideEmojiKeyboard()
             return true
         }
+        if (keyCode == KeyEvent.KEYCODE_BACK && aiKeyboardView?.isVoicePanelOpen == true) {
+            // Back from the voice panel returns to the keys; the recording is thrown away.
+            aiKeyboardView?.hideVoicePanel()
+            onVoiceClosed()
+            return true
+        }
         return super.onKeyDown(keyCode, event)
     }
 
@@ -616,11 +668,219 @@ class TibetanKeyboard : InputMethodService(), OnKeyboardActionListener, AIKeyboa
         openPremiumUpgrade(source)
     }
 
-    override fun onOpenJourney() {
-        AppAnalytics.logJourneyOpened(AppAnalytics.JourneySource.KEYBOARD)
+    // --- Voice typing -----------------------------------------------------------------------
+    // The session lives here, not in a view: the keyboard rebuilds its views every time it opens,
+    // and a recording or an upload must survive that. See VoiceController.
+
+    private val voiceLazy = lazy {
+        VoiceController(
+            recorder = AudioRecordRecorder(this),
+            transcriber = SpeechRepository(),
+            micGranted = ::hasMicPermission,
+            events = AppAnalyticsVoiceEvents,
+        ).also { it.host = voiceHost }
+    }
+    private val voice: VoiceController get() = voiceLazy.value
+    private val voiceStarted: Boolean get() = voiceLazy.isInitialized()
+
+    /** Armed at "Allow microphone"; listening starts by itself once the user is back on that field. */
+    private val voiceResume = VoiceResume()
+
+    /** Which field the voice panel is open on, so it survives the keyboard rebuilding its views. */
+    private val voicePanel = VoicePanelMemory()
+
+    private val voiceHost = object : VoiceController.Host {
+        override fun insert(text: String, field: VoiceField?): String? {
+            val ic = currentInputConnection ?: return null
+            if (field == null || !field.matches(currentVoiceField()) || !voiceAllowedHere()) return null
+            composer.reset()
+            val inserted = VoiceInsert.join(textBeforeCursor(ic), text)
+            ic.commitText(inserted, 1)
+            aiKeyboardView?.updateSuggestions("")
+            creditStreak(text)
+            return inserted
+        }
+
+        override fun undo(inserted: String): Boolean {
+            val ic = currentInputConnection ?: return false
+            val before = editorReads.read { ic.getTextBeforeCursor(inserted.length, 0) }
+            if (!VoiceInsert.canUndo(before, inserted)) return false
+            ic.deleteSurroundingText(inserted.length, 0)
+            composer.reset()
+            aiKeyboardView?.updateSuggestions("")
+            return true
+        }
+
+        override fun selectAll() {
+            val ic = onVoiceField() ?: return
+            selectEverything(ic) { getCurrentInputText().length }
+        }
+
+        override fun clearAll(): String? {
+            val ic = onVoiceField() ?: return null
+            val everything = getCurrentInputText()
+            // Undo can only put back what was read, and the read is capped: past the cap, do nothing
+            // rather than clear text that could not all be restored.
+            if (!ClearRule.restorable(everything)) return null
+            selectEverything(ic) { everything.length }
+            // Delete only what was read and is really selected (see ClearRule): an editor that ignored
+            // "select all", or that gave a window of a longer field, is left untouched.
+            if (!ClearRule.canClear(everything, editorReads.read { ic.getSelectedText(0) })) return null
+            ic.commitText("", 1)
+            composer.reset()
+            aiKeyboardView?.updateSuggestions("")
+            return everything
+        }
+
+        override fun restore(text: String): Boolean {
+            val ic = onVoiceField() ?: return false
+            ic.commitText(text, 1)
+            composer.reset()
+            aiKeyboardView?.updateSuggestions("")
+            return true
+        }
+
+        override fun backspace(): String? {
+            val ic = onVoiceField() ?: return null
+            return deleteBackward(ic)
+        }
+    }
+
+    /**
+     * The input connection, but only while the keyboard is still on the field the panel opened on
+     * and voice may be used there. A field id is no proof of the same field (many apps never set
+     * one), so a password field of the same app must be refused by what it is, not by its id.
+     */
+    private fun onVoiceField(): InputConnection? {
+        val ic = currentInputConnection ?: return null
+        if (!voiceAllowedHere()) return null
+        return if (voice.field?.matches(currentVoiceField()) == true) ic else null
+    }
+
+    /** Whether the focused field may be dictated into at all (never a password or a field that opted out). */
+    private fun voiceAllowedHere(): Boolean {
+        val info = currentInputEditorInfo ?: return false
+        return VoiceAvailability.allowed(info.inputType, info.privateImeOptions)
+    }
+
+    /** The editor's own "select all"; a few apps ignore it, so fall back to selecting by range. */
+    private fun selectEverything(ic: InputConnection, length: () -> Int) {
+        if (!ic.performContextMenuAction(android.R.id.selectAll)) ic.setSelection(0, length())
+    }
+
+    override fun onVoiceRequested() {
+        val view = aiKeyboardView ?: return
+        if (isEmojiMode) hideEmojiKeyboard()
+        view.setVoiceController(voice)
+        view.showVoicePanel()
+        voicePanel.opened(currentVoiceField())
+        openVoiceSession(currentVoiceField())
+    }
+
+    /**
+     * Starts a fresh session on [field], unless one is already running there. The panel opens
+     * ready (or asking for the microphone), never recording: the user holds the mic to talk.
+     */
+    private fun openVoiceSession(field: VoiceField?) {
+        if (voice.isBusy && field?.matches(voice.field) == true) return
+        voice.open(field)
+    }
+
+    override fun onVoiceClosed() {
+        voicePanel.closed()
+        if (voiceStarted) voice.cancel()
+    }
+
+    override fun onVoiceAllowMicrophone() {
+        currentVoiceField()?.let { voiceResume.arm(it, SystemClock.elapsedRealtime()) }
         startActivity(
-            Intent(this, JourneyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            Intent(this, VoicePermissionActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
+    }
+
+    override fun onVoiceOpenSettings() {
+        voiceResume.disarm()
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+
+    /** The panel's delete button. It goes through the controller so the result follows the edit. */
+    override fun onVoiceBackspace() {
+        if (voiceStarted) voice.backspace()
+    }
+
+    /** Back on the field where "Allow microphone" was tapped: carry on, as if nothing happened. */
+    private fun resumeVoiceAfterPermission(field: VoiceField?) {
+        if (!voiceResume.check(field, SystemClock.elapsedRealtime())) return
+        if (!voiceAllowedHere()) return // a field that must not be dictated into gets no panel
+        val view = aiKeyboardView ?: return
+
+        view.setVoiceController(voice)
+        view.showVoicePanel(animated = false)
+        voicePanel.opened(field)
+        voice.open(field)
+        // Allowed: the panel is ready and the user holds the mic. Refused: it says so.
+        if (!hasMicPermission()) {
+            voice.onPermissionResult(granted = false, blocked = VoicePermissionResult.blocked)
+        }
+    }
+
+    /**
+     * The microphone request was answered. A refusal updates the panel at once: with the permission
+     * already refused for good there is no dialog, so the keyboard never restarts and would not
+     * notice. A grant starts listening only once the keyboard is back on the field: right away if
+     * it never left (no dialog was needed), otherwise on the restart that follows the dialog.
+     */
+    private fun onVoicePermissionAnswer(granted: Boolean, blocked: Boolean) {
+        if (granted) {
+            if (isInputViewShown) resumeVoiceAfterPermission(currentVoiceField())
+        } else {
+            // Keyboard still up: no dialog was shown (already refused for good), so there will be
+            // no restart to resume on. Keyboard hidden: a dialog was shown, and the restart that
+            // follows still needs the armed resume to bring the panel back with its answer.
+            if (isInputViewShown) voiceResume.disarm()
+            if (voiceStarted) voice.onPermissionResult(granted = false, blocked = blocked)
+        }
+    }
+
+    private fun hasMicPermission(): Boolean =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+
+    private fun currentVoiceField(): VoiceField? =
+        VoiceField.of(currentInputEditorInfo?.packageName, currentInputEditorInfo?.fieldId ?: 0)
+
+    /** Dictated text is typing too: it keeps the streak alive and feeds the word stats. */
+    private fun creditStreak(text: String) {
+        val chars = VoiceInsert.tibetanChars(text)
+        if (chars > 0) {
+            typingStats.recordTibetanChars(chars)?.let { AppAnalytics.logStreakMilestone(it) }
+        }
+        recordChunkAsWords(text)
+    }
+
+    /**
+     * The delete key's work, shared with the voice panel's delete button. Returns the selected
+     * text it removed, or null when it deleted one character (the panel offers Undo for the former).
+     */
+    private fun deleteBackward(inputConnection: InputConnection): String? {
+        val selected = editorReads.read { inputConnection.getSelectedText(0) }
+        var removed: String? = null
+        when (DeleteRule.plan(selected)) {
+            DeleteRule.Plan.SELECTION -> {
+                removed = selected.toString()
+                inputConnection.commitText("", 1) // replaces the selection with nothing
+                composer.reset()
+            }
+            DeleteRule.Plan.ONE_CHAR -> {
+                composer.onDelete(textBeforeCursor(inputConnection))
+                inputConnection.deleteSurroundingText(1, 0)
+            }
+        }
+        aiKeyboardView?.updateSuggestions(composer.composing)
+        return removed
     }
 
     /**

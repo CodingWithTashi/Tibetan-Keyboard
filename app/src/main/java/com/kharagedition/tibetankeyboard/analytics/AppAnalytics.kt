@@ -300,6 +300,37 @@ object AppAnalytics {
     fun logKeyboardAiApplied(feature: String) = log(EVENT_KEYBOARD_AI_APPLIED, PARAM_FEATURE to feature)
 
     // ----------------------------------------------------------------------------------------
+    // Voice typing (the IME mic) — labels, counts and coarse buckets ONLY: never audio or text
+    // ----------------------------------------------------------------------------------------
+
+    /** The voice panel was opened from the keyboard bar. */
+    fun logVoiceOpened() = log(EVENT_VOICE_OPENED)
+
+    /** The microphone request was answered. [result] is one of [VoicePermission]. */
+    fun logVoicePermission(result: String) = log(EVENT_VOICE_PERMISSION, PARAM_RESULT to result)
+
+    /** Listening started. [method] is `tap` or `hold`. */
+    fun logVoiceRecordingStarted(method: String) = log(EVENT_VOICE_RECORDING_STARTED, PARAM_METHOD to method)
+
+    /** A recording stopped. [reason] is a `VoiceEvents.EndReason` name, [durationBucket] a `VoiceBuckets` range. */
+    fun logVoiceRecordingEnded(reason: String, durationBucket: String) =
+        log(EVENT_VOICE_RECORDING_ENDED, PARAM_REASON to reason, PARAM_DURATION to durationBucket)
+
+    /** Text was added. [chars] is its length, [latencyBucket] the wait for it, [retried] whether Retry was used. */
+    fun logVoiceTranscribed(chars: Int, latencyBucket: String, retried: Boolean) = log(
+        EVENT_VOICE_TRANSCRIBED,
+        PARAM_VALUE to chars.toString(),
+        PARAM_LATENCY to latencyBucket,
+        PARAM_RETRIED to retried,
+    )
+
+    /** A dictation failed. [kind] is a `FailureKind` name. */
+    fun logVoiceFailed(kind: String) = log(EVENT_VOICE_FAILED, PARAM_REASON to kind)
+
+    /** The user took the added text back. */
+    fun logVoiceUndo() = log(EVENT_VOICE_UNDO)
+
+    // ----------------------------------------------------------------------------------------
     // Journey (typing streak & insights) — events carry ONLY counts, never typed content
     // ----------------------------------------------------------------------------------------
 
@@ -411,6 +442,13 @@ object AppAnalytics {
     private const val EVENT_KEYBOARD_SUGGESTION_SELECTED = "keyboard_suggestion_selected"
     private const val EVENT_SUGGESTION_QUOTA_EXHAUSTED = "suggestion_quota_exhausted"
     private const val EVENT_KEYBOARD_AI_USED = "keyboard_ai_used"
+    private const val EVENT_VOICE_OPENED = "voice_opened"
+    private const val EVENT_VOICE_PERMISSION = "voice_permission"
+    private const val EVENT_VOICE_RECORDING_STARTED = "voice_recording_started"
+    private const val EVENT_VOICE_RECORDING_ENDED = "voice_recording_ended"
+    private const val EVENT_VOICE_TRANSCRIBED = "voice_transcribed"
+    private const val EVENT_VOICE_FAILED = "voice_failed"
+    private const val EVENT_VOICE_UNDO = "voice_undo"
     private const val EVENT_KEYBOARD_AI_APPLIED = "keyboard_ai_applied"
 
     private const val EVENT_JOURNEY_OPENED = "journey_opened"
@@ -436,6 +474,11 @@ object AppAnalytics {
     private const val PARAM_LANGUAGE = "language"
     private const val PARAM_SETTING = "setting"
     private const val PARAM_VALUE = "value"
+    private const val PARAM_RESULT = "result"
+    private const val PARAM_METHOD = "method"
+    private const val PARAM_DURATION = "duration"
+    private const val PARAM_LATENCY = "latency"
+    private const val PARAM_RETRIED = "retried"
     private const val PARAM_SOURCE = "source"
     private const val PARAM_TYPE = "type"
     private const val PARAM_DAYS = "days"
@@ -472,6 +515,14 @@ object AppAnalytics {
         const val REPHRASE = "rephrase"
     }
 
+    /** Stable result labels for [logVoicePermission]. */
+    object VoicePermission {
+        const val GRANTED = "granted"
+        const val DENIED = "denied"
+        /** Refused for good: only the system settings can turn the microphone on. */
+        const val BLOCKED = "blocked"
+    }
+
     /** Stable language labels for [logKeyboardLanguageSwitched]. */
     object KeyboardLanguage {
         const val TIBETAN = "tibetan"
@@ -487,6 +538,7 @@ object AppAnalytics {
         const val SETTINGS = "settings"
         const val SHARE = "share"
         const val RATE = "rate"
+        const val VOICE_TEXT = "voice_text"
         const val ABOUT = "about"
         const val UPGRADE = "upgrade"
         const val JOURNEY = "journey"
@@ -496,7 +548,6 @@ object AppAnalytics {
 
     /** Stable source labels for [logJourneyOpened] (where the Journey screen was opened from). */
     object JourneySource {
-        const val KEYBOARD = "keyboard"
         const val HOME = "home"
         const val NOTIFICATION = "notification"
     }

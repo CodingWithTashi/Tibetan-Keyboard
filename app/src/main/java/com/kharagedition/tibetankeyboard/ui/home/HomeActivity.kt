@@ -53,6 +53,7 @@ import com.kharagedition.tibetankeyboard.ui.chat.ChatActivity
 import com.kharagedition.tibetankeyboard.ui.compose.theme.TibetanKeyboardTheme
 import com.kharagedition.tibetankeyboard.ui.journey.JourneyActivity
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsActivity
+import com.kharagedition.tibetankeyboard.ui.voicetext.VoiceTextActivity
 import com.kharagedition.tibetankeyboard.ui.translate.TranslateActivity
 import com.kharagedition.tibetankeyboard.util.AppConstant
 import com.kharagedition.tibetankeyboard.util.CommonUtils
@@ -227,9 +228,10 @@ class HomeActivity : InputMethodActivity() {
             AppAnalytics.logHomeAction(AppAnalytics.HomeAction.SHARE)
             shareApp()
         },
-        onRate = {
-            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.RATE)
-            openView(CommonUtils.PLAY_STORE_URL)
+        onVoiceText = {
+            AppAnalytics.logHomeAction(AppAnalytics.HomeAction.VOICE_TEXT)
+            // Dictation needs no account (its server call takes an anonymous id), only PRO.
+            openIfPremiumOrUpgrade(VoiceTextActivity::class.java, requireLogin = false)
         },
         onAbout = {
             AppAnalytics.logHomeAction(AppAnalytics.HomeAction.ABOUT)
@@ -260,13 +262,13 @@ class HomeActivity : InputMethodActivity() {
      * PRO entry points (Chat, Translate). Signed-out users are classifiable now that RevenueCat is
      * configured anonymously; entitled-but-anonymous users sign in here because the server needs a UID.
      */
-    private fun openIfPremiumOrUpgrade(target: Class<*>) {
+    private fun openIfPremiumOrUpgrade(target: Class<*>, requireLogin: Boolean = true) {
         if (!viewModel.uiState.value.isPremium) {
             AppAnalytics.logFeatureGateShown(AppAnalytics.UpgradeSource.HOME_FEATURE_GATE)
             openPremiumUpgrade(AppAnalytics.UpgradeSource.HOME_FEATURE_GATE)
             return
         }
-        if (!viewModel.isUserAuthenticated()) {
+        if (requireLogin && !viewModel.isUserAuthenticated()) {
             // Link the account first, then return to the screen they asked for.
             AuthManager(this).redirectToLogin(finishCaller = false, target = target)
             return

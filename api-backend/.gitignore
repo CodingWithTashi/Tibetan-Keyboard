@@ -43,3 +43,6 @@ next-env.d.ts
 
 /tibetan-keyboard.json
 /firebase-debug.log
+
+# Firebase emulator secrets (local MONLAM_API_KEY etc.) — never commit
+.secret.local

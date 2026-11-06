@@ -65,6 +65,25 @@ npm test
 
 ## API Endpoints
 
+### POST /speech-to-text
+
+Voice typing: writes a recording down in Tibetan through Monlam AI. Open to everyone (no PRO check
+or daily cap); only technical limits apply.
+
+**Setup:** `firebase functions:secrets:set MONLAM_API_KEY` (and `MONLAM_STT_URL` in `.env` to point
+at another Monlam path, e.g. `/speech-to-text/live`). For the emulator put `MONLAM_API_KEY=...` in
+`.secret.local` (gitignored).
+
+**Request:** the recording as the raw body, `Content-Type: audio/wav`, 16 kHz mono 16-bit PCM,
+at most 60 s (2 MB). Headers: `userid`, and optionally `x-idempotency-key` (one per recording, so
+a retry is not billed twice).
+
+**Response:** `{ "success": true, "data": { "text": "..." } }`, or `{ "success": false, "error":
+"BAD_AUDIO" | "TOO_LONG" | "STT_TIMEOUT" | "STT_UNAVAILABLE" | "STT_CONFIG" | "RATE_LIMITED" |
+"STT_FAILED", "message": "..." }`. 400 bad audio, 413 too long, 429 rate limited (30 per minute per IP).
+
+The `stt:` log lines carry Monlam's `cost`; they never contain the audio or the transcript.
+
 ### POST /translate
 
 Translates text between languages.

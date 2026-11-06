@@ -38,6 +38,9 @@ import com.kharagedition.tibetankeyboard.subscription.SuggestionQuota
 import com.kharagedition.tibetankeyboard.ui.settings.SettingsPrefs
 import kotlinx.coroutines.*
 import com.kharagedition.botok.autocomplete.SuggestionEngine
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceController
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoiceIntro
+import com.kharagedition.tibetankeyboard.ui.keyboard.voice.VoicePanelView
 
 class AIKeyboardView @JvmOverloads constructor(
     context: Context,
@@ -46,11 +49,12 @@ class AIKeyboardView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     private lateinit var aiToolbar: LinearLayout
-    private lateinit var streakChip: TextView
     private lateinit var proPill: View
     private lateinit var proChatBtn: ImageView
-    private lateinit var proAutoBtn: ImageView
     private lateinit var proTranslateBtn: ImageView
+    private lateinit var proMicBtn: View
+    private lateinit var micNewDot: View
+    private lateinit var voicePanel: VoicePanelView
     private lateinit var proPromptBar: View
     private lateinit var proPromptText: TextView
     private lateinit var proPromptCta: View
@@ -138,22 +142,7 @@ class AIKeyboardView @JvmOverloads constructor(
         loadSuggestionEngine()
         applyBottomInsetPadding()
         refreshStrip()
-        refreshStreakChip()
-    }
-
-    /**
-     * Show the current typing streak on the toolbar (the Journey feature's always-visible
-     * trigger). The IME rebuilds this view on every keyboard open, so the number stays fresh
-     * without any observer plumbing. Hidden until the user has a streak at all.
-     */
-    fun refreshStreakChip() {
-        val days = TypingStatsStore.getInstance(context).displayStreak()
-        if (days > 0) {
-            streakChip.text = context.getString(R.string.journey_streak_chip, days)
-            streakChip.visibility = View.VISIBLE
-        } else {
-            streakChip.visibility = View.GONE
-        }
+        applyVoiceIntro()
     }
 
     /**
@@ -165,10 +154,8 @@ class AIKeyboardView @JvmOverloads constructor(
         if (s == appliedStrip) return
         appliedStrip = s
         proPill.visibility = if (s.pillVisible) View.VISIBLE else View.GONE
-        proAutoBtn.visibility = if (s.autocompleteVisible) View.VISIBLE else View.GONE
         proChatBtn.alpha = s.chatAlpha
         proTranslateBtn.alpha = s.translateAlpha
-        proAutoBtn.alpha = s.autocompleteAlpha
         // The strip stays present as the bar's flexible spacer (weight=1) either way.
         suggestionStrip.setSuggestions(emptyList())
     }
@@ -206,7 +193,6 @@ class AIKeyboardView @JvmOverloads constructor(
                 KeyboardUpsell.Control.PILL -> R.string.keyboard_pro_prompt
                 KeyboardUpsell.Control.CHAT -> R.string.keyboard_pro_prompt_chat
                 KeyboardUpsell.Control.TRANSLATE -> R.string.keyboard_pro_prompt_translate
-                KeyboardUpsell.Control.AUTOCOMPLETE,
                 KeyboardUpsell.Control.LOCKED_SUGGESTION -> R.string.keyboard_pro_prompt_suggestions
             }
         )
@@ -223,8 +209,10 @@ class AIKeyboardView @JvmOverloads constructor(
         promptFor = null
         removeCallbacks(promptTimeout)
         proPromptBar.visibility = View.GONE
-        // The AI panel hides the bar while it is open and brings it back itself.
-        if (aiInterfaceContainer.visibility != View.VISIBLE) aiToolbar.visibility = View.VISIBLE
+        // The AI and voice panels hide the bar while they are open and bring it back themselves.
+        if (aiInterfaceContainer.visibility != View.VISIBLE && voicePanel.visibility != View.VISIBLE) {
+            aiToolbar.visibility = View.VISIBLE
+        }
     }
 
     /**
@@ -277,11 +265,12 @@ class AIKeyboardView @JvmOverloads constructor(
 
     private fun initializeViews() {
         aiToolbar = findViewById(R.id.ai_toolbar)
-        streakChip = findViewById(R.id.streak_chip)
         proPill = findViewById(R.id.pro_pill)
         proChatBtn = findViewById(R.id.pro_chat_btn)
-        proAutoBtn = findViewById(R.id.pro_auto_btn)
         proTranslateBtn = findViewById(R.id.pro_translate_btn)
+        proMicBtn = findViewById(R.id.pro_mic_btn)
+        micNewDot = findViewById(R.id.mic_new_dot)
+        voicePanel = findViewById(R.id.voice_panel)
         proPromptBar = findViewById(R.id.pro_prompt_bar)
         proPromptText = findViewById(R.id.pro_prompt_text)
         proPromptCta = findViewById(R.id.pro_prompt_cta)
@@ -322,9 +311,6 @@ class AIKeyboardView @JvmOverloads constructor(
     }
 
     private fun setupClickListeners() {
-        // Streak flame → the Journey screen (available to everyone; streak is the free hook).
-        streakChip.setOnClickListener { aiKeyboardInterface?.onOpenJourney() }
-
         // Gold upsell pill — free users only (hidden for PRO).
         proPill.setOnClickListener { onLockedTap(KeyboardUpsell.Control.PILL) }
 
@@ -333,8 +319,8 @@ class AIKeyboardView @JvmOverloads constructor(
             if (isPremiumUser) aiKeyboardInterface?.onOpenChat() else onLockedTap(KeyboardUpsell.Control.CHAT)
         }
 
-        // Autocomplete — shown to free users only, once today's free suggestions are used.
-        proAutoBtn.setOnClickListener { onLockedTap(KeyboardUpsell.Control.AUTOCOMPLETE) }
+        // Voice typing — open to everyone; the service owns the session (see onVoiceRequested).
+        proMicBtn.setOnClickListener { aiKeyboardInterface?.onVoiceRequested() }
 
         // The prompt bar: only "See plans" opens the paywall, and not on the second tap of a
         // double tap on the icon it has just covered.
@@ -714,6 +700,93 @@ class AIKeyboardView @JvmOverloads constructor(
                 currentOriginalText = ""
                 currentSuggestedText = ""
             }
+            .start()
+    }
+
+    // --- Voice typing ---------------------------------------------------------------------
+
+    /** Whether the voice panel is up. It replaces the bar and the keys, like the AI panel. */
+    val isVoicePanelOpen: Boolean
+        get() = voicePanel.visibility == View.VISIBLE
+
+    private val voiceHost = object : VoicePanelView.Host {
+        override fun onKeyboardRequested() {
+            hideVoicePanel()
+            aiKeyboardInterface?.onVoiceClosed()
+        }
+
+        override fun onAllowMicrophone() {
+            aiKeyboardInterface?.onVoiceAllowMicrophone()
+        }
+
+        override fun onOpenSettings() {
+            aiKeyboardInterface?.onVoiceOpenSettings()
+        }
+
+        override fun onBackspace() {
+            aiKeyboardInterface?.onVoiceBackspace()
+        }
+    }
+
+    /** Hands the voice panel the controller it shows. The service owns the controller. */
+    fun setVoiceController(controller: VoiceController) {
+        voicePanel.bind(controller, voiceHost)
+    }
+
+    /** The bar's mic is hidden in fields that must not be dictated into (see `VoiceAvailability`). */
+    fun applyVoiceAvailability(allowed: Boolean) {
+        proMicBtn.visibility = if (allowed) View.VISIBLE else View.GONE
+        if (!allowed && isVoicePanelOpen) hideVoicePanel(animated = false)
+    }
+
+    /** The NEW dot stays on the mic until voice typing has worked once. */
+    private fun applyVoiceIntro() {
+        micNewDot.visibility = if (VoiceIntro.isSeen(context)) View.GONE else View.VISIBLE
+    }
+
+    fun showVoicePanel(animated: Boolean = true) {
+        hideProPrompt()
+        aiToolbar.visibility = View.GONE
+        normalKeyboardContainer.visibility = View.GONE
+        // Same height as the bar and keys together, like the AI panel, so nothing above moves.
+        voicePanel.setPanelHeightDp(KeyboardSizing.panelHeightDp(keyHeightDpFor(context)))
+        voicePanel.animate().cancel()
+        voicePanel.visibility = View.VISIBLE
+        if (!animated) {
+            voicePanel.alpha = 1f
+            voicePanel.translationY = 0f
+            return
+        }
+        voicePanel.alpha = 0f
+        voicePanel.translationY = PANEL_SLIDE_PX
+        voicePanel.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(220)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+    }
+
+    fun hideVoicePanel(animated: Boolean = true) {
+        if (voicePanel.visibility != View.VISIBLE) return
+        voicePanel.animate().cancel()
+        val finish = {
+            voicePanel.visibility = View.GONE
+            voicePanel.alpha = 1f
+            voicePanel.translationY = 0f
+            aiToolbar.visibility = View.VISIBLE
+            normalKeyboardContainer.visibility = View.VISIBLE
+        }
+        if (!animated) {
+            finish()
+            return
+        }
+        voicePanel.animate()
+            .alpha(0f)
+            .translationY(PANEL_SLIDE_PX)
+            .setDuration(170)
+            .setInterpolator(AccelerateInterpolator())
+            .withEndAction(finish)
             .start()
     }
 

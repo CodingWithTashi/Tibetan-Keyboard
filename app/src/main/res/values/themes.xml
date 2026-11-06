@@ -111,4 +111,23 @@
             <item name="android:focusable">true</item>
         </style>
 
+
+    <!-- One of the three edit tools under the voice panel's text: Undo / Retry, Select all, Clear. -->
+    <style name="VoiceToolChip">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/tk_tool_chip</item>
+        <item name="android:clickable">true</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:textColor">@color/tk_cream</item>
+        <item name="android:textSize">12.5sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

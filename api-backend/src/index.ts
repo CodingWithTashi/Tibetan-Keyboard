@@ -10,6 +10,7 @@ import transliterationService from "./services/transliterationService";
 import {
   validateTranslateRequest,
   validateChatRequest,
+  validateSpeechRequest,
   enforceGlobalCharLimit,
 } from "./middleware/validation";
 import { errorHandler } from "./middleware/errorHandler";
@@ -29,8 +30,14 @@ import { resolveEngine, translate } from "./services/translateProvider";
 import { cachedCompute, makeCacheKey } from "./services/cacheService";
 import { attachProStatus, enforceFreeLimit } from "./middleware/proStatus";
 import { enforceGlobalDailyBudget } from "./middleware/globalBudget";
-import { sendFailure, USER_MESSAGES } from "./middleware/responses";
-import { RATE } from "./config/constants";
+import {
+  sendFailure,
+  USER_MESSAGES,
+  STT_MESSAGES,
+} from "./middleware/responses";
+import { RATE, STT } from "./config/constants";
+import { transcribe, SpeechError } from "./services/monlamSpeechService";
+import { mapMonlamStatus } from "./services/sttResponse";
 import { revenueCatWebhook } from "./webhooks/revenueCatWebhook";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
@@ -65,6 +72,10 @@ const azureTranslatorKey = defineSecret("AZURE_TRANSLATOR_KEY");
 //                firebase functions:secrets:set REVENUECAT_API_KEY
 const revenueCatWebhookSecret = defineSecret("REVENUECAT_WEBHOOK_SECRET");
 const revenueCatApiKey = defineSecret("REVENUECAT_API_KEY");
+
+// Monlam AI key — powers voice typing (POST /speech-to-text).
+// Set with: firebase functions:secrets:set MONLAM_API_KEY
+const monlamApiKey = defineSecret("MONLAM_API_KEY");
 
 /** A safe Firestore doc id, or null. `.doc("")` throws, turning a missing header into a 500. */
 function firestoreUserId(raw: unknown): string | null {
@@ -122,6 +133,10 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
+  // Voice typing has its own limiter (sttLimiter). One request per utterance would otherwise
+  // run into this shared 15-minute budget first, lock the same IP (often a whole carrier's NAT)
+  // out of chat and translate, and make STT.PER_MINUTE a number that never applies.
+  skip: (req) => req.path === STT.ROUTE,
 });
 
 app.use(limiter);
@@ -158,6 +173,21 @@ const aiDailyLimiter = rateLimit({
     error: "rate_limited",
     message:
       "You've reached the daily request limit for this device. Please try again tomorrow.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Per-IP burst cap for voice typing. Kept apart from aiLimiter so dictating does
+// not use up the chat/translate allowance. There is no daily cap and no PRO
+// check: this only stops a script from draining the Monlam credit.
+const sttLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: STT.PER_MINUTE,
+  message: {
+    success: false,
+    error: "rate_limited",
+    message: STT_MESSAGES.RATE_LIMITED,
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -237,6 +267,73 @@ app.post(
         message: USER_MESSAGES.TRANSLATE_FAILED,
         cause: error,
         logContext: { path: "/translate" },
+      });
+    }
+  }
+);
+
+// Voice typing — Monlam AI speech-to-text. The app sends one recording (16 kHz
+// mono 16-bit WAV, at most 60 s) as the raw request body; validateSpeechRequest
+// checks it before anything reaches Monlam and leaves it in res.locals.speech.
+// Open to everyone for now (no attachPro / free limit / daily budget). The
+// `stt:` log lines are the only view of spend, so they carry Monlam's cost.
+// Never log the audio or the transcript.
+app.post(
+  STT.ROUTE,
+  sttLimiter,
+  validateSpeechRequest,
+  async (req, res) => {
+    const userId = (req.headers["userid"] as string) || "anonymous";
+    const { wav, durationMs, idempotencyKey } = res.locals.speech as {
+      wav: Buffer;
+      durationMs: number;
+      idempotencyKey: string;
+    };
+    const startedAt = Date.now();
+
+    try {
+      const { text, billing } = await transcribe(wav, {
+        apiKey: monlamApiKey.value().trim(), // a pasted secret may carry a newline: invalid as a header
+        idempotencyKey,
+      });
+
+      logger.info("stt: ok", {
+        userId,
+        bytes: wav.length,
+        audioMs: durationMs,
+        latencyMs: Date.now() - startedAt,
+        chars: text.length,
+        cost: billing.cost,
+        monlamLatencyMs: billing.latencyMs,
+        monlamRequestId: billing.requestId,
+      });
+
+      const response: ApiResponse<{ text: string }> = {
+        success: true,
+        data: { text },
+      };
+      res.json(response);
+    } catch (error) {
+      const failure = error instanceof SpeechError ? error : null;
+      const mapped = failure?.mapped ?? mapMonlamStatus(0);
+      // Our key refused or credit used up: ours to fix, so log it as an error.
+      const log =
+        mapped.error === "STT_CONFIG" || mapped.error === "STT_UNAVAILABLE"
+          ? logger.error
+          : logger.warn;
+      log("stt: failed", {
+        userId,
+        code: mapped.error,
+        upstreamStatus: failure?.upstreamStatus,
+        upstreamBody: failure?.upstreamBody,
+        bytes: wav.length,
+        audioMs: durationMs,
+        latencyMs: Date.now() - startedAt,
+        detail: error instanceof Error ? error.message : String(error),
+      });
+      sendFailure(res, mapped.status, {
+        error: mapped.error,
+        message: STT_MESSAGES[mapped.error] ?? STT_MESSAGES.STT_FAILED,
       });
     }
   }
@@ -844,6 +941,7 @@ export const api = onRequest(
       azureTranslatorKey,
       revenueCatWebhookSecret,
       revenueCatApiKey,
+      monlamApiKey,
     ],
     // Add additional options if needed
     // invoker: 'public', // Makes function publicly accessible

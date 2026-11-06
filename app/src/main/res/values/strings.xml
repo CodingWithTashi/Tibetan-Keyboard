@@ -81,7 +81,6 @@
     <string name="fix">Fix</string>
     <string name="translate">Translate</string>
     <string name="pro_badge">PRO</string>
-    <string name="unlock_pro">Unlock PRO</string>
     <!-- The keyboard bar asks before opening the paywall: a tap right above the keys is often a slip -->
     <string name="keyboard_pro_prompt">PRO adds AI chat, translation and unlimited suggestions.</string>
     <string name="keyboard_pro_prompt_chat">AI Chat is a PRO feature.</string>
@@ -337,8 +336,6 @@
 
     <!-- Journey (typing streak & insights) -->
     <string name="journey_title">Your Tibetan Journey</string>
-    <string name="journey_streak_chip">🔥 %1$d</string>
-    <string name="journey_streak_chip_cd">Typing streak</string>
     <string name="journey_streak_days">%1$d-day streak</string>
     <string name="journey_streak_none_title">Light your flame</string>
     <string name="journey_streak_none_subtitle">Type a little Tibetan today to start your streak</string>
@@ -488,4 +485,70 @@
         <item quantity="other">Done. You\'ll pay %1$s / month for the next %2$d months.</item>
     </plurals>
 
+
+    <!-- Voice typing (keyboard bar + voice panel) -->
+    <string name="keyboard_pro_pill">PRO</string>
+    <string name="cd_voice_mic">Voice typing</string>
+    <string name="cd_voice_keyboard">Back to keyboard</string>
+    <string name="cd_voice_delete">Delete</string>
+    <string name="cd_voice_cancel">Cancel</string>
+    <string name="cd_voice_start">Hold to speak</string>
+    <string name="cd_voice_finish">Finish and write it down</string>
+    <string name="cd_voice_busy">Writing it down</string>
+    <string name="voice_header_title">Voice typing</string>
+    <string name="voice_language_pill" translatable="false">བོད་སྐད</string>
+    <string name="voice_ask_title">Allow the microphone</string>
+    <string name="voice_ask_body">The keyboard listens only while the mic glows. What you say is sent to Monlam AI to write it down.</string>
+    <string name="voice_ask_cta">Allow microphone</string>
+    <string name="voice_ask_hint">Android will ask you once</string>
+    <string name="voice_off_title">Microphone is off</string>
+    <string name="voice_off_body">Turn it on in Settings › Apps › Tibetan Keyboard › Permissions.</string>
+    <string name="voice_off_cta">Open settings</string>
+    <string name="voice_off_hint">You can keep typing in the meantime</string>
+    <string name="voice_ready_title">Hold to speak</string>
+    <string name="voice_ready_body">Press and hold the mic while you talk. Let go to write it down.</string>
+    <string name="voice_ready_hint">Hold to talk · slide left to cancel</string>
+    <string name="voice_listening_title">Listening</string>
+    <string name="voice_listening_hint_tap">Tap to finish</string>
+    <string name="voice_listening_hint_hold">Let go to send · slide left to cancel</string>
+    <string name="voice_listening_hint_ending">Stops by itself at 1:00</string>
+    <string name="voice_cancel_title">Let go to cancel</string>
+    <string name="voice_cancel_hint">Slide back to keep it</string>
+    <string name="voice_busy_title">Writing it down</string>
+    <string name="voice_busy_body">Usually takes a few seconds.</string>
+    <string name="voice_busy_hint">Tap × to cancel</string>
+    <string name="voice_added">Added</string>
+    <string name="voice_added_streak">Counts toward your %1$d-day streak</string>
+    <string name="voice_added_first">Your first spoken message</string>
+    <string name="voice_added_hint">Hold the mic to add the next sentence</string>
+    <string name="voice_tool_undo">Undo</string>
+    <string name="voice_tool_select_all">Select all</string>
+    <string name="voice_tool_clear">Clear</string>
+    <string name="voice_cleared_title">Cleared</string>
+    <string name="voice_cleared_body">Everything in this field was removed.</string>
+    <string name="voice_cleared_hint">Changed your mind? Tap Undo</string>
+    <string name="voice_short_title">Hold a little longer</string>
+    <string name="voice_short_body">Keep holding the mic while you speak, then let go.</string>
+    <string name="cd_voice_action_record">Start recording</string>
+    <string name="cd_voice_action_stop">Stop and write it down</string>
+    <string name="voice_nohear_title">I didn\'t hear anything</string>
+    <string name="voice_nohear_body">Hold the phone a little closer and try again.</string>
+    <string name="voice_nohear_hint">Nothing was sent</string>
+    <string name="voice_offline_title">Couldn\'t reach the server</string>
+    <string name="voice_server_title">Something went wrong</string>
+    <string name="voice_saved_body">Your recording is saved.</string>
+    <string name="voice_retry_hint">Retry sends the same recording</string>
+    <string name="voice_micbusy_title">The microphone is busy</string>
+    <string name="voice_micbusy_body">Close other apps using it, then try again.</string>
+    <string name="voice_bad_title">We couldn\'t read that recording</string>
+    <string name="voice_bad_body">Please try speaking again.</string>
+    <string name="voice_text_title">Voice Text</string>
+    <string name="voice_text_placeholder">Your words appear here. Hold the mic below and speak Tibetan.</string>
+    <string name="voice_text_chars">%1$d characters</string>
+    <string name="voice_text_copy">Copy</string>
+    <string name="voice_text_share">Share</string>
+    <string name="voice_text_retry">Try again</string>
+    <string name="voice_text_copied">Copied to clipboard</string>
+    <string name="voice_text_busy_body">Sending your voice and writing it down. Usually a few seconds.</string>
+    <string name="voice_text_slow">Taking a little longer than usual. Still working, your recording is safe.</string>
 </resources>

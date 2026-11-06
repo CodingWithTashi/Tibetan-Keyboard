@@ -19,8 +19,6 @@ object KeyboardUpsell {
         PILL(UpgradeSource.KEYBOARD),
         CHAT(UpgradeSource.KEYBOARD),
         TRANSLATE(UpgradeSource.KEYBOARD),
-        /** The Autocomplete icon, shown once today's free suggestions are used. */
-        AUTOCOMPLETE(UpgradeSource.KEYBOARD_SUGGESTIONS),
         LOCKED_SUGGESTION(UpgradeSource.KEYBOARD_SUGGESTIONS),
     }
 
@@ -30,8 +28,8 @@ object KeyboardUpsell {
     const val PROMPT_TIMEOUT_MS = 6_000L
 
     /**
-     * The question's buttons sit where the bar's icons are: "See plans" over Chat and
-     * Autocomplete, close over Translate. The second tap of a double tap would therefore land on
+     * The question's buttons sit where the bar's icons are: "See plans" over Chat, close
+     * over Translate. The second tap of a double tap would therefore land on
      * whatever has just replaced the first tap's target, opening the paywall after all, or
      * closing the question unread, or asking again after it was closed. Taps this soon after the
      * bar swapped under the finger are ignored.

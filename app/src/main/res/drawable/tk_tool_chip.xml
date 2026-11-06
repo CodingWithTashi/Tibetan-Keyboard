@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An edit tool of the voice panel: a pill that presses in, and glows gold while it is the live
+     action (Undo with something to undo, Retry). The view tints the glow with state_activated. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true" android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#33F2C264" />
+            <corners android:radius="22dp" />
+            <stroke android:width="1.2dp" android:color="#B3F2C264" />
+        </shape>
+    </item>
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#1FF2C264" />
+            <corners android:radius="22dp" />
+            <stroke android:width="1.2dp" android:color="#8CF2C264" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FCF5E8" />
+            <corners android:radius="22dp" />
+            <stroke android:width="1dp" android:color="#33FCF5E8" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#0FFCF5E8" />
+            <corners android:radius="22dp" />
+            <stroke android:width="1dp" android:color="#29FCF5E8" />
+        </shape>
+    </item>
+</selector>

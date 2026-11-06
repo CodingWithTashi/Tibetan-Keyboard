@@ -94,9 +94,9 @@ class HomeActions(
     val onPickInputMethod: () -> Unit,
     val onChat: () -> Unit,
     val onTranslate: () -> Unit,
+    val onVoiceText: () -> Unit,
     val onSettings: () -> Unit,
     val onShare: () -> Unit,
-    val onRate: () -> Unit,
     val onAbout: () -> Unit,
     val onUpgrade: () -> Unit,
     val onJourney: () -> Unit,
@@ -489,9 +489,9 @@ private fun QuickActionsGrid(state: HomeUiState, actions: HomeActions) {
     val items = listOf(
         QuickAction("AI Chat", AppIcons.Bot, tag = if (!state.isPremium) "PRO" else null, onClick = actions.onChat),
         QuickAction(stringResource(R.string.ai_translate), AppIcons.Translate, tag = if (!state.isPremium) "PRO" else null, onClick = actions.onTranslate),
+        QuickAction(stringResource(R.string.voice_text_title), AppIcons.Mic, tag = if (!state.isPremium) "PRO" else null, onClick = actions.onVoiceText),
         QuickAction("Settings", AppIcons.Settings, onClick = actions.onSettings),
         QuickAction("Share", AppIcons.Share, onClick = actions.onShare),
-        QuickAction("Rate", AppIcons.Star, onClick = actions.onRate),
         QuickAction("About", AppIcons.More, onClick = actions.onAbout),
     )
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {

@@ -9,17 +9,17 @@ import com.kharagedition.tibetankeyboard.subscription.SuggestionMode
  *
  *  - Free users: gold upsell pill visible; Chat + Translate dimmed (locked). While today's free
  *    suggestions last, real suggestions fill the strip; once they run out the suggestions turn
- *    into locked chips and the dimmed Autocomplete icon returns. Any locked control routes to the
- *    unlock flow.
- *  - PRO users: the pill and Autocomplete chip are hidden (autocomplete just works while typing);
- *    Chat + Translate are full opacity and functional.
+ *    into padlocked chips. Any locked control routes to the unlock flow.
+ *  - PRO users: the pill is hidden (autocomplete just works while typing); Chat + Translate are
+ *    full opacity and functional.
+ *
+ * The mic is not here: voice typing is open to everyone, so it is never locked or hidden by
+ * entitlement (see `VoiceAvailability` for when a field may not have it).
  */
 data class ProStripState(
     val pillVisible: Boolean,
-    val autocompleteVisible: Boolean,
     val chatAlpha: Float,
     val translateAlpha: Float,
-    val autocompleteAlpha: Float,
     /** How many suggestion chips fit next to the controls that are showing. */
     val maxSuggestions: Int,
 ) {
@@ -31,16 +31,13 @@ data class ProStripState(
         const val PRO_SUGGESTIONS = 4
         const val FREE_SUGGESTIONS = 3
 
-        /** Locked chips also carry a padlock and share the bar with the Autocomplete icon. */
+        /** Locked chips also carry a padlock, so they are wider and fewer. */
         const val LOCKED_SUGGESTIONS = 2
 
         fun forUser(isPremium: Boolean, mode: SuggestionMode): ProStripState = ProStripState(
             pillVisible = !isPremium,
-            autocompleteVisible = !isPremium && mode == SuggestionMode.LOCKED,
             chatAlpha = if (isPremium) ACTIVE_ALPHA else LOCKED_ALPHA,
             translateAlpha = if (isPremium) ACTIVE_ALPHA else LOCKED_ALPHA,
-            // Autocomplete is only ever shown to free users, so it always reads as locked.
-            autocompleteAlpha = LOCKED_ALPHA,
             maxSuggestions = when {
                 isPremium -> PRO_SUGGESTIONS
                 mode == SuggestionMode.LOCKED -> LOCKED_SUGGESTIONS

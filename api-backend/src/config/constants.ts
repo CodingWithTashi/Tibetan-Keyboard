@@ -44,6 +44,24 @@ export const RATE = {
   ANON_DAILY_CHAT_MESSAGES: envInt("ANON_DAILY_CHAT_MESSAGES", 20),
 };
 
+/**
+ * Voice typing (`POST /speech-to-text`). No daily cap and no PRO check: the
+ * only limits are technical. Recordings are capped at 60 s (see `wavInfo.ts`);
+ * this per-IP burst cap, kept apart from the chat/translate limiter so voice
+ * does not use up their allowance, bounds a scripted caller's spend.
+ */
+export const STT = {
+  // The route's path. The app-wide limiter skips it (it has its own, below), so one name serves both.
+  ROUTE: "/speech-to-text",
+  // Per-IP, per-minute cap on /speech-to-text.
+  PER_MINUTE: envInt("STT_RATE_PER_MINUTE", 30),
+  // Monlam's sync endpoint. Switch to ".../speech-to-text/live" if the first
+  // real call shows it is faster; env-overridable so that needs no deploy.
+  URL: process.env.MONLAM_STT_URL || "https://api-v1.monlamai.studio/api/v1/speech-to-text/",
+  // Our call to Monlam. Must stay below the function's 60 s timeout.
+  TIMEOUT_MS: 45_000,
+};
+
 export const SUPPORTED_LANGUAGES = ["en", "bo", "zh-CN"];
 
 // The RevenueCat entitlement that grants pro access. Must match the app

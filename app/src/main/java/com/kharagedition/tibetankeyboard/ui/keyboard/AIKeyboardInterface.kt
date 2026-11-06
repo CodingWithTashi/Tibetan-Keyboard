@@ -24,6 +24,18 @@ interface AIKeyboardInterface {
      */
     fun onUnlockPro(source: String = AppAnalytics.UpgradeSource.KEYBOARD)
 
-    /** Open the Tibetan Journey (streak & typing insights) screen. */
-    fun onOpenJourney()
+    /** The bar's mic was tapped: open the voice panel and start listening (the service owns the session). */
+    fun onVoiceRequested()
+
+    /** The voice panel was closed from its keyboard button. Any recording is thrown away. */
+    fun onVoiceClosed()
+
+    /** The panel's "Allow microphone" button: send the user to the permission request. */
+    fun onVoiceAllowMicrophone()
+
+    /** The panel's "Open settings" button, after the microphone was refused for good. */
+    fun onVoiceOpenSettings()
+
+    /** The panel's delete button: the same as the keyboard's backspace. */
+    fun onVoiceBackspace()
 }
