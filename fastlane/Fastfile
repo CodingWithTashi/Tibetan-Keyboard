@@ -1,0 +1,65 @@
+# Play Store releases for Tibetan Keyboard. GitHub Actions runs this from .github/workflows/release.yml;
+# run it locally with `bundle exec fastlane android release track:internal`.
+# versionName is read from app/build.gradle. versionCode is detected: one above the highest code on any
+# Play track (never below the one in build.gradle), passed to Gradle as -PversionCode.
+
+skip_docs
+
+PROJECT_DIR = File.expand_path("..", __dir__)
+PLAY_PACKAGE = "com.kharagedition.tibetankeyboard"
+TRACKS = %w[internal alpha beta production].freeze
+
+# ["2.4.4", 64] from app/build.gradle (the code is only the fallback floor).
+def gradle_version
+  gradle = File.read("#{PROJECT_DIR}/app/build.gradle")
+  [gradle[/versionName\s+"([^"]+)"/, 1], gradle[/versionCode project[^\n]*:\s*(\d+)/, 1].to_i]
+end
+
+platform :android do
+  desc "Build the release AAB and upload it to a Play track (track:internal|alpha|beta|production validate_only:true)"
+  lane :release do |options|
+    track = options.fetch(:track, "internal").to_s
+    UI.user_error!("Unknown track #{track}; use one of #{TRACKS.join(', ')}") unless TRACKS.include?(track)
+    validate_only = options[:validate_only].to_s == "true"
+    json_key = ENV.fetch("PLAY_STORE_JSON_KEY")
+
+    version_name, floor_code = gradle_version
+    on_play = TRACKS.flat_map do |t|
+      google_play_track_version_codes(package_name: PLAY_PACKAGE, track: t, json_key_data: json_key)
+    end
+    version_code = [on_play.max.to_i + 1, floor_code].max
+    UI.important("Releasing #{version_name} (#{version_code}) to #{track}#{' (validate only)' if validate_only}; Play's highest is #{on_play.max || 'none'}")
+
+    # CI has none of the git-ignored files: write the Firebase config and decode the upload keystore
+    # for the CM_* signing config in app/build.gradle.
+    if is_ci
+      File.binwrite("#{PROJECT_DIR}/app/google-services.json", ENV.fetch("GOOGLE_SERVICES_JSON").unpack1("m"))
+      keystore = File.join(ENV.fetch("RUNNER_TEMP", Dir.tmpdir), "upload-keystore.jks")
+      File.binwrite(keystore, ENV.fetch("ANDROID_KEYSTORE_BASE64").unpack1("m"))
+      ENV["CM_KEYSTORE_PATH"] = keystore
+      ENV["CM_KEYSTORE_PASSWORD"] = ENV.fetch("ANDROID_STORE_PASSWORD")
+      ENV["CM_KEY_ALIAS"] = ENV.fetch("ANDROID_KEY_ALIAS")
+      ENV["CM_KEY_PASSWORD"] = ENV.fetch("ANDROID_KEY_PASSWORD")
+    end
+
+    gradle(project_dir: PROJECT_DIR, task: "bundleRelease", flags: "-PversionCode=#{version_code} --no-daemon --stacktrace")
+    aab = "#{PROJECT_DIR}/app/build/outputs/bundle/release/app-release.aab"
+    UI.user_error!("No AAB at #{aab}; was the release signing config set?") unless File.exist?(aab)
+
+    mapping = "#{PROJECT_DIR}/app/build/outputs/mapping/release/mapping.txt"
+    upload_to_play_store(
+      package_name: PLAY_PACKAGE,
+      json_key_data: json_key,
+      track: track,
+      release_status: "completed",
+      version_name: version_name,
+      aab: aab,
+      mapping: File.exist?(mapping) ? mapping : nil,
+      validate_only: validate_only,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+end
